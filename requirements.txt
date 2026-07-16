@@ -1,0 +1,46 @@
+# Core Framework
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+python-multipart==0.0.9
+
+# Database
+sqlalchemy==2.0.30
+alembic==1.13.1
+pymysql==1.1.1
+aiosqlite==0.20.0
+
+# Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-decouple==3.8
+
+# Speech Recognition
+openai-whisper==20231117
+torch>=2.0.0
+torchaudio>=2.0.0
+
+# NLP / Data Extraction
+transformers==4.41.0
+torch>=2.0.0
+
+# PDF Generation
+reportlab==4.1.0
+
+# QR Code
+qrcode[pil]==7.4.2
+Pillow==10.3.0
+pyzbar==0.1.9
+
+# Text-to-Speech
+pyttsx3==2.90
+
+# Audio
+sounddevice==0.4.6
+numpy==1.26.4
+scipy==1.13.0
+
+# Utilities
+pydantic[email]==2.7.1
+pydantic-settings==2.2.1
+httpx==0.27.0
+python-dateutil==2.9.0
