@@ -98,7 +98,7 @@ def scan_qr_token(
         )
 
     return QRScanResponse(
-        form_data=applicant,
+        form_data=applicant.model_dump(),
         submission_id=result["submission_id"],
         submitted_at=result["submitted_at"],
     )
@@ -149,7 +149,7 @@ async def decode_qr_image(
 
     applicant = ApplicantCreate(**form_data)
     return QRScanResponse(
-        form_data=applicant,
+        form_data=applicant.model_dump(),
         submission_id=result["submission_id"],
         submitted_at=result["submitted_at"],
     )

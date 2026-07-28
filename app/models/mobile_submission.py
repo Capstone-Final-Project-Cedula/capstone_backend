@@ -5,7 +5,7 @@ MobileSubmission model — stores QR pre-fill submissions from the Android app.
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, JSON
 from sqlalchemy.sql import func
 from app.core.database import Base
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 
 
 class MobileSubmission(Base):
@@ -33,7 +33,10 @@ class MobileSubmission(Base):
     mobile_user_id = Column(String(100), nullable=True)  # Optional citizen ID
 
     def is_expired(self) -> bool:
-        return datetime.utcnow() > self.expires_at.replace(tzinfo=None)
+        expires_at = self.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        return datetime.now(timezone.utc) > expires_at
 
     def is_valid(self) -> bool:
         return not self.is_claimed and not self.is_expired()

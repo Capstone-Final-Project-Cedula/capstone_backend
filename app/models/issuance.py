@@ -30,6 +30,8 @@ class CTCIssuance(Base):
     additional_community_tax = Column(Float, default=0.00)
     # ₱1.00 per ₱1,000 of income/real property (max ₱5,000)
     total_tax = Column(Float, default=5.00)
+    interest = Column(Float, default=0.00)
+    total_amount_paid = Column(Float, default=5.00)
 
     # ── Processing Info ──────────────────────────────────────────────────────
     input_method = Column(Enum(InputMethodEnum), default=InputMethodEnum.VOICE)

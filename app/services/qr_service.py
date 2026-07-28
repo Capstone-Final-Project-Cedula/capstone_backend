@@ -9,7 +9,7 @@ import uuid
 import base64
 import io
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
 from sqlalchemy.orm import Session
 
@@ -39,7 +39,7 @@ def generate_qr_code(
     """
     # Generate unique token
     token = str(uuid.uuid4()).replace("-", "").upper()[:32]
-    expires_at = datetime.utcnow() + timedelta(minutes=settings.QR_EXPIRY_MINUTES)
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.QR_EXPIRY_MINUTES)
 
     # Serialize dates to strings for JSON
     serializable_data = {}
@@ -154,7 +154,7 @@ def claim_qr_submission(
 
     # Mark as claimed
     submission.is_claimed = True
-    submission.claimed_at = datetime.utcnow()
+    submission.claimed_at = datetime.now(timezone.utc)
     db.commit()
 
     logger.info(f"QR submission claimed: token={token[:8]}...")
