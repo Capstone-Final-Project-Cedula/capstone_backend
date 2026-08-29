@@ -7,6 +7,8 @@ from typing import Optional, List, Any, Union
 from datetime import date, datetime
 from enum import Enum
 
+from app.models.staff_user import RoleEnum
+
 
 # ─── Enums for Schemas ─────────────────────────────────────────────────────────
 
@@ -34,9 +36,11 @@ class InputMethodEnum(str, Enum):
     MANUAL = "manual"
 
 
-class RoleEnum(str, Enum):
-    ADMIN = "ADMIN"
-    STAFF = "STAFF"
+# NOTE: RoleEnum is imported from app.models.staff_user above — do not redefine
+# it here. It previously existed as a separate class with different values
+# ("ADMIN"/"STAFF", uppercase) than the SQLAlchemy model's RoleEnum
+# ("admin"/"staff"/"viewer", lowercase), which caused ResponseValidationError
+# on any endpoint returning a staff role (e.g. GET /auth/me).
 
 
 # ─── Auth Schemas ──────────────────────────────────────────────────────────────

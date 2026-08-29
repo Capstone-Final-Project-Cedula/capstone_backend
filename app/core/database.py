@@ -16,7 +16,7 @@ if "sqlite" in settings.DATABASE_URL:
 engine = create_engine(
     settings.DATABASE_URL,
     connect_args=connect_args,
-    echo=settings.DEBUG,  # SQL logging in debug mode
+    echo=settings.DEBUG,
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -28,10 +28,6 @@ def get_db():
     """
     FastAPI dependency that provides a database session per request.
     Automatically closes the session when the request is done.
-    Usage:
-        @router.get("/")
-        def endpoint(db: Session = Depends(get_db)):
-            ...
     """
     db = SessionLocal()
     try:
@@ -43,4 +39,5 @@ def get_db():
 def create_tables():
     """Create all tables defined in models. Called on startup."""
     from app.models import applicant, issuance, mobile_submission, staff_user  # noqa: F401
+    from app.models import citizen_user  # noqa: F401  ← NEW: citizen auth table
     Base.metadata.create_all(bind=engine)

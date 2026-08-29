@@ -1,17 +1,19 @@
 """
 app/api/routes/speech.py
 Speech-to-text endpoint using OpenAI Whisper.
-POST /api/speech/transcribe — upload audio file, get transcript
-POST /api/speech/verify     — TTS read-back of extracted fields
-GET  /api/speech/script     — get verification script text without speaking
+POST /api/speech/transcribe  — upload audio file, get transcript
+POST /api/speech/verify      — TTS read-back of extracted fields (plays on server)
+POST /api/speech/synthesize  — TTS as downloadable audio bytes (plays in browser)
+GET  /api/speech/script      — get verification script text without speaking
 """
 import os
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi.responses import Response
 
 from app.core.security import get_current_user
 from app.services.speech_service import SpeechService
-from app.services.tts_service import speak_verification, get_verification_script
+from app.services.tts_service import speak_verification, get_verification_script, synthesize_bytes
 from app.schemas.schemas import TranscriptionResponse
 
 router = APIRouter()
@@ -91,7 +93,8 @@ def verify_fields(
 ):
     """
     Trigger TTS voice read-back of the extracted CTC fields.
-    Runs speech on the server (for desktop kiosk deployments).
+    Runs speech on the server (for desktop kiosk deployments where the
+    server and the kiosk speakers are the same machine).
     Also returns the script text so the UI can display it.
     """
     script = get_verification_script(fields)
@@ -102,6 +105,38 @@ def verify_fields(
         "script": script,
         "message": "Voice verification complete." if speak_result else "TTS unavailable on this server.",
     }
+
+
+@router.post("/synthesize")
+def synthesize_speech(
+    payload: dict,
+    current_user=Depends(get_current_user),
+):
+    """
+    Synthesize arbitrary text to speech and return the audio bytes
+    directly, so the browser (not the server machine) plays it.
+    Use this for the web frontend's voice interview flow.
+
+    Body: {"text": "...", "rate": 185}
+    """
+    text = (payload.get("text") or "").strip()
+    if not text:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Text is required.")
+
+    try:
+        rate = int(payload.get("rate", 185))
+    except (TypeError, ValueError):
+        rate = 185
+    rate = max(120, min(240, rate))
+
+    audio_bytes, mime_type = synthesize_bytes(text, rate=rate)
+    if not audio_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Speech synthesis failed.",
+        )
+
+    return Response(content=audio_bytes, media_type=mime_type)
 
 
 @router.post("/script")

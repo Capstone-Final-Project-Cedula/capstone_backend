@@ -78,12 +78,18 @@ def get_civil_status_value(value):
 
 
 def generate_ctc_number(db: Session) -> str:
-    """Generate a unique CTC number."""
+    """
+    Generate a unique CTC number.
+    Format: CTC-YYYYMMDD-XXXX — the date shows exactly when it was issued,
+    but the serial (XXXX) counts issuances for the current YEAR and resets
+    to 0001 on January 1st, rather than resetting every single day.
+    """
     now = datetime.now()
+    year_prefix = now.strftime("%Y")
     date_prefix = now.strftime("%Y%m%d")
-    
+
     count = db.query(CTCIssuance).filter(
-        CTCIssuance.ctc_number.like(f"CTC-{date_prefix}-%")
+        CTCIssuance.ctc_number.like(f"CTC-{year_prefix}%")
     ).count()
     serial = str(count + 1).zfill(4)
     return f"CTC-{date_prefix}-{serial}"

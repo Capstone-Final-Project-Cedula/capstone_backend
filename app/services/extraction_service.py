@@ -3,11 +3,19 @@ app/services/extraction_service.py
 Dual-approach NLP extraction engine.
 Combines DistilBERT NER + Regex patterns to extract all 14 BIR Form 0016 fields
 from a Whisper-generated transcript.
+
+CHANGED: address extraction now uses the barangay gazetteer (fuzzy match
+against real barangay names) instead of trusting raw NER output. See
+_extract_address() below.
 """
 import re
 import logging
 from typing import Optional, Dict, Any, List
+
 from datetime import date, datetime
+
+from app.core.config import settings
+from app.services.barangay_gazetteer import match_barangay
 
 logger = logging.getLogger(__name__)
 
@@ -33,48 +41,39 @@ def get_ner_pipeline():
 # ─── Regex Patterns ────────────────────────────────────────────────────────────
 
 PATTERNS = {
-    # Height: "5 feet 7 inches", "167 cm", "5'7""
     "height": [
         r"(\d{1,3})\s*(?:centimeters?|cm)",
         r"(\d)\s*feet?\s*(?:and\s*)?(\d+)\s*inch(?:es)?",
         r"(\d)'(\d+)\"?",
     ],
-    # Weight: "65 kilos", "65 kg", "143 pounds"
     "weight": [
         r"(\d{2,3})\s*(?:kilograms?|kilos?|kg)",
         r"(\d{2,3})\s*(?:pounds?|lbs?)",
     ],
-    # Gross Annual Income: "50,000 pesos", "₱50,000", "50000 pesos annually"
     "income": [
         r"(?:₱|PHP|peso[s]?)\s*([\d,]+(?:\.\d{2})?)",
         r"([\d,]+(?:\.\d{2})?)\s*(?:pesos?|PHP)",
         r"(?:gross\s*(?:annual\s*)?income\s*(?:of|is)?\s*)([\d,]+)",
     ],
-    # Date of birth: "January 15 1990", "01/15/1990", "15th of January 1990"
     "date": [
         r"(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})",
         r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})",
         r"(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(January|February|March|April|May|June|July|August|September|October|November|December),?\s+(\d{4})",
     ],
-    # ICR Number (for aliens)
     "icr": [
         r"ICR\s*(?:number|no\.?)?\s*:?\s*([A-Z0-9\-]{6,20})",
         r"immigrant\s*certificate\s*of\s*residence\s*:?\s*([A-Z0-9\-]{6,20})",
     ],
-    # Civil Status
     "civil_status": [
         r"\b(single|married|widowed?|separated)\b",
     ],
-    # Sex
     "sex": [
         r"\b(male|female)\b",
         r"\b(man|woman)\b",
     ],
-    # Citizenship
     "citizenship": [
         r"\b(Filipino|American|Chinese|Japanese|Korean|British|Australian|Canadian)\b",
     ],
-    # Occupation keywords
     "occupation": [
         r"(?:work(?:ing)?\s*as|occupation\s*(?:is)?|employed\s*as|profession\s*(?:is)?)\s+(?:a\s+|an\s+)?([\w\s]+?)(?:\s*[,.]|$)",
     ],
@@ -86,16 +85,31 @@ MONTHS = {
     "september": 9, "october": 10, "november": 11, "december": 12,
 }
 
+# ── NEW: address-related patterns ──────────────────────────────────────────
+
+# Matches things like "123 Rizal Street", "Purok 3", "Sitio Maligaya"
+LOCAL_DETAIL_PATTERN = re.compile(
+    r"((?:\d+[\w\-]*\s*)?"
+    r"(?:[A-Za-z0-9\s\.]+?\s*(?:street|st\.?))?[,\s]*"
+    r"(?:(?:purok|zone)\s*[\w\-]+)?[,\s]*"
+    r"(?:sitio\s+[A-Za-z0-9\s]+)?)",
+    re.IGNORECASE,
+)
+
+# Matches "barangay X" / "brgy X" / "brgy. X" so we can isolate the
+# barangay span before fuzzy-matching it against the gazetteer
+BARANGAY_MENTION_PATTERN = re.compile(
+    r"(?:barangay|brgy\.?)\s+([A-Za-z0-9\-\s]+?)(?:[,.]|$)",
+    re.IGNORECASE,
+)
+
 
 # ─── Extraction Helpers ────────────────────────────────────────────────────────
 
 def _extract_height(text: str) -> Optional[float]:
-    """Returns height in centimeters."""
-    # Try cm first
     m = re.search(PATTERNS["height"][0], text, re.IGNORECASE)
     if m:
         return float(m.group(1))
-    # Try feet + inches
     m = re.search(PATTERNS["height"][1], text, re.IGNORECASE)
     if m:
         feet, inches = int(m.group(1)), int(m.group(2))
@@ -108,7 +122,6 @@ def _extract_height(text: str) -> Optional[float]:
 
 
 def _extract_weight(text: str) -> Optional[float]:
-    """Returns weight in kilograms."""
     m = re.search(PATTERNS["weight"][0], text, re.IGNORECASE)
     if m:
         return float(m.group(1).replace(",", ""))
@@ -120,7 +133,6 @@ def _extract_weight(text: str) -> Optional[float]:
 
 
 def _extract_income(text: str) -> Optional[float]:
-    """Returns gross annual income as float."""
     for pattern in PATTERNS["income"]:
         m = re.search(pattern, text, re.IGNORECASE)
         if m:
@@ -133,8 +145,6 @@ def _extract_income(text: str) -> Optional[float]:
 
 
 def _extract_date(text: str) -> Optional[date]:
-    """Parse date of birth from transcript."""
-    # Numeric: MM/DD/YYYY or DD-MM-YYYY
     m = re.search(PATTERNS["date"][0], text)
     if m:
         try:
@@ -142,7 +152,6 @@ def _extract_date(text: str) -> Optional[date]:
         except ValueError:
             pass
 
-    # "January 15, 1990"
     m = re.search(PATTERNS["date"][1], text, re.IGNORECASE)
     if m:
         try:
@@ -151,7 +160,6 @@ def _extract_date(text: str) -> Optional[date]:
         except (ValueError, KeyError):
             pass
 
-    # "15th of January 1990"
     m = re.search(PATTERNS["date"][2], text, re.IGNORECASE)
     if m:
         try:
@@ -209,14 +217,60 @@ def _extract_citizenship(text: str) -> str:
     return m.group(1).title() if m else "Filipino"
 
 
+def _extract_local_detail(text: str) -> Optional[str]:
+    """Pull out just the house number / street / purok / sitio portion."""
+    m = LOCAL_DETAIL_PATTERN.search(text)
+    if m and m.group(1).strip():
+        return m.group(1).strip(" ,")
+    return None
+
+
+def _extract_address(text: str, ner_locations: List[str]) -> Dict[str, Any]:
+    """
+    Build a structured, corrected address instead of trusting raw NER.
+
+    Only the barangay is fuzzy-matched against the gazetteer (since it's
+    the part most likely to be a locally-specific word Whisper mishears).
+    Municipality and province are pulled from settings — they never need
+    to be transcribed since this deployment covers one municipality.
+
+    Returns:
+        {
+            "address": "<full formatted address string>",
+            "barangay_confidence": float,  # 0.0-100.0 fuzzy match score
+            "barangay_matched": bool,
+        }
+    """
+    barangay_raw = None
+    m = BARANGAY_MENTION_PATTERN.search(text)
+    if m:
+        barangay_raw = m.group(1).strip()
+    elif ner_locations:
+        barangay_raw = ner_locations[0]
+
+    matched_barangay, score = match_barangay(barangay_raw) if barangay_raw else (None, 0.0)
+    final_barangay = matched_barangay or barangay_raw
+
+    local_detail = _extract_local_detail(text)
+
+    parts = [
+        local_detail,
+        f"Barangay {final_barangay}" if final_barangay else None,
+        settings.MUNICIPALITY,
+        settings.PROVINCE,
+    ]
+    full_address = ", ".join(p for p in parts if p)
+
+    return {
+        "address": full_address,
+        "barangay_confidence": score,
+        "barangay_matched": matched_barangay is not None,
+    }
+
+
 # ─── DistilBERT NER Extraction ─────────────────────────────────────────────────
 
 def _extract_with_ner(text: str) -> Dict[str, Any]:
-    """
-    Use DistilBERT NER to extract PER (person names), LOC (locations), and
-    ORG entities from the transcript.
-    Returns a dict with 'name_parts', 'locations'.
-    """
     ner = get_ner_pipeline()
     entities = ner(text)
 
@@ -240,13 +294,8 @@ def _extract_with_ner(text: str) -> Dict[str, Any]:
 
 
 def _parse_name(names: List[str], text: str) -> Dict[str, Optional[str]]:
-    """
-    Attempt to split NER-detected name tokens into surname / given_name / middle_name.
-    Falls back to keyword patterns like "my name is John Doe".
-    """
     result = {"surname": None, "given_name": None, "middle_name": None}
 
-    # Try keyword extraction first
     name_pattern = r"(?:my\s+name\s+is|name\s*:)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})"
     m = re.search(name_pattern, text, re.IGNORECASE)
     if m:
@@ -258,7 +307,6 @@ def _parse_name(names: List[str], text: str) -> Dict[str, Optional[str]]:
                 result["middle_name"] = parts[1].title()
         return result
 
-    # Fall back to NER tokens
     if names:
         combined = " ".join(names)
         parts = combined.split()
@@ -273,13 +321,16 @@ def _parse_name(names: List[str], text: str) -> Dict[str, Optional[str]]:
 
 # ─── Main Extraction Function ──────────────────────────────────────────────────
 
-def extract_fields(transcript: str) -> Dict[str, Any]:
+def extract_fields(transcript: str, asr_confidence: float = 1.0) -> Dict[str, Any]:
     """
     Full extraction pipeline: DistilBERT NER + Regex.
-    Returns all extractable BIR Form 0016 fields plus metadata.
 
     Args:
         transcript: Raw text from Whisper ASR
+        asr_confidence: Whisper's confidence score (0.0-1.0) for this
+                         transcript, passed through from speech_service.
+                         Used so name/address confidence reflects how sure
+                         Whisper actually was, not just "found something".
 
     Returns:
         {
@@ -293,7 +344,6 @@ def extract_fields(transcript: str) -> Dict[str, Any]:
     warnings = []
     confidence_scores = {}
 
-    # ── DistilBERT NER pass ─────────────────────────────────────────────────
     try:
         ner_result = _extract_with_ner(text)
         name_result = _parse_name(ner_result["names"], text)
@@ -304,7 +354,6 @@ def extract_fields(transcript: str) -> Dict[str, Any]:
         locations = []
         warnings.append(f"NER extraction unavailable: {str(e)}")
 
-    # ── Regex pass ──────────────────────────────────────────────────────────
     height = _extract_height(text)
     weight = _extract_weight(text)
     income = _extract_income(text)
@@ -315,17 +364,22 @@ def extract_fields(transcript: str) -> Dict[str, Any]:
     icr_number = _extract_icr(text)
     citizenship = _extract_citizenship(text)
 
-    # Address: use first NER location if found
-    address = locations[0] if locations else None
+    # ── Address extraction (now gazetteer-corrected) ───────────────────────
+    address_result = _extract_address(text, locations)
     place_of_birth = locations[1] if len(locations) > 1 else None
 
-    # ── Build extracted fields dict ─────────────────────────────────────────
+    if not address_result["barangay_matched"] and address_result["barangay_confidence"] > 0:
+        warnings.append(
+            f"Barangay could not be confidently matched "
+            f"(best score: {address_result['barangay_confidence']:.0f}/100) — flag for staff review"
+        )
+
     extracted = {
         "surname": name_result.get("surname"),
         "given_name": name_result.get("given_name"),
         "middle_name": name_result.get("middle_name"),
         "date_of_birth": dob,
-        "address": address or "",
+        "address": address_result["address"],
         "sex": sex,
         "civil_status": civil_status,
         "citizenship": citizenship,
@@ -339,14 +393,24 @@ def extract_fields(transcript: str) -> Dict[str, Any]:
     }
 
     # ── Confidence scoring ─────────────────────────────────────────────────
-    all_fields = list(extracted.keys())
+    # Names and address inherit the real ASR confidence instead of a flat
+    # 1.0, since these are the fields most likely to be misheard for
+    # unfamiliar local words. Address additionally factors in how well the
+    # barangay matched the gazetteer.
     for field, value in extracted.items():
-        if value is not None and value != "" and value != 0.0:
-            confidence_scores[field] = 1.0
-        else:
+        if value is None or value == "" or value == 0.0:
             confidence_scores[field] = 0.0
+            continue
 
-    # Fields not extracted
+        if field in ("surname", "given_name", "middle_name"):
+            confidence_scores[field] = asr_confidence
+        elif field == "address":
+            # Blend ASR confidence with how well the barangay matched
+            barangay_score = address_result["barangay_confidence"] / 100.0
+            confidence_scores[field] = round((asr_confidence + barangay_score) / 2, 3)
+        else:
+            confidence_scores[field] = 1.0
+
     unextracted = [f for f, v in extracted.items() if not v and f not in ("icr_number", "middle_name")]
 
     if unextracted:

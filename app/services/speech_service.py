@@ -2,6 +2,10 @@
 app/services/speech_service.py
 OpenAI Whisper ASR integration.
 Handles audio file transcription and microphone capture.
+
+CHANGED: FIELD_PROMPTS["address"] now includes the real list of barangay
+names from the gazetteer, so Whisper is biased toward recognizing them
+correctly in the first place (not just corrected after the fact).
 """
 import whisper
 import numpy as np
@@ -10,6 +14,7 @@ import tempfile
 import os
 from typing import Optional
 from app.core.config import settings
+from app.services.barangay_gazetteer import get_barangay_list_for_prompt
 import logging
 
 logger = logging.getLogger(__name__)
@@ -22,7 +27,10 @@ FIELD_PROMPTS = {
     "surname": "Filipino surname. Examples: Santos, Reyes, Dela Cruz, Bautista, Garcia, Mendoza.",
     "given_name": "Filipino given name. Examples: Maria, Jose, Juan, Ana, Ramon.",
     "middle_name": "Filipino middle name, or the word none.",
-    "address": "A Philippine address with house number, street, barangay, and municipality.",
+    "address": (
+        "A Philippine address with house number and street, in one of "
+        f"these barangays of Mambajao, Camiguin: {get_barangay_list_for_prompt()}."
+    ),
     "date": "A date of birth in year month day format, for example 1990 dash 01 dash 15.",
     "sex": "The answer is either Male or Female.",
     "civil_status": "The answer is one of: Single, Married, Widowed, Separated.",
@@ -130,14 +138,6 @@ class SpeechService:
     def transcribe_bytes(cls, audio_bytes: bytes, suffix: str = ".wav", field_key: Optional[str] = None) -> dict:
         """
         Transcribe audio from raw bytes (e.g., uploaded file from API).
-
-        Args:
-            audio_bytes: Raw audio data
-            suffix: File extension (e.g., '.wav', '.mp3')
-            field_key: Optional interview field key for prompt biasing
-
-        Returns:
-            Same dict as transcribe_file()
         """
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
             tmp.write(audio_bytes)
@@ -154,14 +154,6 @@ class SpeechService:
     def transcribe_numpy(cls, audio_array: np.ndarray, sample_rate: int = 16000, field_key: Optional[str] = None) -> dict:
         """
         Transcribe a numpy float32 audio array (from sounddevice capture).
-
-        Args:
-            audio_array: Float32 numpy array normalized to [-1, 1]
-            sample_rate: Sample rate (Whisper expects 16000 Hz)
-            field_key: Optional interview field key for prompt biasing
-
-        Returns:
-            Same dict as transcribe_file()
         """
         model = cls.get_model()
         start_time = time.time()

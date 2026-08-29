@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.database import create_tables
-from app.api.routes import auth, speech, extraction, qr, forms
+from app.api.routes import auth, speech, extraction, qr, forms, citizen_auth  # ← NEW
 
 # ─── Logging Setup ─────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
     """
     logger.info("=== Cedula System Starting Up ===")
 
-    # Create DB tables
+    # Create DB tables (includes citizen_users now)
     create_tables()
     logger.info("Database tables verified/created.")
 
@@ -93,8 +93,8 @@ def create_app() -> FastAPI:
         ),
         version=settings.APP_VERSION,
         lifespan=lifespan,
-        docs_url="/docs",          # Swagger UI
-        redoc_url="/redoc",        # ReDoc UI
+        docs_url="/docs",
+        redoc_url="/redoc",
         openapi_url="/openapi.json",
     )
 
@@ -108,11 +108,12 @@ def create_app() -> FastAPI:
     )
 
     # ── Routers ───────────────────────────────────────────────────────────────
-    app.include_router(auth.router,       prefix="/api/auth",       tags=["Authentication"])
-    app.include_router(speech.router,     prefix="/api/speech",     tags=["Speech Recognition"])
-    app.include_router(extraction.router, prefix="/api/extraction", tags=["Field Extraction"])
-    app.include_router(qr.router,         prefix="/api/qr",         tags=["QR Code"])
-    app.include_router(forms.router,      prefix="/api/forms",      tags=["Forms & Records"])
+    app.include_router(auth.router,         prefix="/api/auth",       tags=["Staff Authentication"])
+    app.include_router(speech.router,       prefix="/api/speech",     tags=["Speech Recognition"])
+    app.include_router(extraction.router,   prefix="/api/extraction", tags=["Field Extraction"])
+    app.include_router(qr.router,           prefix="/api/qr",         tags=["QR Code"])
+    app.include_router(forms.router,        prefix="/api/forms",      tags=["Forms & Records"])
+    app.include_router(citizen_auth.router, prefix="/api/citizen",    tags=["Citizen Auth (Mobile)"])  # ← NEW
 
     # ── Static Files (serve generated PDFs for download) ─────────────────────
     os.makedirs(settings.PDF_OUTPUT_DIR, exist_ok=True)
