@@ -16,6 +16,7 @@ from datetime import date, datetime
 
 from app.core.config import settings
 from app.services.barangay_gazetteer import match_barangay
+from app.services.name_gazetteer import match_surname, match_given_name, match_middle_name
 
 logger = logging.getLogger(__name__)
 
@@ -293,30 +294,61 @@ def _extract_with_ner(text: str) -> Dict[str, Any]:
     }
 
 
+def _apply_name_gazetteer(result: Dict[str, Optional[str]]) -> Dict[str, Any]:
+    """
+    Fuzzy-correct each raw name part against the known local name lists.
+    Returns the (possibly corrected) name parts plus a confidence score
+    per part, so extract_fields() can blend this into the field
+    confidence instead of trusting the raw NER/regex guess as-is.
+    """
+    corrected = {}
+    match_scores = {}
+
+    for key, raw_value, matcher in (
+        ("surname", result.get("surname"), match_surname),
+        ("given_name", result.get("given_name"), match_given_name),
+        ("middle_name", result.get("middle_name"), match_middle_name),
+    ):
+        if not raw_value:
+            corrected[key] = None
+            match_scores[key] = 0.0
+            continue
+
+        match, score = matcher(raw_value)
+        corrected[key] = match or raw_value  # keep raw text if no confident match
+        match_scores[key] = score
+
+    return {"parts": corrected, "match_scores": match_scores}
+
+
 def _parse_name(names: List[str], text: str) -> Dict[str, Optional[str]]:
-    result = {"surname": None, "given_name": None, "middle_name": None}
+    """
+    Split NER/keyword-detected name tokens into surname / given_name /
+    middle_name, then fuzzy-correct each part against the local name
+    gazetteer (see _apply_name_gazetteer above).
+    """
+    raw_result = {"surname": None, "given_name": None, "middle_name": None}
 
     name_pattern = r"(?:my\s+name\s+is|name\s*:)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})"
     m = re.search(name_pattern, text, re.IGNORECASE)
     if m:
         parts = m.group(1).split()
         if len(parts) >= 2:
-            result["given_name"] = parts[0].title()
-            result["surname"] = parts[-1].title()
+            raw_result["given_name"] = parts[0].title()
+            raw_result["surname"] = parts[-1].title()
             if len(parts) == 3:
-                result["middle_name"] = parts[1].title()
-        return result
-
-    if names:
+                raw_result["middle_name"] = parts[1].title()
+    elif names:
         combined = " ".join(names)
         parts = combined.split()
         if len(parts) >= 2:
-            result["given_name"] = parts[0].title()
-            result["surname"] = parts[-1].title()
+            raw_result["given_name"] = parts[0].title()
+            raw_result["surname"] = parts[-1].title()
             if len(parts) == 3:
-                result["middle_name"] = parts[1].title()
+                raw_result["middle_name"] = parts[1].title()
 
-    return result
+    gazetteer_result = _apply_name_gazetteer(raw_result)
+    return {**gazetteer_result["parts"], "_match_scores": gazetteer_result["match_scores"]}
 
 
 # ─── Main Extraction Function ──────────────────────────────────────────────────
@@ -350,9 +382,11 @@ def extract_fields(transcript: str, asr_confidence: float = 1.0) -> Dict[str, An
         locations = ner_result["locations"]
     except Exception as e:
         logger.warning(f"NER extraction failed, falling back to regex only: {e}")
-        name_result = {"surname": None, "given_name": None, "middle_name": None}
+        name_result = {"surname": None, "given_name": None, "middle_name": None, "_match_scores": {}}
         locations = []
         warnings.append(f"NER extraction unavailable: {str(e)}")
+
+    name_match_scores = name_result.pop("_match_scores", {})
 
     height = _extract_height(text)
     weight = _extract_weight(text)
@@ -373,6 +407,14 @@ def extract_fields(transcript: str, asr_confidence: float = 1.0) -> Dict[str, An
             f"Barangay could not be confidently matched "
             f"(best score: {address_result['barangay_confidence']:.0f}/100) — flag for staff review"
         )
+
+    for name_field in ("surname", "given_name", "middle_name"):
+        score = name_match_scores.get(name_field, 0.0)
+        if name_result.get(name_field) and score < 80:
+            warnings.append(
+                f"{name_field.replace('_', ' ').title()} did not confidently match a known "
+                f"local name (best score: {score:.0f}/100) — flag for staff review"
+            )
 
     extracted = {
         "surname": name_result.get("surname"),
@@ -403,7 +445,11 @@ def extract_fields(transcript: str, asr_confidence: float = 1.0) -> Dict[str, An
             continue
 
         if field in ("surname", "given_name", "middle_name"):
-            confidence_scores[field] = asr_confidence
+            # Blend the real ASR confidence with how well the name matched
+            # a known local name — a name that both sounded clear AND
+            # matches a real local name gets the highest confidence.
+            gaz_score = name_match_scores.get(field, 0.0) / 100.0
+            confidence_scores[field] = round((asr_confidence + gaz_score) / 2, 3) if gaz_score else asr_confidence
         elif field == "address":
             # Blend ASR confidence with how well the barangay matched
             barangay_score = address_result["barangay_confidence"] / 100.0

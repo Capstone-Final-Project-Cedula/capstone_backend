@@ -4,14 +4,15 @@ CTC issuance and PDF generation endpoints.
 """
 import os
 from datetime import datetime, date, timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Optional, List
+from collections import Counter
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_admin
 from app.models.applicant import ApplicantRecord
 from app.models.issuance import CTCIssuance, InputMethodEnum
 from app.models.staff_user import StaffUser
@@ -93,6 +94,23 @@ def generate_ctc_number(db: Session) -> str:
     ).count()
     serial = str(count + 1).zfill(4)
     return f"CTC-{date_prefix}-{serial}"
+
+
+def extract_barangay(address: Optional[str]) -> str:
+    """Infer the barangay/location label from a free-form address."""
+    if not address:
+        return "Unspecified"
+
+    parts = [part.strip() for part in address.split(",") if part.strip()]
+    for part in parts:
+        lower_part = part.lower()
+        if "barangay" in lower_part or lower_part.startswith("brgy"):
+            cleaned = part.replace("Brgy.", "", 1).replace("Brgy", "", 1).strip()
+            if cleaned.lower().startswith("barangay"):
+                return cleaned
+            return f"Barangay {cleaned}"
+
+    return parts[0] if parts else "Unspecified"
 
 
 @router.post("/issue", response_model=IssuanceResponse, status_code=201)
@@ -294,8 +312,10 @@ def download_cedula(
 @router.get("/records", response_model=List[IssuanceResponse])
 def list_records(
     skip: int = 0,
-    limit: int = 50,
+    limit: int = 10,
     search: Optional[str] = None,
+    input_method: Optional[InputMethodEnum] = None,
+    response: Response = None,
     db: Session = Depends(get_db),
     current_user: StaffUser = Depends(get_current_user),
 ):
@@ -309,6 +329,14 @@ def list_records(
             ApplicantRecord.given_name.ilike(search_term) |
             CTCIssuance.ctc_number.ilike(search_term)
         )
+
+    if input_method:
+        query = query.filter(CTCIssuance.input_method == input_method)
+
+    # Keep the response body backward-compatible while exposing the count
+    # required by the numbered pagination UI.
+    total = query.count()
+    response.headers["X-Total-Count"] = str(total)
 
     records = (
         query
@@ -357,6 +385,31 @@ def list_records(
         ))
     
     return result
+
+
+@router.delete("/records/{issuance_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_record(
+    issuance_id: int,
+    db: Session = Depends(get_db),
+    admin: StaffUser = Depends(require_admin),
+):
+    """Permanently delete an issuance and its applicant record (admin only)."""
+    issuance = db.query(CTCIssuance).filter(CTCIssuance.id == issuance_id).first()
+    if not issuance:
+        raise HTTPException(status_code=404, detail="Issuance record not found.")
+
+    pdf_path = issuance.pdf_path
+    applicant = issuance.applicant
+    db.delete(issuance)
+    if applicant:
+        db.delete(applicant)
+    db.commit()
+
+    if pdf_path and os.path.isfile(pdf_path):
+        try:
+            os.remove(pdf_path)
+        except OSError:
+            logger.warning("Record %s was deleted but its PDF could not be removed.", issuance_id)
 
 
 @router.get("/records/{issuance_id}", response_model=IssuanceResponse)
@@ -410,17 +463,29 @@ def get_record(
 @router.get("/dashboard/stats", response_model=DashboardStats)
 def get_dashboard_stats(
     db: Session = Depends(get_db),
-    current_user: StaffUser = Depends(get_current_user),
+    current_user: StaffUser = Depends(require_admin),
 ):
     """Return dashboard statistics."""
     today = date.today()
     today_start = datetime.combine(today, datetime.min.time())
     today_end = datetime.combine(today, datetime.max.time())
+    month_start = today.replace(day=1)
+    month_start_dt = datetime.combine(month_start, datetime.min.time())
 
     total_issued = db.query(func.count(CTCIssuance.id)).scalar() or 0
     today_issued = db.query(func.count(CTCIssuance.id)).filter(
         CTCIssuance.issued_at.between(today_start, today_end)
     ).scalar() or 0
+
+    monthly_count = db.query(func.count(CTCIssuance.id)).filter(
+        CTCIssuance.issued_at >= month_start_dt
+    ).scalar() or 0
+
+    total_revenue = db.query(func.coalesce(func.sum(CTCIssuance.total_amount_paid), 0.0)).scalar() or 0.0
+    today_revenue = db.query(func.coalesce(func.sum(CTCIssuance.total_amount_paid), 0.0)).filter(
+        CTCIssuance.issued_at.between(today_start, today_end)
+    ).scalar() or 0.0
+    average_paid = (float(total_revenue) / total_issued) if total_issued else 0.0
     
     voice_processed = db.query(func.count(CTCIssuance.id)).filter(
         CTCIssuance.input_method == InputMethodEnum.VOICE
@@ -428,6 +493,10 @@ def get_dashboard_stats(
     
     qr_processed = db.query(func.count(CTCIssuance.id)).filter(
         CTCIssuance.input_method == InputMethodEnum.QR
+    ).scalar() or 0
+
+    manual_processed = db.query(func.count(CTCIssuance.id)).filter(
+        CTCIssuance.input_method == InputMethodEnum.MANUAL
     ).scalar() or 0
 
     # Last 7 days
@@ -439,9 +508,99 @@ def get_dashboard_stats(
         count = db.query(func.count(CTCIssuance.id)).filter(
             CTCIssuance.issued_at.between(day_start, day_end)
         ).scalar() or 0
+        revenue = db.query(func.coalesce(func.sum(CTCIssuance.total_amount_paid), 0.0)).filter(
+            CTCIssuance.issued_at.between(day_start, day_end)
+        ).scalar() or 0.0
         daily_data.append({
             "date": day.strftime("%Y-%m-%d"),
-            "count": count
+            "count": count,
+            "revenue": round(float(revenue), 2),
+        })
+
+    monthly_data = []
+    for i in range(5, -1, -1):
+        month = today.month - i
+        year = today.year
+        while month <= 0:
+            month += 12
+            year -= 1
+
+        period_start = date(year, month, 1)
+        if month == 12:
+            period_end = date(year + 1, 1, 1)
+        else:
+            period_end = date(year, month + 1, 1)
+
+        period_start_dt = datetime.combine(period_start, datetime.min.time())
+        period_end_dt = datetime.combine(period_end, datetime.min.time())
+        count = db.query(func.count(CTCIssuance.id)).filter(
+            CTCIssuance.issued_at >= period_start_dt,
+            CTCIssuance.issued_at < period_end_dt,
+        ).scalar() or 0
+        revenue = db.query(func.coalesce(func.sum(CTCIssuance.total_amount_paid), 0.0)).filter(
+            CTCIssuance.issued_at >= period_start_dt,
+            CTCIssuance.issued_at < period_end_dt,
+        ).scalar() or 0.0
+        monthly_data.append({
+            "month": period_start.strftime("%b %Y"),
+            "count": count,
+            "revenue": round(float(revenue), 2),
+        })
+
+    input_method_breakdown = []
+    method_labels = {
+        InputMethodEnum.VOICE: "Voice",
+        InputMethodEnum.QR: "QR",
+        InputMethodEnum.MANUAL: "Manual",
+    }
+    for method, label in method_labels.items():
+        count = db.query(func.count(CTCIssuance.id)).filter(
+            CTCIssuance.input_method == method
+        ).scalar() or 0
+        input_method_breakdown.append({"method": label, "count": count})
+
+    tax_rows = (
+        db.query(ApplicantRecord.tax_classification, func.count(ApplicantRecord.id))
+        .join(CTCIssuance, CTCIssuance.applicant_id == ApplicantRecord.id)
+        .group_by(ApplicantRecord.tax_classification)
+        .all()
+    )
+    tax_classification_breakdown = [
+        {
+            "classification": getattr(classification, "value", classification) or "Unspecified",
+            "count": count,
+        }
+        for classification, count in tax_rows
+    ]
+
+    address_rows = (
+        db.query(ApplicantRecord.address)
+        .join(CTCIssuance, CTCIssuance.applicant_id == ApplicantRecord.id)
+        .all()
+    )
+    barangay_counts = Counter(extract_barangay(row[0]) for row in address_rows)
+    top_barangays = [
+        {"barangay": barangay, "count": count}
+        for barangay, count in barangay_counts.most_common(5)
+    ]
+
+    recent_records = (
+        db.query(CTCIssuance)
+        .join(ApplicantRecord)
+        .order_by(CTCIssuance.issued_at.desc())
+        .limit(5)
+        .all()
+    )
+    recent_activity = []
+    for issuance in recent_records:
+        applicant = issuance.applicant
+        recent_activity.append({
+            "id": issuance.id,
+            "ctc_number": issuance.ctc_number,
+            "applicant_name": applicant.full_name() if applicant else "Unknown applicant",
+            "input_method": issuance.input_method.value,
+            "amount_paid": round(float(issuance.total_amount_paid or 0.0), 2),
+            "issued_at": issuance.issued_at.isoformat() if issuance.issued_at else None,
         })
 
     return DashboardStats(
@@ -450,4 +609,16 @@ def get_dashboard_stats(
         voice_processed=voice_processed,
         qr_processed=qr_processed,
         daily_data=daily_data,
+        manual_processed=manual_processed,
+        total_revenue=round(float(total_revenue), 2),
+        today_revenue=round(float(today_revenue), 2),
+        average_paid=round(float(average_paid), 2),
+        monthly_data=monthly_data,
+        input_method_breakdown=input_method_breakdown,
+        tax_classification_breakdown=tax_classification_breakdown,
+        top_barangays=top_barangays,
+        recent_activity=recent_activity,
+        daily_count=today_issued,
+        monthly_count=monthly_count,
+        total_count=total_issued,
     )

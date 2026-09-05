@@ -1,16 +1,151 @@
-﻿province,municipality,barangay,purok_zone,sitio
-Camiguin,Mambajao,Agoho,,
-Camiguin,Mambajao,Anito,,
-Camiguin,Mambajao,Balbagon,,
-Camiguin,Mambajao,Baylao,,
-Camiguin,Mambajao,Benhaan,,
-Camiguin,Mambajao,Bug-ong,,
-Camiguin,Mambajao,Kuguita,,
-Camiguin,Mambajao,Magting,,
-Camiguin,Mambajao,Naasag,,
-Camiguin,Mambajao,Pandan,,
-Camiguin,Mambajao,Poblacion,,
-Camiguin,Mambajao,Soro-soro,,
-Camiguin,Mambajao,Tagdo,,
-Camiguin,Mambajao,Tupsan,,
-Camiguin,Mambajao,Yumbing,,
+province,municipality,barangay,purok
+Camiguin,Mambajao,Agoho,Purok 1
+Camiguin,Mambajao,Agoho,Purok 2
+Camiguin,Mambajao,Agoho,Purok 3
+Camiguin,Mambajao,Agoho,Purok 4
+Camiguin,Mambajao,Agoho,Purok 5
+Camiguin,Mambajao,Agoho,Purok 6
+Camiguin,Mambajao,Agoho,Purok 7
+Camiguin,Mambajao,Agoho,Purok 8
+Camiguin,Mambajao,Agoho,Purok 9
+Camiguin,Mambajao,Agoho,Purok 10
+Camiguin,Mambajao,Anito,Purok 1
+Camiguin,Mambajao,Anito,Purok 2
+Camiguin,Mambajao,Anito,Purok 3
+Camiguin,Mambajao,Anito,Purok 4
+Camiguin,Mambajao,Anito,Purok 5
+Camiguin,Mambajao,Anito,Purok 6
+Camiguin,Mambajao,Anito,Purok 7
+Camiguin,Mambajao,Anito,Purok 8
+Camiguin,Mambajao,Anito,Purok 9
+Camiguin,Mambajao,Anito,Purok 10
+Camiguin,Mambajao,Balbagon,Purok 1
+Camiguin,Mambajao,Balbagon,Purok 2
+Camiguin,Mambajao,Balbagon,Purok 3
+Camiguin,Mambajao,Balbagon,Purok 4
+Camiguin,Mambajao,Balbagon,Purok 5
+Camiguin,Mambajao,Balbagon,Purok 6
+Camiguin,Mambajao,Balbagon,Purok 7
+Camiguin,Mambajao,Balbagon,Purok 8
+Camiguin,Mambajao,Balbagon,Purok 9
+Camiguin,Mambajao,Balbagon,Purok 10
+Camiguin,Mambajao,Baylao,Purok 1
+Camiguin,Mambajao,Baylao,Purok 2
+Camiguin,Mambajao,Baylao,Purok 3
+Camiguin,Mambajao,Baylao,Purok 4
+Camiguin,Mambajao,Baylao,Purok 5
+Camiguin,Mambajao,Baylao,Purok 6
+Camiguin,Mambajao,Baylao,Purok 7
+Camiguin,Mambajao,Baylao,Purok 8
+Camiguin,Mambajao,Baylao,Purok 9
+Camiguin,Mambajao,Baylao,Purok 10
+Camiguin,Mambajao,Benhaan,Purok 1
+Camiguin,Mambajao,Benhaan,Purok 2
+Camiguin,Mambajao,Benhaan,Purok 3
+Camiguin,Mambajao,Benhaan,Purok 4
+Camiguin,Mambajao,Benhaan,Purok 5
+Camiguin,Mambajao,Benhaan,Purok 6
+Camiguin,Mambajao,Benhaan,Purok 7
+Camiguin,Mambajao,Benhaan,Purok 8
+Camiguin,Mambajao,Benhaan,Purok 9
+Camiguin,Mambajao,Benhaan,Purok 10
+Camiguin,Mambajao,Bug-ong,Purok 1
+Camiguin,Mambajao,Bug-ong,Purok 2
+Camiguin,Mambajao,Bug-ong,Purok 3
+Camiguin,Mambajao,Bug-ong,Purok 4
+Camiguin,Mambajao,Bug-ong,Purok 5
+Camiguin,Mambajao,Bug-ong,Purok 6
+Camiguin,Mambajao,Bug-ong,Purok 7
+Camiguin,Mambajao,Bug-ong,Purok 8
+Camiguin,Mambajao,Bug-ong,Purok 9
+Camiguin,Mambajao,Bug-ong,Purok 10
+Camiguin,Mambajao,Kuguita,Purok 1
+Camiguin,Mambajao,Kuguita,Purok 2
+Camiguin,Mambajao,Kuguita,Purok 3
+Camiguin,Mambajao,Kuguita,Purok 4
+Camiguin,Mambajao,Kuguita,Purok 5
+Camiguin,Mambajao,Kuguita,Purok 6
+Camiguin,Mambajao,Kuguita,Purok 7
+Camiguin,Mambajao,Kuguita,Purok 8
+Camiguin,Mambajao,Kuguita,Purok 9
+Camiguin,Mambajao,Kuguita,Purok 10
+Camiguin,Mambajao,Magting,Purok 1
+Camiguin,Mambajao,Magting,Purok 2
+Camiguin,Mambajao,Magting,Purok 3
+Camiguin,Mambajao,Magting,Purok 4
+Camiguin,Mambajao,Magting,Purok 5
+Camiguin,Mambajao,Magting,Purok 6
+Camiguin,Mambajao,Magting,Purok 7
+Camiguin,Mambajao,Magting,Purok 8
+Camiguin,Mambajao,Magting,Purok 9
+Camiguin,Mambajao,Magting,Purok 10
+Camiguin,Mambajao,Naasag,Purok 1
+Camiguin,Mambajao,Naasag,Purok 2
+Camiguin,Mambajao,Naasag,Purok 3
+Camiguin,Mambajao,Naasag,Purok 4
+Camiguin,Mambajao,Naasag,Purok 5
+Camiguin,Mambajao,Naasag,Purok 6
+Camiguin,Mambajao,Naasag,Purok 7
+Camiguin,Mambajao,Naasag,Purok 8
+Camiguin,Mambajao,Naasag,Purok 9
+Camiguin,Mambajao,Naasag,Purok 10
+Camiguin,Mambajao,Pandan,Purok 1
+Camiguin,Mambajao,Pandan,Purok 2
+Camiguin,Mambajao,Pandan,Purok 3
+Camiguin,Mambajao,Pandan,Purok 4
+Camiguin,Mambajao,Pandan,Purok 5
+Camiguin,Mambajao,Pandan,Purok 6
+Camiguin,Mambajao,Pandan,Purok 7
+Camiguin,Mambajao,Pandan,Purok 8
+Camiguin,Mambajao,Pandan,Purok 9
+Camiguin,Mambajao,Pandan,Purok 10
+Camiguin,Mambajao,Poblacion,Purok 1
+Camiguin,Mambajao,Poblacion,Purok 2
+Camiguin,Mambajao,Poblacion,Purok 3
+Camiguin,Mambajao,Poblacion,Purok 4
+Camiguin,Mambajao,Poblacion,Purok 5
+Camiguin,Mambajao,Poblacion,Purok 6
+Camiguin,Mambajao,Poblacion,Purok 7
+Camiguin,Mambajao,Poblacion,Purok 8
+Camiguin,Mambajao,Poblacion,Purok 9
+Camiguin,Mambajao,Poblacion,Purok 10
+Camiguin,Mambajao,Soro-soro,Purok 1
+Camiguin,Mambajao,Soro-soro,Purok 2
+Camiguin,Mambajao,Soro-soro,Purok 3
+Camiguin,Mambajao,Soro-soro,Purok 4
+Camiguin,Mambajao,Soro-soro,Purok 5
+Camiguin,Mambajao,Soro-soro,Purok 6
+Camiguin,Mambajao,Soro-soro,Purok 7
+Camiguin,Mambajao,Soro-soro,Purok 8
+Camiguin,Mambajao,Soro-soro,Purok 9
+Camiguin,Mambajao,Soro-soro,Purok 10
+Camiguin,Mambajao,Tagdo,Purok 1
+Camiguin,Mambajao,Tagdo,Purok 2
+Camiguin,Mambajao,Tagdo,Purok 3
+Camiguin,Mambajao,Tagdo,Purok 4
+Camiguin,Mambajao,Tagdo,Purok 5
+Camiguin,Mambajao,Tagdo,Purok 6
+Camiguin,Mambajao,Tagdo,Purok 7
+Camiguin,Mambajao,Tagdo,Purok 8
+Camiguin,Mambajao,Tagdo,Purok 9
+Camiguin,Mambajao,Tagdo,Purok 10
+Camiguin,Mambajao,Tupsan,Purok 1
+Camiguin,Mambajao,Tupsan,Purok 2
+Camiguin,Mambajao,Tupsan,Purok 3
+Camiguin,Mambajao,Tupsan,Purok 4
+Camiguin,Mambajao,Tupsan,Purok 5
+Camiguin,Mambajao,Tupsan,Purok 6
+Camiguin,Mambajao,Tupsan,Purok 7
+Camiguin,Mambajao,Tupsan,Purok 8
+Camiguin,Mambajao,Tupsan,Purok 9
+Camiguin,Mambajao,Tupsan,Purok 10
+Camiguin,Mambajao,Yumbing,Purok 1
+Camiguin,Mambajao,Yumbing,Purok 2
+Camiguin,Mambajao,Yumbing,Purok 3
+Camiguin,Mambajao,Yumbing,Purok 4
+Camiguin,Mambajao,Yumbing,Purok 5
+Camiguin,Mambajao,Yumbing,Purok 6
+Camiguin,Mambajao,Yumbing,Purok 7
+Camiguin,Mambajao,Yumbing,Purok 8
+Camiguin,Mambajao,Yumbing,Purok 9
+Camiguin,Mambajao,Yumbing,Purok 10

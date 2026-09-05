@@ -218,6 +218,18 @@ class DashboardStats(BaseModel):
     voice_processed: int
     qr_processed: int
     daily_data: List[dict]
+    manual_processed: int = 0
+    total_revenue: float = 0.0
+    today_revenue: float = 0.0
+    average_paid: float = 0.0
+    monthly_data: List[dict] = []
+    input_method_breakdown: List[dict] = []
+    tax_classification_breakdown: List[dict] = []
+    top_barangays: List[dict] = []
+    recent_activity: List[dict] = []
+    daily_count: int = 0
+    monthly_count: int = 0
+    total_count: int = 0
 
 
 # ─── Speech Schemas ───────────────────────────────────────────────────────────

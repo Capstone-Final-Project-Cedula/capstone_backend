@@ -105,6 +105,8 @@ def create_app() -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+        # Let the browser read the total needed for the Records page buttons.
+        expose_headers=["X-Total-Count"],
     )
 
     # ── Routers ───────────────────────────────────────────────────────────────

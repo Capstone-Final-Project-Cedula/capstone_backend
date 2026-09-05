@@ -6,11 +6,16 @@ POST /api/qr/scan      — desktop: decode and claim QR submission
 POST /api/qr/decode    — desktop: decode QR from uploaded image
 """
 import json
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import get_current_user
+from app.core.security import decode_access_token, get_current_user
+from app.models.citizen_user import CitizenUser
+from app.models.mobile_submission import MobileSubmission
 from app.services.qr_service import generate_qr_code, claim_qr_submission, decode_qr_from_image
 from app.schemas.schemas import (
     QRGenerateRequest, QRGenerateResponse,
@@ -18,12 +23,55 @@ from app.schemas.schemas import (
 )
 
 router = APIRouter()
+citizen_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/citizen/login", auto_error=False)
+
+
+def get_optional_current_citizen(
+    token: Optional[str] = Depends(citizen_oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> Optional[CitizenUser]:
+    """
+    Return the authenticated citizen when a mobile bearer token is present.
+    QR generation remains public, so missing or invalid citizen tokens are ignored.
+    """
+    if not token:
+        return None
+
+    payload = decode_access_token(token)
+    if not payload or payload.get("type") != "citizen":
+        return None
+
+    username = payload.get("sub")
+    if not username:
+        return None
+
+    user = db.query(CitizenUser).filter(CitizenUser.username == username).first()
+    if not user or not user.is_active:
+        return None
+
+    return user
+
+
+def get_current_citizen(
+    token: str = Depends(citizen_oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> CitizenUser:
+    """Require a valid mobile citizen bearer token."""
+    user = get_optional_current_citizen(token=token, db=db)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate citizen credentials.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
 
 
 @router.post("/generate", response_model=QRGenerateResponse, status_code=201)
 def generate_qr(
     payload: QRGenerateRequest,
     db: Session = Depends(get_db),
+    current_citizen: Optional[CitizenUser] = Depends(get_optional_current_citizen),
 ):
     """
     Generate a QR code for a mobile pre-fill submission.
@@ -43,6 +91,7 @@ def generate_qr(
         token, img_b64, expires_at, submission_id = generate_qr_code(
             form_data=form_data,
             db=db,
+            mobile_user_id=str(current_citizen.id) if current_citizen else None,
         )
     except Exception as e:
         raise HTTPException(
@@ -56,6 +105,38 @@ def generate_qr(
         expires_at=expires_at,
         submission_id=submission_id,
     )
+
+
+@router.get("/history")
+def get_qr_history(
+    db: Session = Depends(get_db),
+    current_citizen: CitizenUser = Depends(get_current_citizen),
+):
+    """
+    Return QR submissions created by the signed-in mobile citizen only.
+    Staff users and other citizens cannot see this list.
+    """
+    submissions = (
+        db.query(MobileSubmission)
+        .filter(MobileSubmission.mobile_user_id == str(current_citizen.id))
+        .order_by(MobileSubmission.submitted_at.desc())
+        .limit(20)
+        .all()
+    )
+
+    return [
+        {
+            "id": submission.id,
+            "submission_id": submission.id,
+            "qr_token": submission.qr_token,
+            "qr_image_base64": "",
+            "expires_at": submission.expires_at,
+            "submitted_at": submission.submitted_at,
+            "form_data": submission.form_data,
+            "is_claimed": submission.is_claimed,
+        }
+        for submission in submissions
+    ]
 
 
 @router.post("/scan", response_model=QRScanResponse)

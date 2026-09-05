@@ -31,11 +31,15 @@ router = APIRouter()
 # ─── Schemas ──────────────────────────────────────────────────────────────────
 
 class RegisterRequest(BaseModel):
-    full_name:        str = Field(..., min_length=2, max_length=150)
-    email:            EmailStr
+    first_name:       str = Field(..., min_length=1, max_length=60)
+    middle_name:      Optional[str] = Field(None, max_length=60)
+    last_name:        str = Field(..., min_length=1, max_length=60)
+    username:         str = Field(..., min_length=3, max_length=50)
     password:         str = Field(..., min_length=8)
     confirm_password: str
-    username:         Optional[str] = Field(None, min_length=3, max_length=50)
+    profile_picture:  str = Field(..., min_length=20)
+    full_name:        Optional[str] = Field(None, min_length=2, max_length=150)
+    email:            Optional[EmailStr] = None
 
     @validator('confirm_password')
     def passwords_match(cls, v, values):
@@ -57,7 +61,7 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    email:    EmailStr
+    username: str = Field(..., min_length=3, max_length=50)
     password: str
 
 
@@ -90,13 +94,18 @@ class ResetPasswordRequest(BaseModel):
 class UpdateProfileRequest(BaseModel):
     full_name: Optional[str] = Field(None, min_length=2, max_length=150)
     username:  Optional[str] = Field(None, min_length=3, max_length=50)
+    profile_picture: Optional[str] = Field(None, min_length=20)
 
 
 class CitizenProfileResponse(BaseModel):
     id:          int
     full_name:   str
-    email:       str
+    first_name:  Optional[str]
+    middle_name: Optional[str]
+    last_name:   Optional[str]
+    email:       Optional[str]
     username:    Optional[str]
+    profile_picture: Optional[str]
     is_verified: bool
     created_at:  datetime
 
@@ -118,13 +127,15 @@ def _get_citizen_from_token(token: str, db: Session) -> CitizenUser:
     )
     try:
         payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
-        email: str = payload.get("sub")
-        if not email:
+        subject: str = payload.get("sub")
+        if not subject:
             raise credentials_exc
     except JWTError:
         raise credentials_exc
 
-    user = db.query(CitizenUser).filter(CitizenUser.email == email).first()
+    user = db.query(CitizenUser).filter(
+        (CitizenUser.username == subject) | (CitizenUser.email == subject)
+    ).first()
     if not user or not user.is_active:
         raise credentials_exc
     return user
@@ -174,47 +185,50 @@ def register(
     Register a new citizen account.
     Sends an email verification token on success.
     """
-    # Check duplicate email
-    if db.query(CitizenUser).filter(CitizenUser.email == payload.email).first():
+    username = payload.username.lower().strip()
+    if db.query(CitizenUser).filter(CitizenUser.username == username).first():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This username is already taken.",
+        )
+
+    email = payload.email.lower().strip() if payload.email else f"{username}@cedula.local"
+    if db.query(CitizenUser).filter(CitizenUser.email == email).first():
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="An account with this email already exists.",
         )
 
-    # Check duplicate username
-    if payload.username:
-        if db.query(CitizenUser).filter(CitizenUser.username == payload.username).first():
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="This username is already taken.",
-            )
-
     verification_token = secrets.token_urlsafe(32)
+    name_parts = [
+        payload.first_name.strip(),
+        payload.middle_name.strip() if payload.middle_name else "",
+        payload.last_name.strip(),
+    ]
+    full_name = payload.full_name.strip() if payload.full_name else " ".join(
+        part for part in name_parts if part
+    )
 
     user = CitizenUser(
-        full_name=payload.full_name.strip(),
-        email=payload.email.lower().strip(),
-        username=payload.username.strip() if payload.username else None,
+        full_name=full_name,
+        first_name=payload.first_name.strip(),
+        middle_name=payload.middle_name.strip() if payload.middle_name else None,
+        last_name=payload.last_name.strip(),
+        email=email,
+        username=username,
+        profile_picture=payload.profile_picture,
         hashed_password=hash_password(payload.password),
         verification_token=verification_token,
-        is_verified=False,
+        is_verified=True,
     )
     db.add(user)
     db.commit()
     db.refresh(user)
 
-    # Send verification email in background
-    background_tasks.add_task(
-        _send_verification_email,
-        email=user.email,
-        token=verification_token,
-        full_name=user.full_name,
-    )
-
     return {
-        "message": "Account created successfully. Please check your email to verify your account.",
-        "email": user.email,
-        "requires_verification": True,
+        "message": "Account created successfully. You can now sign in.",
+        "username": user.username,
+        "requires_verification": False,
     }
 
 
@@ -222,16 +236,16 @@ def register(
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
     """
     Authenticate a citizen and return a JWT access token.
-    Email must be verified before login is allowed.
+    Username and password are required.
     """
     user = db.query(CitizenUser).filter(
-        CitizenUser.email == payload.email.lower().strip()
+        CitizenUser.username == payload.username.lower().strip()
     ).first()
 
     if not user or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password.",
+            detail="Invalid username or password.",
         )
 
     if not user.is_active:
@@ -249,15 +263,19 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     user.last_login = datetime.utcnow()
     db.commit()
 
-    token = create_access_token(data={"sub": user.email, "type": "citizen"})
+    token = create_access_token(data={"sub": user.username, "type": "citizen"})
 
     return TokenResponse(
         access_token=token,
         user={
             "id":          user.id,
             "full_name":   user.full_name,
+            "first_name":  user.first_name,
+            "middle_name": user.middle_name,
+            "last_name":   user.last_name,
             "email":       user.email,
             "username":    user.username,
+            "profile_picture": user.profile_picture,
             "is_verified": user.is_verified,
         },
     )
@@ -406,9 +424,13 @@ def update_profile(
                 raise HTTPException(status_code=409, detail="Username is already taken.")
         user.username = payload.username.strip() or None
 
+    if payload.profile_picture:
+        user.profile_picture = payload.profile_picture
+
     db.commit()
     db.refresh(user)
     return {"message": "Profile updated.", "user": {
         "full_name": user.full_name,
         "username": user.username,
+        "profile_picture": user.profile_picture,
     }}
