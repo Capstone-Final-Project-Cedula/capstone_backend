@@ -13,6 +13,7 @@ Layout matches the official printed CTC card as closely as possible:
   - Sig:    Right Thumb Print | Taxpayer's Signature | Municipal/City Treasurer
   - Footer: TOTAL | INTEREST | TOTAL AMOUNT PAID | (In words)
 """
+import io
 import os
 from datetime import datetime
 from typing import Optional
@@ -21,9 +22,11 @@ from reportlab.lib.pagesizes import LETTER
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas as pdfcanvas
+from reportlab.lib.utils import ImageReader
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
+import math
 
 from app.core.config import settings
 import logging
@@ -36,14 +39,18 @@ WHITE      = colors.white
 DARK_GRAY  = colors.HexColor("#333333")
 MID_GRAY   = colors.HexColor("#666666")
 LIGHT_GRAY = colors.HexColor("#CCCCCC")
-HEADER_BG  = colors.HexColor("#2B4D7C")
-SEAL_BLUE  = colors.HexColor("#1E3A6E")
-SEAL_GOLD  = colors.HexColor("#B8860B")
+HEADER_BG  = colors.white
+SEAL_BLUE  = colors.HexColor("#B32035")
+SEAL_GOLD  = colors.HexColor("#B32035")
+STAMP_RED  = colors.HexColor("#B32035")
 
 # Card dimensions
 CARD_W = 8.27 * inch
 CARD_H = 4.5  * inch
 MARGIN = 0.20 * inch
+BIR_LOGO_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "assets", "bir_logo.png")
+)
 
 
 def _ensure_output_dir():
@@ -135,12 +142,38 @@ def _checkbox(c, x, y, size=6.5, checked=False, number=None):
     c.setFillColor(BLACK)
 
 
+def _draw_bir_logo(c, x, y, w, h, stamp=False):
+    """Draw the supplied red transparent stamp without altering its artwork."""
+    if not os.path.isfile(BIR_LOGO_PATH):
+        return False
+    try:
+        from PIL import Image
+
+        image = Image.open(BIR_LOGO_PATH).convert("RGBA")
+        image = image.rotate(-2.5, expand=True, resample=Image.Resampling.BICUBIC)
+        image_buffer = io.BytesIO()
+        image.save(image_buffer, format="PNG")
+        image_buffer.seek(0)
+        c.saveState()
+        try:
+            c.setFillAlpha(0.24)
+        except AttributeError:
+            pass
+        c.drawImage(ImageReader(image_buffer), x, y, width=w, height=h,
+                    preserveAspectRatio=True, mask="auto", anchor="c")
+        c.restoreState()
+        return True
+    except Exception:
+        logger.exception("Unable to draw BIR logo asset")
+        return False
+
+
 def _draw_bir_seal(c, cx, cy, r=15):
     """Draw a simple stylised BIR-style circular seal (vector, not a
     reproduction of the official artwork) so the card reads as an official
     government form even without an embedded logo asset."""
     c.saveState()
-    # outer ring
+    # Keep the seal monochrome and fine-lined, like the printed form.
     c.setLineWidth(1.1)
     c.setStrokeColor(SEAL_BLUE)
     c.setFillColor(WHITE)
@@ -148,7 +181,7 @@ def _draw_bir_seal(c, cx, cy, r=15):
     c.setLineWidth(0.5)
     c.circle(cx, cy, r - 2.2, stroke=1, fill=0)
 
-    # simple 8-point sunburst in the center (evokes the Philippine sun)
+    # A restrained sunburst keeps the seal legible at certificate scale.
     c.setFillColor(SEAL_GOLD)
     import math
     rays = 8
@@ -178,6 +211,39 @@ def _draw_bir_seal(c, cx, cy, r=15):
     _draw_text_on_arc(c, top_text, cx, cy, r - 1.2, start_deg=200, end_deg=-20, size=3.4)
     bottom_text = "BUREAU OF INTERNAL REVENUE"
     _draw_text_on_arc(c, bottom_text, cx, cy, r - 1.2, start_deg=160, end_deg=380, size=3.0, flip=True)
+    c.restoreState()
+
+
+def _draw_bir_watermark(c, cx, cy, r=74):
+    """Draw the faint red circular seal printed through the form body."""
+    c.saveState()
+    try:
+        c.setStrokeAlpha(0.24)
+        c.setFillAlpha(0.24)
+    except AttributeError:
+        pass
+    c.setStrokeColor(STAMP_RED)
+    c.setFillColor(STAMP_RED)
+    c.setLineWidth(1.1)
+    c.circle(cx, cy, r, stroke=1, fill=0)
+    c.setLineWidth(0.45)
+    c.circle(cx, cy, r - 5, stroke=1, fill=0)
+    c.circle(cx, cy, r - 12, stroke=1, fill=0)
+    c.setFont("Helvetica-Bold", 10)
+    c.drawCentredString(cx, cy + r - 19, "BUREAU OF INTERNAL REVENUE")
+    c.setFont("Helvetica-Bold", 8)
+    c.drawCentredString(cx, cy - r + 10, "REPUBLIC OF THE PHILIPPINES")
+    c.setLineWidth(0.8)
+    for i in range(12):
+        angle = math.radians(i * 30)
+        x1 = cx + 18 * math.cos(angle)
+        y1 = cy + 18 * math.sin(angle)
+        x2 = cx + 35 * math.cos(angle)
+        y2 = cy + 35 * math.sin(angle)
+        c.line(x1, y1, x2, y2)
+    c.circle(cx, cy, 17, stroke=1, fill=0)
+    c.setFont("Helvetica-Bold", 13)
+    c.drawCentredString(cx, cy - 5, "BIR")
     c.restoreState()
 
 
@@ -284,30 +350,25 @@ def generate_cedula_pdf(
     hdr_bot = hdr_top - HDR_H
     _hline(c, L, hdr_bot, R, lw=1.0)
 
-    # BIR seal (top-left)
-    SEAL_R = 15
-    seal_cx = L + SEAL_R + 4
-    seal_cy = hdr_bot + HDR_H / 2
-    _draw_bir_seal(c, seal_cx, seal_cy, r=SEAL_R)
-
-    text_x = seal_cx + SEAL_R + 6
+    # The original form keeps the emblem in the body, not in the header.
+    text_x = L + 7
     c.setFont("Helvetica", 5.5)
     c.setFillColor(BLACK)
     c.drawString(text_x, hdr_top - 8, "BIR FORM 0016 (DECEMBER, 2014)")
 
-    c.setFont("Helvetica-Bold", 11.5)
+    c.setFont("Helvetica-Bold", 12.5)
     c.drawString(text_x, hdr_bot + 7, "COMMUNITY TAX CERTIFICATE")
 
-    IND_W, IND_H = 62, HDR_H
+    IND_W, IND_H = 72, HDR_H
     IND_X = L + 230
-    c.setFillColor(HEADER_BG)
+    c.setFillColor(BLACK)
     c.rect(IND_X, hdr_bot, IND_W, IND_H, stroke=1, fill=1)
     c.setFillColor(WHITE)
     c.setFont("Helvetica-Bold", 9.5)
     c.drawCentredString(IND_X + IND_W / 2, hdr_bot + IND_H / 2 - 4, "INDIVIDUAL")
     c.setFillColor(BLACK)
 
-    CCI_X = IND_X + IND_W + 4
+    CCI_X = IND_X + IND_W
     CCI_W = R - CCI_X
     _border(c, CCI_X, hdr_bot, CCI_W, HDR_H, lw=1.0)
     c.setFont("Helvetica-Bold", 18)
@@ -339,12 +400,28 @@ def generate_cedula_pdf(
     def row_bot(i): return ys[i + 1]
 
     _vline(c, RIGHT_X, WORK_BOT, WORK_TOP)
-    # Row separators on the LEFT side only. Skip the boundary between row 5
-    # and row 6 (index 6) because the occupation cell spans both rows.
+    # The original has a separate horizontal cell for each measurement in the
+    # right column. The occupation cell alone spans the final two left rows.
     for i in range(1, N_ROWS):
         if i == 6:
             continue
         _hline(c, L, ys[i], RIGHT_X)
+        _hline(c, RIGHT_X, ys[i], R)
+
+    # The reference stamp is a prominent red circular mark, centered over the
+    # form and large enough to cross the information and tax sections.
+    logo_cx = L + FW * 0.50
+    logo_cy = (WORK_TOP + B) / 2
+    logo_diameter = 162
+    c.saveState()
+    _draw_bir_logo(
+        c,
+        logo_cx - logo_diameter / 2,
+        logo_cy - logo_diameter / 2,
+        logo_diameter,
+        logo_diameter,
+    )
+    c.restoreState()
 
     # ROW 0 — YEAR | PLACE OF ISSUE | DATE ISSUED
     r0t, r0b = row_top(0), row_bot(0)
@@ -415,19 +492,15 @@ def generate_cedula_pdf(
     _vline(c, L + NAME_SUR_W,              r1b, r1t)
     _vline(c, L + NAME_SUR_W + NAME_FST_W, r1b, r1t)
 
-    _cell(c, L,                             r1b, NAME_SUR_W, ROW_H,
-          "NAME (SURNAME)", surname,    val_size=9, val_bold=True)
-    _cell(c, L + NAME_SUR_W,                r1b, NAME_FST_W, ROW_H,
-          "(FIRST)",        given_name, val_size=9, val_bold=True)
-    _cell(c, L + NAME_SUR_W + NAME_FST_W,   r1b, NAME_MID_W, ROW_H,
-          "(MIDDLE)",       middle_name, val_size=9, val_bold=True)
-    _cell(c, RIGHT_X, r1b, RIGHT_W, ROW_H, "HEIGHT",
-          f"{height} cm." if height else "", val_size=9, val_bold=True)
+    _cell(c, L, r1b, NAME_SUR_W, r1t - r1b, "NAME (SURNAME)", surname, val_size=9, val_bold=True)
+    _cell(c, L + NAME_SUR_W, r1b, NAME_FST_W, r1t - r1b, "(FIRST)", given_name, val_size=9, val_bold=True)
+    _cell(c, L + NAME_SUR_W + NAME_FST_W, r1b, NAME_MID_W, r1t - r1b, "(MIDDLE)", middle_name, val_size=9, val_bold=True)
+    _cell(c, RIGHT_X, r1b, RIGHT_W, r1t - r1b, "HEIGHT", f"{height} cm." if height else "", val_size=9, val_bold=True)
 
     # ROW 2 — ADDRESS | WEIGHT
     r2t, r2b = row_top(2), row_bot(2)
-    _cell(c, L,       r2b, LEFT_W, ROW_H, "ADDRESS", address,   val_size=8.5, val_bold=True)
-    _cell(c, RIGHT_X, r2b, RIGHT_W, ROW_H, "WEIGHT",  weight_str, val_size=9,   val_bold=True)
+    _cell(c, L,       r2b, LEFT_W, r2t - r2b, "ADDRESS", address,   val_size=8.5, val_bold=True)
+    _cell(c, RIGHT_X, r2b, RIGHT_W, r2t - r2b, "WEIGHT",  weight_str, val_size=9,   val_bold=True)
 
     # ROW 3 — CITIZENSHIP | ICR | PLACE OF BIRTH | DATE OF BIRTH
     r3t, r3b = row_top(3), row_bot(3)
@@ -437,10 +510,10 @@ def generate_cedula_pdf(
     _vline(c, L + CIT_W,         r3b, r3t)
     _vline(c, L + CIT_W + ICR_W, r3b, r3t)
 
-    _cell(c, L,               r3b, CIT_W, ROW_H, "CITIZENSHIP",           citizenship, val_size=8.5, val_bold=True)
-    _cell(c, L + CIT_W,       r3b, ICR_W, ROW_H, "ICR NO. (If an Alien)", icr_no,      val_size=8)
-    _cell(c, L + CIT_W+ICR_W, r3b, POB_W, ROW_H, "PLACE OF BIRTH",        place_birth, val_size=7.6, val_bold=True)
-    _cell(c, RIGHT_X,         r3b, RIGHT_W, ROW_H, "DATE OF BIRTH",       dob,         val_size=9,   val_bold=True)
+    _cell(c, L,               r3b, CIT_W, r3t - r3b, "CITIZENSHIP",           citizenship, val_size=8.5, val_bold=True)
+    _cell(c, L + CIT_W,       r3b, ICR_W, r3t - r3b, "ICR NO. (If an Alien)", icr_no,      val_size=8)
+    _cell(c, L + CIT_W+ICR_W, r3b, POB_W, r3t - r3b, "PLACE OF BIRTH",        place_birth, val_size=7.6, val_bold=True)
+    _cell(c, RIGHT_X,         r3b, RIGHT_W, r3t - r3b, "DATE OF BIRTH",       dob,         val_size=9,   val_bold=True)
 
     # ROW 4 — CIVIL STATUS | TAXABLE AMOUNT
     r4t, r4b = row_top(4), row_bot(4)
@@ -462,7 +535,7 @@ def generate_cedula_pdf(
             or (key == "divorced" and "separated" in civil_status)
         )
         box_x = col_x + 4
-        box_y = r4b + ROW_H * 0.16
+        box_y = r4b + (r4t - r4b) * 0.16
         _checkbox(c, box_x, box_y, size=6.2, checked=checked, number=num)
         c.setFont("Helvetica", 5.2)
         c.setFillColor(BLACK)
@@ -470,7 +543,7 @@ def generate_cedula_pdf(
         if len(lines) > 1:
             c.drawString(box_x + 9, box_y - 5.5, lines[1])
 
-    _cell(c, RIGHT_X, r4b, RIGHT_W, ROW_H, "TAXABLE AMOUNT",
+    _cell(c, RIGHT_X, r4b, RIGHT_W, r4t - r4b, "TAXABLE AMOUNT",
           f"P {taxable_amt:,.2f}", val_size=9, val_bold=True)
 
     # ROW 5+6 — PROFESSION / OCCUPATION / BUSINESS (merged, spans both rows)
