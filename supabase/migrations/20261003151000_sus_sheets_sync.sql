@@ -11,7 +11,8 @@
 -- sus_sync_key (Vault) only proves a call to the Edge Function came from this
 -- database; it is generated here and read back by the function.
 
-create extension if not exists pg_net;
+-- pg_net is registered in the extensions schema (its functions live in "net").
+create extension if not exists pg_net with schema extensions;
 create extension if not exists pg_cron;
 
 select vault.create_secret(
