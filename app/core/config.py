@@ -24,13 +24,21 @@ class Settings(BaseSettings):
     SUPABASE_PDF_BUCKET: str = "ctc-pdfs"
     SUPABASE_PROFILE_BUCKET: str = "profile-pictures"
 
+    # Web app origins allowed to call the API when DEBUG is off (comma-separated),
+    # e.g. "http://localhost:3000,http://192.168.1.8:3000"
+    CORS_ORIGINS: str = "http://localhost:3000"
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [o.strip().rstrip("/") for o in self.CORS_ORIGINS.split(",") if o.strip()]
+
     # Barangay local time (Philippines is UTC+8, no DST). Used for "today",
     # monthly stats and CTC numbering so every device agrees on the date.
     LOCAL_UTC_OFFSET_HOURS: int = 8
 
     # JWT
     SECRET_KEY: str = "change-this-in-production-32-chars-minimum"
-    JWT_SECRET_KEY: str = "jwt-secret-change-in-production"
+    JWT_SECRET_KEY: str                            # required: random secret in .env, signs all login tokens
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
 

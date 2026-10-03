@@ -101,7 +101,9 @@ def create_app() -> FastAPI:
     # ── CORS ──────────────────────────────────────────────────────────────────
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"] if settings.DEBUG else ["http://localhost:3000"],
+        # Production: only the web app's own address(es), from CORS_ORIGINS.
+        # (The mobile app is not a browser, so CORS does not apply to it.)
+        allow_origins=["*"] if settings.DEBUG else settings.cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
