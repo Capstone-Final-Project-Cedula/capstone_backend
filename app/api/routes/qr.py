@@ -14,7 +14,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.security import decode_access_token, get_current_user
+from app.core.security import decode_access_token, require_staff, TOKEN_TYPE_CITIZEN
 from app.models.citizen_user import CitizenUser
 from app.models.mobile_submission import MobileSubmission
 from app.services.qr_service import generate_qr_code, claim_qr_submission, decode_qr_from_image
@@ -33,23 +33,26 @@ def get_optional_current_citizen(
 ) -> Optional[CitizenUser]:
     """
     Return the authenticated citizen when a mobile bearer token is present.
-    QR generation remains public, so missing or invalid citizen tokens are ignored.
+    QR generation stays public for guests (no token at all). A token that is
+    present but expired or invalid gets a 401, so the app can ask the citizen
+    to sign in again instead of silently saving the QR as a guest submission
+    that never shows up in their history.
     """
     if not token:
         return None
 
     payload = decode_access_token(token)
-    if not payload or payload.get("type") != "citizen":
-        return None
+    username = payload.get("sub") if payload else None
+    user = None
+    if payload and payload.get("type") == TOKEN_TYPE_CITIZEN and username:
+        user = db.query(CitizenUser).filter(CitizenUser.username == username).first()
 
-    username = payload.get("sub")
-    if not username:
-        return None
-
-    user = db.query(CitizenUser).filter(CitizenUser.username == username).first()
     if not user or not user.is_active:
-        return None
-
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Your session has expired. Please sign in again.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return user
 
 
@@ -163,7 +166,7 @@ def clear_qr_history(
 def scan_qr_token(
     payload: QRScanRequest,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_staff),
 ):
     """
     Claim a QR submission by token string.
@@ -209,7 +212,7 @@ def scan_qr_token(
 async def decode_qr_image(
     image_file: UploadFile = File(..., description="Image containing the QR code"),
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user=Depends(require_staff),
 ):
     """
     Upload an image containing a QR code and auto-claim the submission.

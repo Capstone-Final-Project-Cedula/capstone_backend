@@ -15,7 +15,7 @@ Layout matches the official printed CTC card as closely as possible:
 """
 import io
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from reportlab.lib.pagesizes import LETTER
@@ -29,9 +29,15 @@ from reportlab.lib.enums import TA_CENTER
 import math
 
 from app.core.config import settings
+from app.services import settings_service
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def _local_now() -> datetime:
+    """Current barangay-local time (UTC+8), whatever the computer's own clock zone is."""
+    return datetime.now(timezone(timedelta(hours=settings.LOCAL_UTC_OFFSET_HOURS)))
 
 # Colors
 BLACK      = colors.black
@@ -284,7 +290,8 @@ def generate_cedula_pdf(
 
     a = applicant_data
     t = tax_data
-    now = datetime.now()
+    now = _local_now()
+    office = settings_service.get_settings()
 
     # Parse CTC number -> CCI header parts
     try:
@@ -296,7 +303,7 @@ def generate_cedula_pdf(
         cci_serial = "00000001"
 
     year_issued  = cci_year
-    place_issued = a.get("place_of_issue") or f"{settings.MUNICIPALITY}, {settings.PROVINCE}"
+    place_issued = a.get("place_of_issue") or f"{office.municipality}, {office.province}"
 
     # Windows-safe date (no %-m or %-d)
     date_issued  = f"{now.month}/{now.day}/{str(now.year)[2:]}"
@@ -334,7 +341,7 @@ def generate_cedula_pdf(
     # Canvas
     c = pdfcanvas.Canvas(output_path, pagesize=(CARD_W, CARD_H))
     c.setTitle(f"Community Tax Certificate - {ctc_number}")
-    c.setAuthor(settings.BARANGAY_NAME)
+    c.setAuthor(office.barangay_name)
 
     L  = MARGIN
     R  = CARD_W - MARGIN
@@ -700,11 +707,12 @@ def generate_receipt_pdf(ctc_number: str, applicant_data: dict, tax_data: dict) 
     full_name  = f"{a.get('given_name', '')} {a.get('surname', '')}".strip()
     total      = float(tax_data.get("total_tax", 5.00))
     total_paid = float(tax_data.get("total_amount_paid", total))
-    now        = datetime.now()
+    now        = _local_now()
     date_str   = f"{now.strftime('%B')} {now.day}, {now.year}"
+    office     = settings_service.get_settings()
 
     story = [
-        Paragraph(f"<b>{settings.BARANGAY_NAME}</b>", h_style),
+        Paragraph(f"<b>{office.barangay_name}</b>", h_style),
         Paragraph("OFFICIAL RECEIPT — Community Tax Certificate", n_style),
         Spacer(1, 8),
         HRFlowable(width="100%", thickness=1, color=colors.HexColor("#003366")),

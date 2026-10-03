@@ -9,15 +9,50 @@ correctly in the first place (not just corrected after the fact).
 """
 import whisper
 import numpy as np
+import io
 import time
 import tempfile
 import os
-from typing import Optional
+from math import gcd
+from typing import Optional, Union
+from scipy.io import wavfile
+from scipy.signal import resample_poly
 from app.core.config import settings
 from app.services.barangay_gazetteer import get_barangay_list_for_prompt
 import logging
 
 logger = logging.getLogger(__name__)
+
+WHISPER_SAMPLE_RATE = 16000
+
+
+def _decode_wav(audio_bytes: bytes) -> Optional[np.ndarray]:
+    """
+    Decode WAV bytes to 16 kHz mono float32 in [-1, 1], the input Whisper expects.
+    Returns None for anything that is not a readable WAV file.
+    """
+    if not audio_bytes.startswith(b"RIFF"):
+        return None
+    try:
+        rate, data = wavfile.read(io.BytesIO(audio_bytes))
+    except Exception:  # noqa: BLE001 — unreadable WAV: let ffmpeg try
+        return None
+
+    if data.dtype == np.int16:
+        samples = data.astype(np.float32) / 32768.0
+    elif data.dtype == np.int32:
+        samples = data.astype(np.float32) / 2147483648.0
+    elif data.dtype == np.uint8:
+        samples = (data.astype(np.float32) - 128.0) / 128.0
+    else:
+        samples = data.astype(np.float32)
+
+    if samples.ndim > 1:
+        samples = samples.mean(axis=1)
+    if rate != WHISPER_SAMPLE_RATE:
+        factor = gcd(rate, WHISPER_SAMPLE_RATE)
+        samples = resample_poly(samples, WHISPER_SAMPLE_RATE // factor, rate // factor)
+    return samples.astype(np.float32)
 
 
 # Context hints per interview field — dramatically improves accuracy on
@@ -69,12 +104,13 @@ class SpeechService:
         return FIELD_PROMPTS.get(field_key)
 
     @classmethod
-    def transcribe_file(cls, audio_path: str, field_key: Optional[str] = None) -> dict:
+    def transcribe_file(cls, audio_path: Union[str, np.ndarray], field_key: Optional[str] = None) -> dict:
         """
-        Transcribe an audio file using Whisper.
+        Transcribe audio using Whisper.
 
         Args:
-            audio_path: Path to audio file (WAV, MP3, M4A, etc.)
+            audio_path: Path to an audio file (WAV, MP3, M4A, etc. — decoded by
+                        ffmpeg), or 16 kHz mono float32 samples (no ffmpeg needed).
             field_key: Optional interview field key, used to bias decoding
                        toward expected vocabulary via initial_prompt.
 
@@ -86,7 +122,8 @@ class SpeechService:
         start_time = time.time()
         initial_prompt = cls._build_prompt(field_key)
 
-        logger.info(f"Transcribing audio file: {audio_path} (field={field_key})")
+        source = audio_path if isinstance(audio_path, str) else f"{len(audio_path) / WHISPER_SAMPLE_RATE:.1f}s of audio"
+        logger.info(f"Transcribing {source} (field={field_key})")
 
         result = model.transcribe(
             audio_path,
@@ -138,7 +175,13 @@ class SpeechService:
     def transcribe_bytes(cls, audio_bytes: bytes, suffix: str = ".wav", field_key: Optional[str] = None) -> dict:
         """
         Transcribe audio from raw bytes (e.g., uploaded file from API).
+        WAV (what the web app uploads) is decoded here, so it works without
+        ffmpeg; other formats go through Whisper's ffmpeg-based loader.
         """
+        samples = _decode_wav(audio_bytes)
+        if samples is not None:
+            return cls.transcribe_file(samples, field_key=field_key)
+
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
             tmp.write(audio_bytes)
             tmp_path = tmp.name

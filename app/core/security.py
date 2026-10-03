@@ -16,6 +16,12 @@ from app.core.database import get_db
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
+# Every token says which kind of account it belongs to. Staff and citizen
+# usernames live in different tables, so without this a citizen who signs up
+# with a staff member's username would be accepted as that staff member.
+TOKEN_TYPE_STAFF = "staff"
+TOKEN_TYPE_CITIZEN = "citizen"
+
 
 # ─── Password Utilities ────────────────────────────────────────────────────────
 
@@ -68,7 +74,7 @@ def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     payload = decode_access_token(token)
-    if payload is None:
+    if payload is None or payload.get("type") != TOKEN_TYPE_STAFF:
         raise credentials_exception
 
     username: str = payload.get("sub")
@@ -82,11 +88,28 @@ def get_current_user(
     return user
 
 
+def _role_value(user) -> str:
+    return getattr(user.role, "value", user.role)
+
+
 def require_admin(current_user=Depends(get_current_user)):
     """Dependency for admin-only routes."""
-    if current_user.role != "admin":
+    if _role_value(current_user) != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"
+        )
+    return current_user
+
+
+def require_staff(current_user=Depends(get_current_user)):
+    """
+    Dependency for routes that create or change records (issue CTCs, claim QR
+    submissions). Admins and staff pass; the read-only "viewer" role does not.
+    """
+    if _role_value(current_user) not in ("admin", "staff"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account is read-only.",
         )
     return current_user

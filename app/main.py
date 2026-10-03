@@ -8,11 +8,11 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.database import create_tables
-from app.api.routes import auth, speech, extraction, qr, forms, citizen_auth  # ← NEW
+from app.api.routes import auth, speech, extraction, qr, forms, citizen_auth
+from app.api.routes import settings as settings_routes
 
 # ─── Logging Setup ─────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -117,15 +117,12 @@ def create_app() -> FastAPI:
     app.include_router(extraction.router,   prefix="/api/extraction", tags=["Field Extraction"])
     app.include_router(qr.router,           prefix="/api/qr",         tags=["QR Code"])
     app.include_router(forms.router,        prefix="/api/forms",      tags=["Forms & Records"])
-    app.include_router(citizen_auth.router, prefix="/api/citizen",    tags=["Citizen Auth (Mobile)"])  # ← NEW
+    app.include_router(citizen_auth.router, prefix="/api/citizen",    tags=["Citizen Auth (Mobile)"])
+    app.include_router(settings_routes.router, prefix="/api/settings", tags=["Settings"])
 
-    # ── Static Files (serve generated PDFs for download) ─────────────────────
-    os.makedirs(settings.PDF_OUTPUT_DIR, exist_ok=True)
-    app.mount(
-        "/pdfs",
-        StaticFiles(directory=settings.PDF_OUTPUT_DIR),
-        name="pdfs",
-    )
+    # Generated PDFs are NOT served as public static files: they contain
+    # citizens' personal data and have guessable names. Downloads go through
+    # GET /api/forms/download/{ctc_number}, which requires a staff login.
 
     # ── Root Health Check ─────────────────────────────────────────────────────
     @app.get("/", tags=["Health"])

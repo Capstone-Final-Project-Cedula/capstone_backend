@@ -13,7 +13,7 @@ from collections import Counter
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.security import get_current_user, require_admin
+from app.core.security import get_current_user, require_admin, require_staff
 from app.models.applicant import ApplicantRecord
 from app.models.issuance import CTCIssuance, InputMethodEnum
 from app.models.staff_user import StaffUser
@@ -148,7 +148,7 @@ def extract_barangay(address: Optional[str]) -> str:
 def issue_ctc(
     payload: IssuanceCreate,
     db: Session = Depends(get_db),
-    current_user: StaffUser = Depends(get_current_user),
+    current_user: StaffUser = Depends(require_staff),
 ):
     """
     Full CTC issuance workflow.

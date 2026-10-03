@@ -58,9 +58,18 @@ class TokenResponse(BaseModel):
 
 # ─── Staff User Schemas ────────────────────────────────────────────────────────
 
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str = Field(..., min_length=8)
+
+
+class CitizenPasswordResetRequest(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+
+
 class StaffUserCreate(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=8)
     full_name: str
     position: Optional[str] = None
     email: Optional[str] = None
@@ -245,25 +254,14 @@ class TranscriptionResponse(BaseModel):
 # ─── Extraction Schemas ───────────────────────────────────────────────────────
 
 class ExtractionRequest(BaseModel):
-    text: str
+    transcript: str
 
 
 class ExtractionResponse(BaseModel):
-    surname: Optional[str] = None
-    given_name: Optional[str] = None
-    middle_name: Optional[str] = None
-    date: Optional[str] = None
-    address: Optional[str] = None
-    sex: Optional[str] = None
-    civil_status: Optional[str] = None
-    citizenship: Optional[str] = "Filipino"
-    icr_no: Optional[str] = None
-    place_of_birth: Optional[str] = None
-    height: Optional[float] = None
-    weight: Optional[float] = None
-    occupation: Optional[str] = None
-    gross_annual_income: Optional[float] = None
-    tax_classification: Optional[str] = "A"
+    extracted_fields: ApplicantCreate
+    confidence_scores: dict = {}
+    unextracted_fields: List[str] = []
+    warnings: List[str] = []
 
 
 # ─── QR Schemas ──────────────────────────────────────────────────────────────

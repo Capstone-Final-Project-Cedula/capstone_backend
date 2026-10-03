@@ -49,6 +49,10 @@ def setup_test_db():
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
+    # Windows cannot delete a SQLite file that still has open connections.
+    from app.core.database import engine as app_engine
+    engine.dispose()
+    app_engine.dispose()
     if os.path.exists("test_cedula.db"):
         os.remove("test_cedula.db")
 
@@ -99,12 +103,12 @@ def staff_user(db):
 
 @pytest.fixture(scope="module")
 def admin_token(admin_user):
-    return create_access_token(data={"sub": admin_user.username})
+    return create_access_token(data={"sub": admin_user.username, "type": "staff"})
 
 
 @pytest.fixture(scope="module")
 def staff_token(staff_user):
-    return create_access_token(data={"sub": staff_user.username})
+    return create_access_token(data={"sub": staff_user.username, "type": "staff"})
 
 
 # ─── Auth Tests ─────────────────────────────────────────────────────────────────
@@ -159,7 +163,7 @@ class TestAuth:
             "/api/auth/register",
             json={
                 "username": "test_admin",  # already exists
-                "password": "pass123",
+                "password": "pass12345",
                 "full_name": "Duplicate",
                 "role": "staff",
             },
@@ -170,7 +174,7 @@ class TestAuth:
     def test_register_requires_admin(self, client, staff_token):
         resp = client.post(
             "/api/auth/register",
-            json={"username": "hack", "password": "pass", "full_name": "Hack"},
+            json={"username": "hack", "password": "hackpass123", "full_name": "Hack"},
             headers={"Authorization": f"Bearer {staff_token}"},
         )
         assert resp.status_code == 403
@@ -435,17 +439,59 @@ class TestIssuance:
         records = resp.json()
         assert any("Reyes" in r["applicant"]["surname"] for r in records)
 
-    def test_dashboard_stats(self, client, staff_token):
+    def test_dashboard_stats(self, client, admin_token):
+        resp = client.get(
+            "/api/forms/dashboard/stats",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total_issued"] >= 1
+        assert data["today_issued"] >= 1
+        assert len(data["daily_data"]) == 7
+
+    def test_dashboard_is_admin_only(self, client, staff_token):
         resp = client.get(
             "/api/forms/dashboard/stats",
             headers={"Authorization": f"Bearer {staff_token}"},
         )
-        assert resp.status_code == 200
-        data = resp.json()
-        assert "daily_count" in data
-        assert "monthly_count" in data
-        assert "total_count" in data
-        assert data["daily_count"] >= 1
+        assert resp.status_code == 403
+
+
+# ─── Permission / Token Tests ──────────────────────────────────────────────────
+
+class TestPermissions:
+    def test_citizen_token_rejected_by_staff_routes(self, client, admin_user):
+        # A citizen whose username equals a staff username must not get staff access.
+        citizen_token = create_access_token(data={"sub": admin_user.username, "type": "citizen"})
+        resp = client.get("/api/auth/staff", headers={"Authorization": f"Bearer {citizen_token}"})
+        assert resp.status_code == 401
+
+    def test_untyped_token_rejected(self, client, admin_user):
+        legacy = create_access_token(data={"sub": admin_user.username})
+        resp = client.get("/api/auth/me", headers={"Authorization": f"Bearer {legacy}"})
+        assert resp.status_code == 401
+
+    def test_viewer_cannot_issue(self, client, db):
+        from app.models.staff_user import StaffUser, RoleEnum
+        viewer = StaffUser(username="test_viewer", hashed_password=hash_password("testpass123"),
+                           full_name="Test Viewer", role=RoleEnum.VIEWER)
+        db.add(viewer)
+        db.commit()
+        token = create_access_token(data={"sub": viewer.username, "type": "staff"})
+        headers = {"Authorization": f"Bearer {token}"}
+        assert client.get("/api/forms/records", headers=headers).status_code == 200
+        resp = client.post("/api/forms/issue", headers=headers,
+                           json={"applicant_data": TestIssuance.SAMPLE_APPLICANT, "input_method": "manual"})
+        assert resp.status_code == 403
+
+    def test_admin_cannot_deactivate_self(self, client, admin_user, admin_token):
+        resp = client.patch(f"/api/auth/staff/{admin_user.id}/toggle-active",
+                            headers={"Authorization": f"Bearer {admin_token}"})
+        assert resp.status_code == 400
+
+    def test_pdfs_not_publicly_served(self, client):
+        assert client.get("/pdfs/CTC_20260101_0001.pdf").status_code == 404
 
 
 # ─── Health Check ──────────────────────────────────────────────────────────────

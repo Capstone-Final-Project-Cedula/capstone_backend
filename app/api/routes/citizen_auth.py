@@ -23,13 +23,21 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr, Field, validator
 
 from app.core.database import get_db
-from app.core.security import hash_password, verify_password, create_access_token
+from fastapi.security import OAuth2PasswordBearer
+
+from app.core.security import (
+    hash_password, verify_password, create_access_token, TOKEN_TYPE_CITIZEN,
+)
 from app.models.citizen_user import CitizenUser
 from app.services import storage_service
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# Citizen endpoints read the token from the Authorization header, never the
+# URL (URLs end up in server and proxy logs).
+citizen_token_scheme = OAuth2PasswordBearer(tokenUrl="/api/citizen/login")
 
 
 # ─── Schemas ──────────────────────────────────────────────────────────────────
@@ -53,14 +61,34 @@ class RegisterRequest(BaseModel):
 
     @validator('password')
     def password_strength(cls, v):
-        if not any(c.isupper() for c in v):
-            raise ValueError('Password must contain at least one uppercase letter.')
-        if not any(c.islower() for c in v):
-            raise ValueError('Password must contain at least one lowercase letter.')
-        if not any(c.isdigit() for c in v):
-            raise ValueError('Password must contain at least one number.')
-        if not any(c in '!@#$%^&*()_+-=[]{}|;:,.<>?' for c in v):
-            raise ValueError('Password must contain at least one special character.')
+        return _check_password_strength(v)
+
+
+def _check_password_strength(v: str) -> str:
+    if not any(c.isupper() for c in v):
+        raise ValueError('Password must contain at least one uppercase letter.')
+    if not any(c.islower() for c in v):
+        raise ValueError('Password must contain at least one lowercase letter.')
+    if not any(c.isdigit() for c in v):
+        raise ValueError('Password must contain at least one number.')
+    if not any(c in '!@#$%^&*()_+-=[]{}|;:,.<>?' for c in v):
+        raise ValueError('Password must contain at least one special character.')
+    return v
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password:     str
+    new_password:     str = Field(..., min_length=8)
+    confirm_password: str
+
+    @validator('new_password')
+    def new_password_strength(cls, v):
+        return _check_password_strength(v)
+
+    @validator('confirm_password')
+    def passwords_match(cls, v, values):
+        if 'new_password' in values and v != values['new_password']:
+            raise ValueError('Passwords do not match.')
         return v
 
 
@@ -132,7 +160,7 @@ def _get_citizen_from_token(token: str, db: Session) -> CitizenUser:
     try:
         payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         subject: str = payload.get("sub")
-        if not subject:
+        if not subject or payload.get("type") != TOKEN_TYPE_CITIZEN:
             raise credentials_exc
     except JWTError:
         raise credentials_exc
@@ -281,7 +309,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
     user.last_login = datetime.utcnow()
     db.commit()
 
-    token = create_access_token(data={"sub": user.username, "type": "citizen"})
+    token = create_access_token(data={"sub": user.username, "type": TOKEN_TYPE_CITIZEN})
 
     return TokenResponse(
         access_token=token,
@@ -410,9 +438,28 @@ def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db))
     return {"message": "Password reset successfully. You can now log in with your new password."}
 
 
+@router.put("/me/password")
+def change_my_password(
+    payload: ChangePasswordRequest,
+    token: str = Depends(citizen_token_scheme),
+    db: Session = Depends(get_db),
+):
+    """Change the signed-in citizen's password (e.g. after a staff-issued temporary one)."""
+    user = _get_citizen_from_token(token, db)
+    if not verify_password(payload.old_password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect.")
+    if payload.new_password == payload.old_password:
+        raise HTTPException(status_code=400, detail="New password must be different from the current one.")
+    user.hashed_password = hash_password(payload.new_password)
+    user.reset_token = None
+    user.reset_token_expires = None
+    db.commit()
+    return {"message": "Password changed successfully."}
+
+
 @router.get("/me", response_model=CitizenProfileResponse)
 def get_my_profile(
-    token: str,
+    token: str = Depends(citizen_token_scheme),
     db: Session = Depends(get_db),
 ):
     """Return the currently authenticated citizen's profile."""
@@ -425,7 +472,7 @@ def get_my_profile(
 @router.put("/me")
 def update_profile(
     payload: UpdateProfileRequest,
-    token: str,
+    token: str = Depends(citizen_token_scheme),
     db: Session = Depends(get_db),
 ):
     """Update citizen's full name or username."""
@@ -435,14 +482,19 @@ def update_profile(
         user.full_name = payload.full_name.strip()
 
     if payload.username is not None:
-        if payload.username != user.username:
+        # Same normalisation as register/login, which lowercase the username;
+        # otherwise a changed username could never be used to sign in again.
+        new_username = payload.username.lower().strip()
+        if len(new_username) < 3:
+            raise HTTPException(status_code=400, detail="Username must be at least 3 characters.")
+        if new_username != user.username:
             existing = db.query(CitizenUser).filter(
-                CitizenUser.username == payload.username,
+                CitizenUser.username == new_username,
                 CitizenUser.id != user.id,
             ).first()
             if existing:
                 raise HTTPException(status_code=409, detail="Username is already taken.")
-        user.username = payload.username.strip() or None
+        user.username = new_username
 
     old_picture = user.profile_picture
     if payload.profile_picture:

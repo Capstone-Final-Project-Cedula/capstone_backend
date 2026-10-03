@@ -13,8 +13,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
 from app.models.mobile_submission import MobileSubmission
+from app.services import settings_service
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,8 @@ def generate_qr_code(
     """
     # Generate unique token
     token = str(uuid.uuid4()).replace("-", "").upper()[:32]
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.QR_EXPIRY_MINUTES)
+    expiry_minutes = settings_service.get_settings(db).qr_expiry_minutes  # admin-editable
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=expiry_minutes)
 
     # Serialize dates to strings for JSON
     serializable_data = {}
