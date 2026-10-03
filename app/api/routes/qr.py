@@ -4,6 +4,7 @@ QR code endpoints for mobile-to-desktop pre-fill workflow.
 POST /api/qr/generate  — mobile app: generate QR from form data
 POST /api/qr/scan      — desktop: decode and claim QR submission
 POST /api/qr/decode    — desktop: decode QR from uploaded image
+GET/DELETE /api/qr/history — mobile app: list / clear the citizen's own submissions
 """
 import json
 from typing import Optional
@@ -137,6 +138,25 @@ def get_qr_history(
         }
         for submission in submissions
     ]
+
+
+@router.delete("/history")
+def clear_qr_history(
+    db: Session = Depends(get_db),
+    current_citizen: CitizenUser = Depends(get_current_citizen),
+):
+    """
+    Delete every QR submission of the signed-in citizen ("Clear All" in the app).
+    Their unscanned QR codes stop working; issued CTCs are unaffected because
+    issuance records keep their own copy of the applicant data.
+    """
+    deleted = (
+        db.query(MobileSubmission)
+        .filter(MobileSubmission.mobile_user_id == str(current_citizen.id))
+        .delete(synchronize_session=False)
+    )
+    db.commit()
+    return {"deleted": deleted}
 
 
 @router.post("/scan", response_model=QRScanResponse)

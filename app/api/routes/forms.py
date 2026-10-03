@@ -192,9 +192,9 @@ def issue_ctc(
         income = float(applicant.gross_annual_income or 0.0)
         tax_result = compute_tax(income)
 
-        basic_tax = 5.00
-        additional_tax = tax_result.get("additional_tax", 0.0)
-        total_tax = basic_tax + additional_tax
+        basic_tax = tax_result["basic_community_tax"]
+        additional_tax = tax_result["additional_community_tax"]
+        total_tax = tax_result["total_tax"]
         interest = 0.00
         total_amount_paid = total_tax + interest
 
