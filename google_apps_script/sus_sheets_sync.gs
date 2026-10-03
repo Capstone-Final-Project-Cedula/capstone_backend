@@ -13,6 +13,10 @@
  * the Summary / Column guide tabs are never touched.
  */
 
+var SCRIPT_VERSION = '2';
+// "CeduSync SUS Survey Results". Opened by ID so the script works whether it
+// was created from the sheet (Extensions > Apps Script) or as its own project.
+var SPREADSHEET_ID = '1lKh9XoH97sdO-93M1178yL10C3Muhgw_k3sE6MtHjGQ';
 var SHEET_NAME = 'Responses';
 var COLUMN_COUNT = 18; // A..R
 var TIME_ZONE = 'Asia/Manila';
@@ -33,6 +37,22 @@ var FEATURE_LABELS = {
 };
 var PLATFORM_LABELS = { web: 'Web', mobile: 'Mobile' };
 
+/** Open the web app URL in a browser to check the right code is deployed. */
+function doGet() {
+  return reply_({
+    ok: true,
+    service: 'CeduSync SUS sync',
+    version: SCRIPT_VERSION,
+    secretConfigured: Boolean(PropertiesService.getScriptProperties().getProperty('SHARED_SECRET'))
+  });
+}
+
+function responsesSheet_() {
+  var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
+  if (!sheet) throw new Error('Tab "' + SHEET_NAME + '" not found');
+  return sheet;
+}
+
 function doPost(e) {
   var body;
   try {
@@ -50,8 +70,7 @@ function doPost(e) {
   try {
     var response = body.response || {};
     var row = buildRow_(response);
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-    if (!sheet) throw new Error('Tab "' + SHEET_NAME + '" not found');
+    var sheet = responsesSheet_();
 
     var lastRow = lastResponseRow_(sheet);
     if (lastRow >= 2) {
@@ -134,7 +153,7 @@ function reply_(obj) {
  * column S are left untouched.
  */
 function deleteTestRows() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  var sheet = responsesSheet_();
   var lastRow = lastResponseRow_(sheet);
   if (lastRow < 2) return Logger.log('No response rows.');
   var names = sheet.getRange(2, 3, lastRow - 1, 1).getDisplayValues();
