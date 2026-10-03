@@ -19,6 +19,9 @@ TEST_DATABASE_URL = "sqlite:///./test_cedula.db"
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 os.environ["JWT_SECRET_KEY"] = "test-jwt-secret-key-32chars-minimum"
 os.environ["SECRET_KEY"] = "test-secret-key-32chars-minimum-xx"
+# Keep tests off the real Supabase Storage even when .env has credentials.
+os.environ["SUPABASE_URL"] = ""
+os.environ["SUPABASE_SECRET_KEY"] = ""
 
 from app.main import app
 from app.core.database import Base, get_db

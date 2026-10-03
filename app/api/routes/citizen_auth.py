@@ -12,6 +12,7 @@ Endpoints:
   GET  /api/citizen/me                — get current user profile
   PUT  /api/citizen/me                — update profile
 """
+import logging
 import uuid
 import secrets
 from datetime import datetime, timedelta
@@ -24,6 +25,9 @@ from pydantic import BaseModel, EmailStr, Field, validator
 from app.core.database import get_db
 from app.core.security import hash_password, verify_password, create_access_token
 from app.models.citizen_user import CitizenUser
+from app.services import storage_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -141,6 +145,19 @@ def _get_citizen_from_token(token: str, db: Session) -> CitizenUser:
     return user
 
 
+def _store_profile_picture(user: CitizenUser, value: Optional[str]) -> Optional[str]:
+    """
+    Upload a new picture to Supabase Storage and return the value to save.
+    Falls back to keeping the inline image if the upload fails, so sign-up
+    and profile edits never break because of Storage.
+    """
+    try:
+        return storage_service.store_profile_picture(user.id, value)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Profile picture upload for citizen %s failed, storing inline: %s", user.id, exc)
+        return value
+
+
 def _send_verification_email(email: str, token: str, full_name: str):
     """
     Send a verification email. In development, prints to console.
@@ -216,12 +233,13 @@ def register(
         last_name=payload.last_name.strip(),
         email=email,
         username=username,
-        profile_picture=payload.profile_picture,
         hashed_password=hash_password(payload.password),
         verification_token=verification_token,
         is_verified=True,
     )
     db.add(user)
+    db.flush()  # assigns user.id, used in the storage path
+    user.profile_picture = _store_profile_picture(user, payload.profile_picture)
     db.commit()
     db.refresh(user)
 
@@ -275,7 +293,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
             "last_name":   user.last_name,
             "email":       user.email,
             "username":    user.username,
-            "profile_picture": user.profile_picture,
+            "profile_picture": storage_service.profile_picture_for_client(user.profile_picture),
             "is_verified": user.is_verified,
         },
     )
@@ -399,7 +417,9 @@ def get_my_profile(
 ):
     """Return the currently authenticated citizen's profile."""
     user = _get_citizen_from_token(token, db)
-    return user
+    profile = CitizenProfileResponse.model_validate(user)
+    profile.profile_picture = storage_service.profile_picture_for_client(user.profile_picture)
+    return profile
 
 
 @router.put("/me")
@@ -424,13 +444,22 @@ def update_profile(
                 raise HTTPException(status_code=409, detail="Username is already taken.")
         user.username = payload.username.strip() or None
 
+    old_picture = user.profile_picture
     if payload.profile_picture:
-        user.profile_picture = payload.profile_picture
+        user.profile_picture = _store_profile_picture(user, payload.profile_picture)
 
     db.commit()
     db.refresh(user)
+
+    if (
+        storage_service.is_storage_ref(old_picture)
+        and old_picture != user.profile_picture
+    ):
+        storage_service.delete_object(old_picture)
+
     return {"message": "Profile updated.", "user": {
         "full_name": user.full_name,
         "username": user.username,
-        "profile_picture": user.profile_picture,
+        "profile_picture": payload.profile_picture
+        or storage_service.profile_picture_for_client(user.profile_picture),
     }}

@@ -1,0 +1,29 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Local databases and backups (data now lives in Supabase)
+*.db
+*.db-journal
+*.sqlite3
+backups/
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Generated files (PDFs are stored in Supabase Storage)
+uploads/
+pdfs/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

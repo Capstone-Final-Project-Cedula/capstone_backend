@@ -3,19 +3,21 @@ app/api/routes/forms.py
 CTC issuance and PDF generation endpoints.
 """
 import os
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, text
 from typing import Optional, List
 from collections import Counter
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import get_current_user, require_admin
 from app.models.applicant import ApplicantRecord
 from app.models.issuance import CTCIssuance, InputMethodEnum
 from app.models.staff_user import StaffUser
+from app.services import storage_service
 from app.services.pdf_service import generate_cedula_pdf, generate_receipt_pdf
 from app.services.tax_service import compute_tax
 from app.schemas.schemas import (
@@ -29,6 +31,22 @@ import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+LOCAL_TZ = timezone(timedelta(hours=settings.LOCAL_UTC_OFFSET_HOURS))
+
+
+def local_today() -> date:
+    """Today's date in barangay local time, regardless of the device's clock zone."""
+    return datetime.now(LOCAL_TZ).date()
+
+
+def local_day_start_utc(day: date) -> datetime:
+    """
+    Midnight of a local calendar day, as a naive UTC datetime — the same form
+    issued_at is stored and compared in (UTC session on Postgres, UTC text on SQLite).
+    """
+    local_midnight = datetime.combine(day, datetime.min.time(), tzinfo=LOCAL_TZ)
+    return local_midnight.astimezone(timezone.utc).replace(tzinfo=None)
 
 
 def parse_date(date_str):
@@ -84,15 +102,28 @@ def generate_ctc_number(db: Session) -> str:
     Format: CTC-YYYYMMDD-XXXX — the date shows exactly when it was issued,
     but the serial (XXXX) counts issuances for the current YEAR and resets
     to 0001 on January 1st, rather than resetting every single day.
+
+    The serial is the year's highest existing serial + 1 (not a row count, which
+    re-used numbers after a record was deleted). On Postgres an advisory lock,
+    held until the issuing transaction ends, keeps two devices from taking the
+    same number at the same time.
     """
-    now = datetime.now()
+    now = datetime.now(LOCAL_TZ)
     year_prefix = now.strftime("%Y")
     date_prefix = now.strftime("%Y%m%d")
 
-    count = db.query(CTCIssuance).filter(
+    if db.get_bind().dialect.name == "postgresql":
+        db.execute(text("SELECT pg_advisory_xact_lock(hashtext('ctc_issuance.ctc_number'))"))
+
+    existing = db.query(CTCIssuance.ctc_number).filter(
         CTCIssuance.ctc_number.like(f"CTC-{year_prefix}%")
-    ).count()
-    serial = str(count + 1).zfill(4)
+    ).all()
+    serials = [
+        int(number.rsplit("-", 1)[-1])
+        for (number,) in existing
+        if number.rsplit("-", 1)[-1].isdigit()
+    ]
+    serial = str(max(serials, default=0) + 1).zfill(4)
     return f"CTC-{date_prefix}-{serial}"
 
 
@@ -208,6 +239,14 @@ def issue_ctc(
                 detail=f"PDF generation failed: {str(e)}",
             )
 
+        # Share the PDF with every device through Supabase Storage. If the
+        # upload fails the issuance still goes through with the local path;
+        # scripts/migrate_sqlite_to_supabase.py --pdfs-only re-uploads those later.
+        try:
+            pdf_path = storage_service.store_pdf(pdf_path)
+        except Exception as e:
+            logger.warning(f"PDF upload for {ctc_number} failed, keeping local copy: {e}")
+
         # ── 6. Save Issuance ──────────────────────────────────────────────────
         input_method = InputMethodEnum.VOICE
         if payload.input_method == "qr":
@@ -295,6 +334,20 @@ def download_cedula(
 
     if not issuance:
         raise HTTPException(status_code=404, detail=f"CTC '{ctc_number}' not found.")
+
+    if storage_service.is_storage_ref(issuance.pdf_path):
+        try:
+            content, _ = storage_service.download_bytes(issuance.pdf_path)
+        except FileNotFoundError:
+            raise HTTPException(status_code=404, detail="PDF file not found.")
+        except Exception as e:
+            logger.error(f"PDF download for {ctc_number} failed: {e}")
+            raise HTTPException(status_code=502, detail="Could not fetch the PDF from storage.")
+        return Response(
+            content=content,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{ctc_number}.pdf"'},
+        )
 
     if not issuance.pdf_path or not os.path.exists(issuance.pdf_path):
         raise HTTPException(
@@ -405,7 +458,9 @@ def delete_record(
         db.delete(applicant)
     db.commit()
 
-    if pdf_path and os.path.isfile(pdf_path):
+    if storage_service.is_storage_ref(pdf_path):
+        storage_service.delete_object(pdf_path)
+    elif pdf_path and os.path.isfile(pdf_path):
         try:
             os.remove(pdf_path)
         except OSError:
@@ -466,15 +521,18 @@ def get_dashboard_stats(
     current_user: StaffUser = Depends(require_admin),
 ):
     """Return dashboard statistics."""
-    today = date.today()
-    today_start = datetime.combine(today, datetime.min.time())
-    today_end = datetime.combine(today, datetime.max.time())
+    # Day/month boundaries are barangay-local (UTC+8) midnights converted to UTC,
+    # so "today" matches the clerk's calendar instead of the UTC date.
+    today = local_today()
+    today_start = local_day_start_utc(today)
+    today_end = local_day_start_utc(today + timedelta(days=1))
     month_start = today.replace(day=1)
-    month_start_dt = datetime.combine(month_start, datetime.min.time())
+    month_start_dt = local_day_start_utc(month_start)
 
     total_issued = db.query(func.count(CTCIssuance.id)).scalar() or 0
     today_issued = db.query(func.count(CTCIssuance.id)).filter(
-        CTCIssuance.issued_at.between(today_start, today_end)
+        CTCIssuance.issued_at >= today_start,
+        CTCIssuance.issued_at < today_end,
     ).scalar() or 0
 
     monthly_count = db.query(func.count(CTCIssuance.id)).filter(
@@ -483,7 +541,8 @@ def get_dashboard_stats(
 
     total_revenue = db.query(func.coalesce(func.sum(CTCIssuance.total_amount_paid), 0.0)).scalar() or 0.0
     today_revenue = db.query(func.coalesce(func.sum(CTCIssuance.total_amount_paid), 0.0)).filter(
-        CTCIssuance.issued_at.between(today_start, today_end)
+        CTCIssuance.issued_at >= today_start,
+        CTCIssuance.issued_at < today_end,
     ).scalar() or 0.0
     average_paid = (float(total_revenue) / total_issued) if total_issued else 0.0
     
@@ -503,13 +562,15 @@ def get_dashboard_stats(
     daily_data = []
     for i in range(6, -1, -1):
         day = today - timedelta(days=i)
-        day_start = datetime.combine(day, datetime.min.time())
-        day_end = datetime.combine(day, datetime.max.time())
+        day_start = local_day_start_utc(day)
+        day_end = local_day_start_utc(day + timedelta(days=1))
         count = db.query(func.count(CTCIssuance.id)).filter(
-            CTCIssuance.issued_at.between(day_start, day_end)
+            CTCIssuance.issued_at >= day_start,
+            CTCIssuance.issued_at < day_end,
         ).scalar() or 0
         revenue = db.query(func.coalesce(func.sum(CTCIssuance.total_amount_paid), 0.0)).filter(
-            CTCIssuance.issued_at.between(day_start, day_end)
+            CTCIssuance.issued_at >= day_start,
+            CTCIssuance.issued_at < day_end,
         ).scalar() or 0.0
         daily_data.append({
             "date": day.strftime("%Y-%m-%d"),
@@ -531,8 +592,8 @@ def get_dashboard_stats(
         else:
             period_end = date(year, month + 1, 1)
 
-        period_start_dt = datetime.combine(period_start, datetime.min.time())
-        period_end_dt = datetime.combine(period_end, datetime.min.time())
+        period_start_dt = local_day_start_utc(period_start)
+        period_end_dt = local_day_start_utc(period_end)
         count = db.query(func.count(CTCIssuance.id)).filter(
             CTCIssuance.issued_at >= period_start_dt,
             CTCIssuance.issued_at < period_end_dt,

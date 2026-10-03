@@ -18,6 +18,16 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite:///./cedula.db"
 
+    # Supabase Storage (optional — PDFs and profile pictures stay local when unset)
+    SUPABASE_URL: str = ""
+    SUPABASE_SECRET_KEY: str = ""                  # sb_secret_... (server-side only, never in clients)
+    SUPABASE_PDF_BUCKET: str = "ctc-pdfs"
+    SUPABASE_PROFILE_BUCKET: str = "profile-pictures"
+
+    # Barangay local time (Philippines is UTC+8, no DST). Used for "today",
+    # monthly stats and CTC numbering so every device agrees on the date.
+    LOCAL_UTC_OFFSET_HOURS: int = 8
+
     # JWT
     SECRET_KEY: str = "change-this-in-production-32-chars-minimum"
     JWT_SECRET_KEY: str = "jwt-secret-change-in-production"
@@ -45,6 +55,19 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def normalize_database_url(cls, value):
+        # SQLAlchemy 2.0 rejects the "postgres://" alias some providers hand out.
+        if isinstance(value, str) and value.startswith("postgres://"):
+            return "postgresql://" + value[len("postgres://"):]
+        return value
+
+    @field_validator("SUPABASE_URL", mode="before")
+    @classmethod
+    def strip_supabase_url(cls, value):
+        return value.strip().rstrip("/") if isinstance(value, str) else value
 
     @field_validator("DEBUG", mode="before")
     @classmethod
