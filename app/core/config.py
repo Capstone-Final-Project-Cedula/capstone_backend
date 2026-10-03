@@ -15,8 +15,8 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
 
-    # Database
-    DATABASE_URL: str = "sqlite:///./cedula.db"
+    # Database — Supabase Postgres session pooler URL, set in .env (required)
+    DATABASE_URL: str
 
     # Supabase Storage (optional — PDFs and profile pictures stay local when unset)
     SUPABASE_URL: str = ""
@@ -59,9 +59,13 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_URL", mode="before")
     @classmethod
     def normalize_database_url(cls, value):
-        # SQLAlchemy 2.0 rejects the "postgres://" alias some providers hand out.
-        if isinstance(value, str) and value.startswith("postgres://"):
-            return "postgresql://" + value[len("postgres://"):]
+        # Accept the plain URL Supabase shows and pin the psycopg2 driver
+        # (SQLAlchemy 2.1 would otherwise pick psycopg 3, which isn't installed;
+        # 2.0 also rejects the "postgres://" alias).
+        if isinstance(value, str):
+            for prefix in ("postgres://", "postgresql://"):
+                if value.startswith(prefix):
+                    return "postgresql+psycopg2://" + value[len(prefix):]
         return value
 
     @field_validator("SUPABASE_URL", mode="before")

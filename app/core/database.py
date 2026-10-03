@@ -2,25 +2,27 @@
 app/core/database.py
 SQLAlchemy engine, session factory, and Base class.
 All models import Base from here.
+
+The app runs on Supabase Postgres (DATABASE_URL = session pooler string).
+The schema is managed by Supabase migrations; create_all() at startup only
+creates tables that are missing (e.g. in the test suite's throwaway database).
 """
-from sqlalchemy import create_engine, event, text
+from sqlalchemy import create_engine, event
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
-IS_SQLITE = settings.DATABASE_URL.startswith("sqlite")
 IS_POSTGRES = settings.DATABASE_URL.startswith("postgres")
 
-# SQLite needs check_same_thread=False for FastAPI
-connect_args = {}
-engine_kwargs = {}
-if IS_SQLITE:
-    connect_args = {"check_same_thread": False}
-elif IS_POSTGRES:
+if IS_POSTGRES:
     # Supabase pooler: drop dead connections before use and recycle idle ones
     # before the pooler closes them.
     engine_kwargs = {"pool_pre_ping": True, "pool_recycle": 300}
     connect_args = {"connect_timeout": 10}
+else:
+    # Only the test suite uses a non-Postgres (throwaway SQLite) database.
+    engine_kwargs = {}
+    connect_args = {"check_same_thread": False}
 
 engine = create_engine(
     settings.DATABASE_URL,
@@ -56,28 +58,7 @@ def get_db():
 
 
 def create_tables():
-    """Create all tables defined in models. Called on startup."""
+    """Create any missing tables defined in models. Called on startup."""
     from app.models import applicant, issuance, mobile_submission, staff_user  # noqa: F401
-    from app.models import citizen_user  # noqa: F401  ← NEW: citizen auth table
+    from app.models import citizen_user  # noqa: F401
     Base.metadata.create_all(bind=engine)
-    _sync_citizen_user_columns()
-
-
-def _sync_citizen_user_columns():
-    """Add citizen profile columns for local SQLite databases without Alembic."""
-    if not IS_SQLITE:
-        return
-
-    additions = {
-        "first_name": "ALTER TABLE citizen_users ADD COLUMN first_name VARCHAR(60)",
-        "middle_name": "ALTER TABLE citizen_users ADD COLUMN middle_name VARCHAR(60)",
-        "last_name": "ALTER TABLE citizen_users ADD COLUMN last_name VARCHAR(60)",
-        "profile_picture": "ALTER TABLE citizen_users ADD COLUMN profile_picture VARCHAR",
-    }
-
-    with engine.begin() as conn:
-        rows = conn.execute(text("PRAGMA table_info(citizen_users)")).fetchall()
-        existing = {row[1] for row in rows}
-        for column_name, statement in additions.items():
-            if column_name not in existing:
-                conn.execute(text(statement))

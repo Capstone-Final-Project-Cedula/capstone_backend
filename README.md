@@ -8,7 +8,8 @@ Data Entry and Form Generation for barangay-level government offices in the Phil
 | Layer | Technology |
 |---|---|
 | Framework | FastAPI + Uvicorn |
-| Database | SQLAlchemy + SQLite (dev) / MySQL (prod) |
+| Database | SQLAlchemy + Supabase Postgres (session pooler) |
+| File storage | Supabase Storage (CTC PDFs, profile pictures) |
 | ASR | OpenAI Whisper (`base` model) |
 | NLP/NER | DistilBERT (`dslim/distilbert-NER`) |
 | PDF | ReportLab |
@@ -208,9 +209,15 @@ pytest tests/ -v --cov=app --cov-report=term-missing
 
 ## Production Deployment
 
-### MySQL Setup
+### Supabase Setup
+All devices share one Supabase project, so data stays in sync. The schema,
+Row Level Security and private Storage buckets are managed as Supabase migrations.
 ```env
-DATABASE_URL=mysql+pymysql://cedula_user:password@localhost:3306/cedula_db
+# Dashboard > Connect > Direct > Session pooler (port 5432)
+DATABASE_URL=postgresql://postgres.<project-ref>:<db-password>@aws-0-<region>.pooler.supabase.com:5432/postgres
+# Dashboard > Project Settings > API Keys > Secret keys (server only, never in web/mobile code)
+SUPABASE_URL=https://<project-ref>.supabase.co
+SUPABASE_SECRET_KEY=sb_secret_...
 ```
 
 ### Environment Variables (production)

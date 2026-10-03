@@ -43,7 +43,7 @@ def local_today() -> date:
 def local_day_start_utc(day: date) -> datetime:
     """
     Midnight of a local calendar day, as a naive UTC datetime — the same form
-    issued_at is stored and compared in (UTC session on Postgres, UTC text on SQLite).
+    issued_at is compared in (the Postgres session time zone is pinned to UTC).
     """
     local_midnight = datetime.combine(day, datetime.min.time(), tzinfo=LOCAL_TZ)
     return local_midnight.astimezone(timezone.utc).replace(tzinfo=None)
@@ -240,8 +240,8 @@ def issue_ctc(
             )
 
         # Share the PDF with every device through Supabase Storage. If the
-        # upload fails the issuance still goes through with the local path;
-        # scripts/migrate_sqlite_to_supabase.py --pdfs-only re-uploads those later.
+        # upload fails the issuance still goes through with the local path,
+        # downloadable from this computer only.
         try:
             pdf_path = storage_service.store_pdf(pdf_path)
         except Exception as e:
