@@ -93,9 +93,11 @@ def create_app() -> FastAPI:
         ),
         version=settings.APP_VERSION,
         lifespan=lifespan,
-        docs_url="/docs",
-        redoc_url="/redoc",
-        openapi_url="/openapi.json",
+        # The interactive API browser is for development only; with DEBUG off
+        # (backend reachable from the internet through a tunnel) it is hidden.
+        docs_url="/docs" if settings.DEBUG else None,
+        redoc_url="/redoc" if settings.DEBUG else None,
+        openapi_url="/openapi.json" if settings.DEBUG else None,
     )
 
     # ── CORS ──────────────────────────────────────────────────────────────────

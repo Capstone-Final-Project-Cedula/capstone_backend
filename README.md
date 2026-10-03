@@ -91,6 +91,8 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - **Swagger UI:** http://localhost:8000/docs
 - **ReDoc:** http://localhost:8000/redoc
 
+(Only with `DEBUG=True`; they are turned off when `DEBUG=False`.)
+
 ### 5. Default admin credentials
 
 On first run, a default admin account is created:
