@@ -340,6 +340,11 @@ class TestQRCode:
         assert len(data["qr_token"]) == 32
         self.__class__.last_token = data["qr_token"]
 
+    def test_status_before_scan(self, client):
+        resp = client.get(f"/api/qr/status/{self.__class__.last_token}")
+        assert resp.status_code == 200
+        assert resp.json() == {"is_claimed": False, "is_expired": False}
+
     def test_scan_qr_valid_token(self, client, staff_token):
         token = self.__class__.last_token
         resp = client.post(
@@ -351,6 +356,11 @@ class TestQRCode:
         data = resp.json()
         assert data["form_data"]["surname"] == "Dela Cruz"
         assert data["form_data"]["given_name"] == "Juan"
+
+    def test_status_after_scan(self, client):
+        resp = client.get(f"/api/qr/status/{self.__class__.last_token}")
+        assert resp.json() == {"is_claimed": True, "is_expired": False}
+        assert client.get("/api/qr/status/not-a-real-token").status_code == 404
 
     def test_scan_qr_already_used(self, client, staff_token):
         """Token should be invalidated after first use."""
@@ -492,6 +502,64 @@ class TestPermissions:
 
     def test_pdfs_not_publicly_served(self, client):
         assert client.get("/pdfs/CTC_20260101_0001.pdf").status_code == 404
+
+
+# ─── SUS Survey ────────────────────────────────────────────────────────────────
+
+class TestSusSurvey:
+    ANSWERS = dict(zip([f"q{i}" for i in range(1, 11)], [4, 2, 5, 1, 4, 2, 5, 2, 4, 1]))
+
+    def survey(self, **overrides):
+        return {
+            "respondent_name": "  ", "role": "citizen_applicant", "computer_experience": "basic",
+            "features_used": ["voice_input", "qr_prefill", "voice_input"], **self.ANSWERS,
+            "comments": "Easy to follow", "consent_given": True, "platform": "web", **overrides,
+        }
+
+    def test_submit_without_login_and_score_hidden(self, client, staff_token):
+        resp = client.post("/api/sus/responses", json=self.survey())
+        assert resp.status_code == 201
+        assert "sus_score" not in resp.json()
+
+        rows = client.get("/api/sus/responses", headers={"Authorization": f"Bearer {staff_token}"}).json()
+        row = next(r for r in rows if r["id"] == resp.json()["id"])
+        assert row["sus_score"] == 85.0                      # the reference test case
+        assert row["respondent_name"] is None                # blank name stored as empty
+        assert row["features_used"] == ["voice_input", "qr_prefill"]
+        assert row["synced_to_sheets"] is False
+
+    def test_rejects_invalid_answers(self, client):
+        for bad in ({"consent_given": False}, {"q3": 6}, {"q10": 0}, {"role": "mayor"},
+                    {"features_used": ["hacking"]}, {"platform": "desktop"}, {"transaction_id": 999999}):
+            assert client.post("/api/sus/responses", json=self.survey(**bad)).status_code == 422, bad
+        missing = self.survey()
+        del missing["q7"]
+        assert client.post("/api/sus/responses", json=missing).status_code == 422
+
+    def test_links_to_transaction(self, client, staff_token, db):
+        from app.models.issuance import CTCIssuance
+        issuance_id = db.query(CTCIssuance.id).first()[0]
+        resp = client.post("/api/sus/responses", json=self.survey(transaction_id=issuance_id, platform="mobile"))
+        assert resp.status_code == 201
+
+    def test_reading_needs_staff(self, client, db):
+        from app.models.staff_user import StaffUser, RoleEnum
+        assert client.get("/api/sus/responses").status_code == 401
+        db.add(StaffUser(username="sus_viewer", hashed_password=hash_password("testpass123"),
+                         full_name="Survey Viewer", role=RoleEnum.VIEWER))
+        db.commit()
+        viewer = {"Authorization": f"Bearer {create_access_token(data={'sub': 'sus_viewer', 'type': 'staff'})}"}
+        assert client.get("/api/sus/responses", headers=viewer).status_code == 403
+        citizen = {"Authorization": f"Bearer {create_access_token(data={'sub': 'admin_test', 'type': 'citizen'})}"}
+        assert client.get("/api/sus/responses", headers=citizen).status_code == 401
+
+    def test_summary_and_resync_permissions(self, client, staff_token, admin_token):
+        summary = client.get("/api/sus/summary", headers={"Authorization": f"Bearer {staff_token}"}).json()
+        assert summary["total"] >= 2 and summary["pending_sync"] == summary["total"]
+        assert summary["mean_sus_score"] == 85.0
+        assert client.post("/api/sus/resync", headers={"Authorization": f"Bearer {staff_token}"}).status_code == 403
+        # The test database is SQLite, which has no Edge Function to call.
+        assert client.post("/api/sus/resync", headers={"Authorization": f"Bearer {admin_token}"}).status_code == 503
 
 
 # ─── Health Check ──────────────────────────────────────────────────────────────

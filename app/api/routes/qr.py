@@ -5,8 +5,10 @@ POST /api/qr/generate  — mobile app: generate QR from form data
 POST /api/qr/scan      — desktop: decode and claim QR submission
 POST /api/qr/decode    — desktop: decode QR from uploaded image
 GET/DELETE /api/qr/history — mobile app: list / clear the citizen's own submissions
+GET  /api/qr/status/{token} — mobile app: has the QR been scanned yet?
 """
 import json
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
@@ -141,6 +143,27 @@ def get_qr_history(
         }
         for submission in submissions
     ]
+
+
+@router.get("/status/{qr_token}")
+def get_qr_status(qr_token: str, db: Session = Depends(get_db)):
+    """
+    Has this QR code been scanned by the barangay staff yet? The mobile QR
+    screen polls this to show "form received" and the usability survey.
+    Public (guests have no login), and it reveals nothing but two flags; the
+    token itself is the unguessable secret the citizen holds.
+    """
+    submission = db.query(MobileSubmission).filter(MobileSubmission.qr_token == qr_token).first()
+    if submission is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="QR code not found.")
+
+    expires_at = submission.expires_at
+    if expires_at.tzinfo is None:  # SQLite (tests) returns naive UTC values
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    return {
+        "is_claimed": bool(submission.is_claimed),
+        "is_expired": not submission.is_claimed and expires_at <= datetime.now(timezone.utc),
+    }
 
 
 @router.delete("/history")

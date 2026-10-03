@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.core.database import create_tables
 from app.api.routes import auth, speech, extraction, qr, forms, citizen_auth
 from app.api.routes import settings as settings_routes
+from app.api.routes import sus
 
 # ─── Logging Setup ─────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -121,6 +122,7 @@ def create_app() -> FastAPI:
     app.include_router(forms.router,        prefix="/api/forms",      tags=["Forms & Records"])
     app.include_router(citizen_auth.router, prefix="/api/citizen",    tags=["Citizen Auth (Mobile)"])
     app.include_router(settings_routes.router, prefix="/api/settings", tags=["Settings"])
+    app.include_router(sus.router,          prefix="/api/sus",        tags=["SUS Survey"])
 
     # Generated PDFs are NOT served as public static files: they contain
     # citizens' personal data and have guessable names. Downloads go through
