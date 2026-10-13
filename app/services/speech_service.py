@@ -86,7 +86,7 @@ FIELD_PROMPTS = {
     "weight": "A weight, for example 60 kilos or 130 pounds.",
     "occupation": "An occupation. Examples: farmer, teacher, driver, vendor, housewife, student, laborer.",
     "gross_annual_income": "An amount in pesos, for example 20,000 a month or 240,000 a year, or none.",
-    "spelling": "A name spelled letter by letter, for example C, R, U, Z, or the word yes.",
+    "spelling": "Letters spelled one by one, for example: D, E, L, A, space, C, R, U, Z, done.",
     "confirm": "Yes or no. Opo, oo, hindi.",
     "review": "Yes, or a correction such as: change surname to Cruz.",
 }
