@@ -197,8 +197,9 @@ class SpeechService:
 
         transcript = _clean_transcript(result.get("text", ""))
 
-        logger.info(f"Transcription complete in {processing_time:.2f}s | Confidence: {confidence:.2f}")
-        logger.info(f"Transcript: {transcript}")
+        # Only the length is logged: transcripts are applicants' personal data (Data Privacy Act).
+        logger.info(f"Transcription complete in {processing_time:.2f}s | Confidence: {confidence:.2f} | "
+                    f"{len(transcript)} characters")
 
         return {
             "transcript": transcript,

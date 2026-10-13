@@ -14,6 +14,7 @@ import os
 import tempfile
 import threading
 import logging
+from collections import OrderedDict
 from typing import Optional
 
 import edge_tts
@@ -190,6 +191,14 @@ def speak_text(text: str, rate: int = 185, volume: float = 1.0, voice: str = DEF
                     pass
 
 
+# The interview asks the same questions of every applicant, so generated audio is
+# kept in memory: a repeated line plays at once instead of waiting ~1.2 s for the
+# online voice service. Only good online (edge-tts) audio is cached.
+_AUDIO_CACHE: "OrderedDict[tuple, tuple]" = OrderedDict()
+_AUDIO_CACHE_MAX = 400
+_audio_cache_lock = threading.Lock()
+
+
 def synthesize_bytes(text: str, rate: int = 185, volume: float = 1.0, voice: str = DEFAULT_VOICE) -> tuple:
     """
     Synthesize speech and return the raw audio bytes instead of playing
@@ -201,6 +210,21 @@ def synthesize_bytes(text: str, rate: int = 185, volume: float = 1.0, voice: str
     Returns:
         (audio_bytes, mime_type) tuple
     """
+    key = (text, rate, volume, voice)
+    with _audio_cache_lock:
+        if key in _AUDIO_CACHE:
+            _AUDIO_CACHE.move_to_end(key)
+            return _AUDIO_CACHE[key]
+    result = _synthesize_bytes_uncached(text, rate, volume, voice)
+    if result[0] and result[1] == "audio/mpeg":
+        with _audio_cache_lock:
+            _AUDIO_CACHE[key] = result
+            while len(_AUDIO_CACHE) > _AUDIO_CACHE_MAX:
+                _AUDIO_CACHE.popitem(last=False)
+    return result
+
+
+def _synthesize_bytes_uncached(text: str, rate: int, volume: float, voice: str) -> tuple:
     tmp_path = None
     try:
         tmp_fd, tmp_path = tempfile.mkstemp(suffix=".mp3")
