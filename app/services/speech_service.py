@@ -70,7 +70,7 @@ BUKIDNON_PLACES = (
 )
 
 FIELD_PROMPTS = {
-    "surname": "Filipino surname. Examples: Santos, Reyes, Dela Cruz, Bautista, Garcia, Lumansoc, Dagondon.",
+    "surname": "Filipino surname. Examples: Santos, Reyes, Dela Cruz, Bautista, Garcia.",
     "given_name": "Filipino given name. Examples: Maria, Jose, Juan, Ana, Ramon, Jun-jun.",
     "middle_name": "Filipino middle name, or the word none.",
     "address": (
