@@ -26,7 +26,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 from rapidfuzz import fuzz, process
 
 from app.core.config import settings
-from app.services import extraction_service
+from app.services import extraction_service, name_lexicon, place_gazetteer
 from app.services.barangay_gazetteer import load_aliases, load_barangays, match_barangay
 
 logger = logging.getLogger(__name__)
@@ -470,34 +470,76 @@ NAME_PREFIXES = [
     r"^(?:ang\s+)?(?:apelyido|pangalan|gitnang pangalan|middle name)(?:\s+ko)?(?:\s+ay)?\s*",
     r"^(?:it'?s|it\s+is|i'?m|i\s+am|this\s+is|call\s+me|ako\s+(?:si|ay)|si)\s+",
 ]
+# Whisper often mishears the start of "My surname is Santos" ("And what's her name is",
+# "A vice surname is"); everything up to "...name is" is dropped.
+NAME_LEAD_IN = re.compile(
+    r"^.{0,30}?\b(?:sur\s?name|last\s?name|family\s?name|first\s?name|given\s?name|middle\s?name|name"
+    r"|apelyido|pangalan)(?:'s|\s+(?:is|ay|ko(?:\s+ay)?))\s*:?\s*",
+    re.IGNORECASE,
+)
+NAME_ABBREVIATIONS = {"ma", "sta", "sto", "jr", "sr", "st"}
+HONORIFIC_TAIL = re.compile(r"(?<=\w)[\s,]+(?:po|pô|poe|pa|pah|bo|pu|pe)\W*$", re.IGNORECASE)
+GLUED_HONORIFIC = re.compile(r"^(.{3,}?)(?:po|pu|bo|pa|pe|poe|pah)$", re.IGNORECASE)
 NAME_ALLOWED = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿñÑ][A-Za-zÀ-ÖØ-öø-ÿñÑ .'\-]*$")
 NAME_SOUND_ALIKES = {"1": "Juan", "one": "Juan", "won": "Juan", "wan": "Juan", "hwan": "Juan", "1 1": "Juan"}
 NAME_PARTICLES = {"de", "dela", "del", "delos", "los", "la", "las", "san", "santa", "sta", "van", "von", "di", "da", "dos", "mc"}
+# Particles of two-word Filipino surnames (Dela Cruz, De Guzman, San Juan, Sta. Maria).
+FILIPINO_PARTICLES = {"de", "dela", "del", "delos", "los", "la", "las", "san", "santa", "sta", "sto", "santo"}
 NOT_A_NAME = {
     "male", "female", "single", "married", "yes", "no", "okay", "ok", "hello", "hi", "test",
     "testing", "none", "nothing", "name", "surname", "wala",
 }
+# Everyday words that are never a whole name on their own: "It's." or "Or these." is
+# what Whisper made of an unclear answer, not a name.
+FILLER_WORDS = {
+    "it's", "its", "it", "is", "or", "these", "this", "that", "those", "the", "a", "an", "and", "so",
+    "what", "then", "there", "their", "they", "he", "she", "i", "i'm", "im", "me", "my", "you", "your",
+    "be", "was", "are", "of", "to", "in", "on", "at", "for", "with", "not", "just", "like", "but",
+    "here", "yes", "no", "okay", "ok", "oh", "ah", "um", "uh", "hmm", "well", "sir", "maam", "ma'am",
+    "ano", "ito", "iyan", "yan", "yung", "kasi", "lang", "ba", "ang", "ng", "sa", "si",
+}
 
 
 def _spelled_letters(text: str) -> Optional[str]:
-    """'C R U Z' / 'c-r-u-z' -> 'CRUZ' when the answer is spelled letter by letter."""
-    parts = re.findall(r"[A-Za-zñÑ]+", text)
+    """
+    'C R U Z' / 'c-r-u-z' -> 'CRUZ' when the answer is spelled letter by letter;
+    "space" (or "next word") separates names: 'M A R Y space A N N' -> 'MARY ANN'.
+    """
+    words = re.sub(r"\bnext\s+word\b", " space ", text, flags=re.IGNORECASE)
+    parts = re.findall(r"[A-Za-zñÑ]+", words)
     singles = [p for p in parts if len(p) == 1]
-    if len(singles) >= 2 and len(singles) >= len(parts) - 1:
-        return "".join(singles)
+    spaces = [p for p in parts if p.lower() in ("space", "espasyo")]
+    if len(singles) >= 2 and len(singles) + len(spaces) >= len(parts) - 1:
+        out = "".join(" " if p.lower() in ("space", "espasyo") else p for p in parts if len(p) == 1 or p in spaces)
+        return _squash(out) or None
     return None
 
 
-def _handle_name(key: str, text: str, label: str, optional: bool) -> AnswerResult:
+def _handle_name(key: str, text: str, label: str, optional: bool, spoken: bool = False) -> AnswerResult:
     if optional and _is_blank_answer(text):
         return _ok(key, "", display="none", methods=["regex"])
     cleaned = _strip_prefix(_basic_clean(text), NAME_PREFIXES)
+    lead_in = NAME_LEAD_IN.match(cleaned)
+    if lead_in and cleaned[lead_in.end():].strip():
+        cleaned = _basic_clean(cleaned[lead_in.end():])
     # "Juan" said as "hwan" is often written as the number one by speech engines.
     if cleaned.lower().strip(" .") in NAME_SOUND_ALIKES:
         return _ok(key, NAME_SOUND_ALIKES[cleaned.lower().strip(" .")], methods=["regex"], confidence=0.7)
     spelled = _spelled_letters(cleaned)
     if spelled:
         return _ok(key, _title(spelled), methods=["regex"], confidence=0.95)
+    # ...and "wan" inside a name too: "Juma 1" is "Jumawan".
+    cleaned = re.sub(r"(?<=[A-Za-z])\s*\b1\b", "wan", cleaned)
+    if spoken:
+        # The polite "po" after a name, which Whisper also writes as "Pa", "Poe" or "Bo".
+        cleaned = re.sub(HONORIFIC_TAIL, "", cleaned).strip(" ,.;:!?")
+    # A pause between two names comes out as a comma or period ("Mary, Ann"): it is a space
+    # (but "Ma. Cristina", "Sta. Maria" keep their abbreviation dot).
+    cleaned = _squash(re.sub(
+        r"\b(\w+)\s*([,.;])\s*(?=[^\W\d_])",
+        lambda m: m.group(0) if m.group(2) == "." and m.group(1).lower() in NAME_ABBREVIATIONS else m.group(1) + " ",
+        cleaned,
+    ))
 
     methods = ["regex"]
     titled = _title(cleaned)
@@ -511,6 +553,12 @@ def _handle_name(key: str, text: str, label: str, optional: bool) -> AnswerResul
             # Keep the whole span DistilBERT marked as a person (not just the entity words,
             # which once turned "Dela Cruz" into "Cruz"), plus surname particles before it.
             start, end = min(e.start for e in persons), max(e.end for e in persons)
+            # DistilBERT may tag only part of an unfamiliar word ("Tu|mampos" -> "mampos"):
+            # always keep whole words.
+            while start > 0 and (titled[start - 1].isalpha() or titled[start - 1] in "'-"):
+                start -= 1
+            while end < len(titled) and (titled[end].isalpha() or titled[end] in "'-"):
+                end += 1
             before = titled[:start].split()
             while before and before[-1].lower().strip(".") in NAME_PARTICLES:
                 start = titled.rfind(before.pop(), 0, start)
@@ -520,12 +568,40 @@ def _handle_name(key: str, text: str, label: str, optional: bool) -> AnswerResul
     value = _squash(value).strip(" .,'-")
     if not value or value.lower() in NOT_A_NAME:
         return _fail(key, f"Please tell me your {label}.", methods=methods)
+    if all(w.lower().strip(".,!?") in FILLER_WORDS for w in value.split()):
+        return _fail(key, f"I didn't catch a name. Please spell your {label}.", reason="not_a_name", methods=methods)
+    if spoken:
+        # Whisper writes a final "s"/"z" sound after a vowel as "'s" ("Bati's"): names have no "'s".
+        value = re.sub(r"(?<=[A-Za-z])'s\b", "s", value)
     if re.search(r"\d", value):
         return _fail(key, f"A name should not have numbers. Please say your {label} again.", methods=methods)
     if not NAME_ALLOWED.match(value) or len(value) > 60 or len(value.split()) > 5:
         return _fail(key, f"I didn't get a name from that. Please say only your {label}.", methods=methods)
     if len(value.replace(" ", "")) < 2:
         return _fail(key, f"That seems too short. Please say your {label} again, or spell it.", methods=methods)
+
+    if not spoken:
+        return _ok(key, _title(value), methods=methods, confidence=confidence)
+
+    kind = "given_name" if key == "given_name" else "surname"
+    words = value.split()
+    # Whisper splits an unfamiliar surname into English words ("Da Gondon", "Lumen Salk").
+    # A Filipino surname is one word unless it has a particle (Dela Cruz, De Guzman).
+    if kind == "surname" and len(words) > 1 and not any(w.lower().strip(".") in FILIPINO_PARTICLES for w in words):
+        value = "".join(words)
+    # Spell it the way it is written locally when it sounds exactly like a known name.
+    local = name_lexicon.known_spelling(value, kind)
+    if not local and not name_lexicon.is_known(value, kind):
+        # "po" glued onto the name ("Baculiope", "Ompadbo"): drop it only when what is left
+        # is a known name, since real names can end in "po" too (Ocampo).
+        glued = GLUED_HONORIFIC.match(value)
+        if glued:
+            stem = glued.group(1)
+            local = (stem if name_lexicon.is_known(stem, kind) else None) or name_lexicon.known_spelling(stem, kind)
+    if local:
+        if not name_lexicon.is_known(local, kind):
+            local = _title(local)
+        return _ok(key, local, methods=methods + ["lexicon"], confidence=confidence)
     return _ok(key, _title(value), methods=methods, confidence=confidence)
 
 
@@ -896,47 +972,6 @@ def _handle_address(key: str, text: str) -> AnswerResult:
                warnings=["Barangay not recognized — please check the address."])
 
 
-PH_PLACES = {
-    "abra", "agusan", "aklan", "albay", "antique", "apayao", "aurora", "basilan", "bataan", "batanes",
-    "batangas", "benguet", "biliran", "bohol", "bukidnon", "bulacan", "cagayan", "camarines", "camiguin",
-    "capiz", "catanduanes", "cavite", "cebu", "cotabato", "davao", "dinagat", "guimaras", "ifugao",
-    "ilocos", "iloilo", "isabela", "kalinga", "laguna", "lanao", "leyte", "maguindanao", "marinduque",
-    "masbate", "misamis", "mindoro", "mountain province", "negros", "nueva ecija", "nueva vizcaya",
-    "palawan", "pampanga", "pangasinan", "quezon", "quirino", "rizal", "romblon", "samar", "sarangani",
-    "siquijor", "sorsogon", "sultan kudarat", "sulu", "surigao", "tarlac", "tawi-tawi", "zambales",
-    "zamboanga", "manila", "metro manila", "makati", "pasig", "taguig", "caloocan", "cagayan de oro",
-    "iligan", "butuan", "gingoog", "ozamiz", "oroquieta", "tangub", "malaybalay", "valencia", "baguio",
-    "tacloban", "ormoc", "dumaguete", "bacolod", "general santos", "koronadal", "cotabato city",
-    "puerto princesa", "legazpi", "naga", "lucena", "antipolo", "marikina", "pasay", "paranaque",
-    "las pinas", "muntinlupa", "valenzuela", "malabon", "navotas", "mandaluyong", "san juan",
-    "mambajao", "catarman", "sagay", "mahinog", "guinsiliban", "balingoan", "talisayan", "medina",
-    "jasaan", "villanueva", "tagoloan", "opol", "el salvador", "lapu-lapu", "mandaue", "talisay",
-    "tagbilaran", "surallah", "kidapawan", "digos", "tagum", "mati", "pagadian", "dipolog", "dapitan",
-    # Bukidnon (2 cities, 20 municipalities)
-    "baungon", "cabanglasan", "damulog", "dangcagan", "don carlos", "impasugong", "impasug-ong",
-    "kadingilan", "kalilangan", "kibawe", "kitaotao", "lantapan", "libona", "malitbog", "manolo fortich",
-    "maramag", "pangantucan", "san fernando", "sumilao", "talakag",
-    # Misamis Oriental, next door
-    "misamis oriental", "alubijid", "balingasag", "binuangan", "claveria", "gitagum", "initao",
-    "kinoguitan", "lagonglong", "laguindingan", "libertad", "lugait", "magsaysay", "manticao",
-    "naawan", "salay", "sugbongcogon", "el salvador city",
-}
-
-
-def _known_place(text: str) -> Optional[str]:
-    t = text.lower()
-    for place in sorted(PH_PLACES, key=len, reverse=True):
-        if re.search(rf"\b{re.escape(place)}\b", t):
-            return place
-    words = re.findall(r"[a-zñ\-]+", t)
-    for w in words:
-        if len(w) >= 5:
-            res = process.extractOne(w, list(PH_PLACES), scorer=fuzz.ratio)
-            if res and res[1] >= 88:
-                return res[0]
-    return None
-
-
 def _handle_place_of_birth(key: str, text: str) -> AnswerResult:
     cleaned = _strip_prefix(_basic_clean(text), [
         r"^(?:i\s+was\s+)?born\s+(?:in|at)\s+", r"^(?:my\s+)?place\s+of\s+birth(?:\s+is)?\s*",
@@ -947,15 +982,19 @@ def _handle_place_of_birth(key: str, text: str) -> AnswerResult:
     if re.fullmatch(r"[\d\s.,/-]+", cleaned):
         return _fail(key, "Please say the name of the town or city where you were born.")
     methods = ["regex", "gazetteer"]
+    # Every Philippine province, city and municipality (PSGC): written the official way,
+    # with its province ("polo molok" -> "Polomolok, South Cotabato").
+    place = place_gazetteer.find_place(cleaned, home_province=_office_location()[1])
+    if place:
+        return _ok(key, place["value"], methods=methods, confidence=0.95)
     entities = _ner_entities(_title(cleaned))
     locations = []
     if entities is not None:
         methods.insert(0, "distilbert")
         locations = [e.word for e in entities if e.label == "LOC" and e.score >= 0.5]
     barangay = _find_barangay(cleaned)[0]
-    known = _known_place(cleaned)
     value = _title(cleaned)
-    if locations or barangay or known:
+    if locations or barangay:
         return _ok(key, value, methods=methods, confidence=0.9)
     # Plausible but not recognized as a place: keep it, but ask the applicant to confirm.
     return _ok(key, value, methods=methods, confidence=0.5, needs_confirmation=True,
@@ -1024,10 +1063,10 @@ FIELD_LABELS = {
 }
 OPTIONAL_FIELDS = {"middle_name", "icr_no"}
 
-HANDLERS: Dict[str, Callable[[str, str], AnswerResult]] = {
-    "surname": lambda k, t: _handle_name(k, t, "surname", optional=False),
-    "given_name": lambda k, t: _handle_name(k, t, "given name", optional=False),
-    "middle_name": lambda k, t: _handle_name(k, t, "middle name", optional=True),
+HANDLERS: Dict[str, Callable[..., AnswerResult]] = {
+    "surname": lambda k, t, spoken=False: _handle_name(k, t, "surname", optional=False, spoken=spoken),
+    "given_name": lambda k, t, spoken=False: _handle_name(k, t, "given name", optional=False, spoken=spoken),
+    "middle_name": lambda k, t, spoken=False: _handle_name(k, t, "middle name", optional=True, spoken=spoken),
     "address": _handle_address,
     "date": _handle_date,
     "sex": _handle_sex,
@@ -1042,8 +1081,16 @@ HANDLERS: Dict[str, Callable[[str, str], AnswerResult]] = {
 }
 
 
-def understand_answer(field_key: str, transcript: str) -> AnswerResult:
-    """Interpret one interview answer for one field (see module docstring)."""
+NAME_KEYS = {"surname", "given_name", "middle_name"}
+
+
+def understand_answer(field_key: str, transcript: str, spoken: bool = False) -> AnswerResult:
+    """
+    Interpret one interview answer for one field (see module docstring).
+    spoken=True: the text is Whisper's transcript, so a name may also be rejoined
+    ("Da Gondon") and given its local spelling ("Bakulio" -> "Baculio"). Typed
+    text is kept as typed.
+    """
     handler = HANDLERS.get(field_key)
     if handler is None:
         raise KeyError(field_key)
@@ -1056,6 +1103,8 @@ def understand_answer(field_key: str, transcript: str) -> AnswerResult:
     if _is_unclear(text):
         return _fail(field_key, "No problem, let me ask again.", reason="unclear")
     try:
+        if field_key in NAME_KEYS:
+            return handler(field_key, text, spoken=spoken)
         return handler(field_key, text)
     except Exception as exc:  # never break the interview on a parsing bug
         logger.exception(f"Answer parsing failed for {field_key}: {exc}")

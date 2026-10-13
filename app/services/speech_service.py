@@ -70,9 +70,13 @@ BUKIDNON_PLACES = (
 )
 
 FIELD_PROMPTS = {
-    "surname": "Filipino surname. Examples: Santos, Reyes, Dela Cruz, Bautista, Garcia.",
-    "given_name": "Filipino given name. Examples: Maria, Jose, Juan, Ana, Ramon, Jun-jun.",
-    "middle_name": "Filipino middle name, or the word none.",
+    # Name hints are written like real answers, not as a list: Whisper copies the format
+    # (local spellings, "po" as its own word) instead of copying a list of example names
+    # into the transcript ("Dela Cruz, Bautista, Garcia."). Benchmark with Philippine
+    # voices: 30 -> 43 of 144 names exactly right with Whisper base.
+    "surname": "Lagbas po. Ybañez po. My surname is Sumagaysay. Manlangit po. Tagaylo.",
+    "given_name": "Jessa po. My first name is Rodel. Mylene po. Gerlie Mae.",
+    "middle_name": "Lagbas po. My middle name is Ybañez. None po. Sumagaysay.",
     "address": (
         f"Purok, sitio and barangay in Baungon, Bukidnon. Barangays: {get_barangay_list_for_prompt()}."
     ),
@@ -87,7 +91,7 @@ FIELD_PROMPTS = {
     "occupation": "An occupation. Examples: farmer, teacher, driver, vendor, housewife, student, laborer.",
     "gross_annual_income": "An amount in pesos, for example 20,000 a month or 240,000 a year, or none.",
     "spelling": "Letters spelled one by one, for example: D, E, L, A, space, C, R, U, Z, done.",
-    "confirm": "Yes or no. Opo, oo, hindi.",
+    "confirm": "Yes or no. Opo, oo, hindi. Go back.",
     "review": "Yes, or a correction such as: change surname to Cruz.",
 }
 
@@ -131,26 +135,35 @@ class SpeechService:
     Model is loaded once on first use to avoid repeated cold starts.
     """
 
-    _model = None  # Cached Whisper model (shared across requests)
+    _models: dict = {}  # Cached Whisper models by name (shared across requests)
 
     @classmethod
-    def get_model(cls):
-        """Load model once and cache it (lazy initialization)."""
-        if cls._model is None:
+    def model_name_for(cls, field_key: Optional[str]) -> str:
+        """Yes/no replies use the small, fast model; everything else the main one."""
+        if field_key == "confirm" and settings.WHISPER_CONFIRM_MODEL:
+            return settings.WHISPER_CONFIRM_MODEL
+        return settings.WHISPER_MODEL
+
+    @classmethod
+    def get_model(cls, name: Optional[str] = None):
+        """Load a model once and cache it (lazy initialization)."""
+        name = name or settings.WHISPER_MODEL
+        if name not in cls._models:
             with _model_lock:
-                if cls._model is None:
-                    logger.info(f"Loading Whisper model: {settings.WHISPER_MODEL}")
-                    cls._model = whisper.load_model(settings.WHISPER_MODEL)
+                if name not in cls._models:
+                    logger.info(f"Loading Whisper model: {name}")
+                    cls._models[name] = whisper.load_model(name)
                     logger.info("Whisper model loaded successfully.")
-        return cls._model
+        return cls._models[name]
 
     @classmethod
     def warm_up(cls) -> None:
-        """Load the model (and run one tiny pass) at startup so the first answer is fast."""
+        """Load the models (and run one short pass) at startup so the first answer is fast."""
         try:
-            model = cls.get_model()
-            with _model_lock:
-                model.transcribe(np.zeros(WHISPER_SAMPLE_RATE // 2, dtype=np.float32), **_decode_options(None))
+            for name in {settings.WHISPER_MODEL, cls.model_name_for("confirm")}:
+                model = cls.get_model(name)
+                with _model_lock:
+                    model.transcribe(np.zeros(WHISPER_SAMPLE_RATE // 2, dtype=np.float32), **_decode_options(None))
             logger.info("Whisper warmed up.")
         except Exception as exc:  # never block startup on this
             logger.warning(f"Whisper warm-up failed: {exc}")
@@ -176,7 +189,7 @@ class SpeechService:
             dict with keys: transcript, language, confidence, segments,
                             processing_time_seconds
         """
-        model = cls.get_model()
+        model = cls.get_model(cls.model_name_for(field_key))
         start_time = time.time()
         initial_prompt = cls._build_prompt(field_key)
 

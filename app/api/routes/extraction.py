@@ -32,6 +32,7 @@ InterviewField = Literal[
 class AnswerRequest(BaseModel):
     field_key: InterviewField
     transcript: str = Field("", max_length=500)
+    spoken: bool = False   # True: Whisper's transcript in the voice interview (names may be respelled)
 
 
 class AnswerResponse(BaseModel):
@@ -65,7 +66,7 @@ def understand_interview_answer(payload: AnswerRequest, current_user=Depends(get
     normalized value, or ok=false with a short message to say before asking
     again — e.g. "nails" for sex is rejected instead of saved.
     """
-    return AnswerResponse(**understand_answer(payload.field_key, payload.transcript).as_dict())
+    return AnswerResponse(**understand_answer(payload.field_key, payload.transcript, spoken=payload.spoken).as_dict())
 
 
 @router.post("/answers", response_model=AnswersResponse)

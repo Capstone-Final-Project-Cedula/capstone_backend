@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     # greedy decoding (~0.75 s per answer measured on an i5-11400H), versus
     # "small" + beam search at ~4 s. Use "small" on a GPU or a fast server.
     WHISPER_MODEL: str = "base"
+    # Yes/no replies ("is that correct?") use a smaller model: 0.28 s instead of 0.64 s per
+    # reply with the same accuracy on Philippine voices (benchmark, October 2026). "" = WHISPER_MODEL.
+    WHISPER_CONFIRM_MODEL: str = "tiny"
     WHISPER_BEAM_SIZE: int = 1                     # 1 = greedy (fast); 5 = thorough but ~2x slower
     WHISPER_PRELOAD: bool = True                   # load at startup so the first applicant doesn't wait
     WHISPER_NO_SPEECH_THRESHOLD: float = 0.35

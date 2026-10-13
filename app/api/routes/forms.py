@@ -17,7 +17,7 @@ from app.core.security import get_current_user, require_admin, require_staff
 from app.models.applicant import ApplicantRecord
 from app.models.issuance import CTCIssuance, InputMethodEnum
 from app.models.staff_user import StaffUser
-from app.services import storage_service
+from app.services import name_lexicon, storage_service
 from app.services.pdf_service import generate_cedula_pdf, generate_receipt_pdf
 from app.services.tax_service import compute_tax
 from app.schemas.schemas import (
@@ -271,6 +271,7 @@ def issue_ctc(
         db.add(issuance)
         db.commit()
         db.refresh(issuance)
+        name_lexicon.refresh_records()   # the next interview knows this applicant's names
 
         logger.info(f"CTC {ctc_number} issued successfully")
 

@@ -584,6 +584,59 @@ class TestInterviewAnswers:
         assert phonetic_key("Salimbalan") == phonetic_key("Isolim Balan")
         assert understand_answer("given_name", "1.").value == "Juan"   # "Juan" heard as "one"
 
+    @pytest.mark.parametrize("key,heard,value", [
+        # Real Whisper (base) outputs for Philippine voices saying these names:
+        ("surname", "And what's her name is Bakulio?", "Baculio"),   # misheard lead-in + English spelling
+        ("surname", "A vice surname is Sinagin.", "Sinagin"),
+        ("surname", "Abelana.", "Abellana"),                          # known local spelling
+        ("surname", "Pakana Po.", "Pacana"),
+        ("surname", "Da Gondon.", "Dagondon"),                        # split into English words
+        ("surname", "I got po.", "Igot"),
+        ("surname", "My surname is Juma Wan.", "Jumawan"),
+        ("surname", "Juma 1.", "Jumawan"),                            # "wan" written as a digit
+        ("surname", "Baculiope.", "Baculio"),                         # "po" glued on
+        ("surname", "Santos, Bo.", "Santos"),                         # "po" heard as "Bo"
+        ("surname", "Dela Cruz po", "Dela Cruz"),                     # particle: stays two words
+        ("given_name", "Maria, Pa.", "Maria"),
+        ("given_name", "Jhon Paul", "Jhon Paul"),                     # given names are not joined
+        ("given_name", "Ross, John.", "Ross John"),                   # a pause written as a comma
+        ("given_name", "Mary. Ann.", "Mary Ann"),
+        ("given_name", "Ma. Cristina", "Ma. Cristina"),               # abbreviation kept
+        ("given_name", "M, A, R, Y, space, A, N, N.", "Mary Ann"),
+        ("given_name", "Maria Cristina Luz", "Maria Cristina Luz"),   # three given names
+        ("surname", "Ocampo", "Ocampo"),                              # a real "-po" name is kept
+    ])
+    def test_spoken_names(self, key, heard, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer(key, heard, spoken=True)
+        assert result.ok, result.message
+        assert result.value == value
+
+    @pytest.mark.parametrize("heard", ["It's.", "Or these.", "this is", "That is it."])
+    def test_filler_is_not_a_name(self, heard):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("surname", heard, spoken=True)
+        assert not result.ok and result.reason == "not_a_name"
+
+    def test_typed_names_are_kept_as_typed(self):
+        from app.services.answer_service import understand_answer
+        assert understand_answer("surname", "Bakos").value == "Bakos"            # not respelled
+        assert understand_answer("surname", "Santos Reyes").value == "Santos Reyes"
+
+    def test_name_sound_key(self):
+        from app.services.name_lexicon import sound_key
+        assert sound_key("Baculio") == sound_key("Bakulio")
+        assert sound_key("Abellana") == sound_key("Abelana")
+        assert sound_key("Maglinte") == sound_key("Maglenti")
+        assert sound_key("Ortega") != sound_key("Ordega")
+
+    def test_ner_span_keeps_whole_words(self):
+        from app.services import answer_service
+        from app.services.answer_service import Entity, _handle_name
+        # DistilBERT tagging only "mampos" of "Tumampos" must not cut the name.
+        with patch.object(answer_service, "_ner_entities", return_value=[Entity("PER", "mampos", 0.9, 2, 8)]):
+            assert _handle_name("surname", "Tumampos", "surname", optional=False).value == "Tumampos"
+
     def test_whisper_drops_silence_hallucinations(self):
         from app.services.speech_service import _clean_transcript, _decode_options
         assert _clean_transcript(" Thank you. ") == ""

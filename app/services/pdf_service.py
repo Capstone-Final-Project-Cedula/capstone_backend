@@ -50,10 +50,13 @@ SEAL_BLUE  = colors.HexColor("#B32035")
 SEAL_GOLD  = colors.HexColor("#B32035")
 STAMP_RED  = colors.HexColor("#B32035")
 
-# Card dimensions
+# Card dimensions (drawing units). The card is drawn scaled up to fill a landscape
+# letter page (short bond paper), so it prints full size on any office printer.
 CARD_W = 8.27 * inch
-CARD_H = 4.5  * inch
+CARD_H = 5.2  * inch     # tall enough for every caption + value row (was 4.5 in: values hit the lines)
 MARGIN = 0.20 * inch
+PAGE_SIZE = (LETTER[1], LETTER[0])   # 11 x 8.5 in, landscape
+PAGE_MARGIN = 0.35 * inch
 BIR_LOGO_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "assets", "bir_logo.png")
 )
@@ -119,22 +122,51 @@ def _label(c, x, y, text, size=5.0):
     c.setFillColor(BLACK)
 
 
-def _value(c, x, y, text, size=8.5, bold=False):
-    c.setFont("Helvetica-Bold" if bold else "Helvetica", size)
+def _value(c, x, y, text, size=8.5, bold=False, max_width=None):
+    """Draw a value; a value too wide for its cell is drawn smaller instead of spilling over."""
+    font = "Helvetica-Bold" if bold else "Helvetica"
+    text = str(text) if text else ""
+    if max_width and text:
+        while size > 5 and c.stringWidth(text, font, size) > max_width:
+            size -= 0.25
+    c.setFont(font, size)
     c.setFillColor(BLACK)
-    c.drawString(x, y, str(text) if text else "")
+    c.drawString(x, y, text)
+
+
+CAP_HEIGHT = 0.72   # Helvetica capitals are about 0.72 of the font size tall
 
 
 def _cell(c, x, y, w, h, caption, value, cap_size=5.0, val_size=8.2,
           val_bold=False, pad_x=3, pad_y=3):
-    """Caption pinned to the top of the cell, value pinned to the bottom.
-    Works for any cell height, including merged (multi-row) cells."""
+    """Caption pinned to the top of the cell, value on the bottom. The value always
+    stays INSIDE the cell: on a short cell it is drawn smaller, never moved down
+    across the cell's bottom line."""
     cap_y = y + h - cap_size - pad_y
-    val_y = y + pad_y + 1
-    # never let the value collide with the caption on very short cells
-    val_y = min(val_y, cap_y - val_size - 2)
+    val_y = y + pad_y
+    room = (cap_y - 1.5) - val_y                # space between the value baseline and the caption
+    size = max(5.0, min(val_size, room / CAP_HEIGHT))
     _label(c, x + pad_x, cap_y, caption, size=cap_size)
-    _value(c, x + pad_x, val_y, value, size=val_size, bold=val_bold)
+    _value(c, x + pad_x, val_y, value, size=size, bold=val_bold, max_width=w - 2 * pad_x)
+
+
+def _number(value) -> str:
+    """165.0 -> '165', 52.5 -> '52.5'."""
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return str(value or "")
+    return str(int(f)) if f.is_integer() else f"{f:g}"
+
+
+def _form_date(value) -> str:
+    """'2005-07-30' -> '07/30/2005' (the order used on the printed form)."""
+    s = str(value or "")
+    try:
+        d = datetime.strptime(s[:10], "%Y-%m-%d")
+        return d.strftime("%m/%d/%Y")
+    except ValueError:
+        return s
 
 
 def _checkbox(c, x, y, size=6.5, checked=False, number=None):
@@ -318,11 +350,11 @@ def generate_cedula_pdf(
     citizenship  = (a.get("citizenship")  or "FIL.").upper()
     icr_no       =  a.get("icr_number")   or ""
     place_birth  = (a.get("place_of_birth") or "").upper()
-    height       =  str(a.get("height_cm")  or "")
-    weight_val   =  str(a.get("weight_kg")  or "")
-    weight_str   =  f"{weight_val} kg." if weight_val else ""
+    height       =  _number(a.get("height_cm")) if a.get("height_cm") else ""
+    weight_val   =  _number(a.get("weight_kg")) if a.get("weight_kg") else ""
+    weight_str   =  f"{weight_val} kg" if weight_val else ""
     civil_status = (a.get("civil_status") or "").lower()
-    dob          =  str(a.get("date_of_birth") or "")
+    dob          =  _form_date(a.get("date_of_birth"))
     occupation   = (a.get("occupation")   or "").upper()
     income       =  float(a.get("gross_annual_income") or 0.0)
     treasurer    =  getattr(settings, "TREASURER_NAME", "")
@@ -338,10 +370,15 @@ def generate_cedula_pdf(
     taxable_amt = gross_biz + salaries + real_prop
     in_words    = _amount_in_words(total_paid)
 
-    # Canvas
-    c = pdfcanvas.Canvas(output_path, pagesize=(CARD_W, CARD_H))
+    # Canvas: a landscape letter page with the card scaled up to fill its width and
+    # centred, so it prints full size (the card alone printed small at the page top).
+    c = pdfcanvas.Canvas(output_path, pagesize=PAGE_SIZE)
     c.setTitle(f"Community Tax Certificate - {ctc_number}")
     c.setAuthor(office.barangay_name)
+    page_w, page_h = PAGE_SIZE
+    scale = min((page_w - 2 * PAGE_MARGIN) / CARD_W, (page_h - 2 * PAGE_MARGIN) / CARD_H)
+    c.translate((page_w - CARD_W * scale) / 2, (page_h - CARD_H * scale) / 2)
+    c.scale(scale, scale)
 
     L  = MARGIN
     R  = CARD_W - MARGIN
@@ -385,7 +422,7 @@ def generate_cedula_pdf(
     # ── VERTICAL ZONES ───────────────────────────────────────────────────
     WORK_TOP = hdr_bot
     FOOT_H   = 27
-    TAX_H    = 73
+    TAX_H    = 86     # five rows; two of them carry two-line descriptions
     SIG_H    = 36
     WORK_BOT = B + FOOT_H + TAX_H + SIG_H
     WORK_H   = WORK_TOP - WORK_BOT
@@ -502,7 +539,7 @@ def generate_cedula_pdf(
     _cell(c, L, r1b, NAME_SUR_W, r1t - r1b, "NAME (SURNAME)", surname, val_size=9, val_bold=True)
     _cell(c, L + NAME_SUR_W, r1b, NAME_FST_W, r1t - r1b, "(FIRST)", given_name, val_size=9, val_bold=True)
     _cell(c, L + NAME_SUR_W + NAME_FST_W, r1b, NAME_MID_W, r1t - r1b, "(MIDDLE)", middle_name, val_size=9, val_bold=True)
-    _cell(c, RIGHT_X, r1b, RIGHT_W, r1t - r1b, "HEIGHT", f"{height} cm." if height else "", val_size=9, val_bold=True)
+    _cell(c, RIGHT_X, r1b, RIGHT_W, r1t - r1b, "HEIGHT", f"{height} cm" if height else "", val_size=9, val_bold=True)
 
     # ROW 2 — ADDRESS | WEIGHT
     r2t, r2b = row_top(2), row_bot(2)
@@ -536,19 +573,21 @@ def generate_cedula_pdf(
     c.setFont("Helvetica", 5.4)
     for i, (num, lines, key) in enumerate(cs_items):
         col_x = L + i * CS_COL
+        # Box 3 on the form is "Widow/Widower/Legally Separated"; box 4 is only Divorced.
         checked = (
-            key in civil_status
-            or (key == "widow"    and "widowed"   in civil_status)
-            or (key == "divorced" and "separated" in civil_status)
+            (key == "widow" and any(w in civil_status for w in ("widow", "separated")))
+            or (key != "widow" and key in civil_status)
         )
         box_x = col_x + 4
-        box_y = r4b + (r4t - r4b) * 0.16
+        box_y = r4b + 6.5            # leaves room for a two-line label inside the row
         _checkbox(c, box_x, box_y, size=6.2, checked=checked, number=num)
         c.setFont("Helvetica", 5.2)
         c.setFillColor(BLACK)
-        c.drawString(box_x + 9, box_y + 1, lines[0])
         if len(lines) > 1:
-            c.drawString(box_x + 9, box_y - 5.5, lines[1])
+            c.drawString(box_x + 9, box_y + 3.4, lines[0])
+            c.drawString(box_x + 9, box_y - 2.8, lines[1])
+        else:
+            c.drawString(box_x + 9, box_y + 1, lines[0])
 
     _cell(c, RIGHT_X, r4b, RIGHT_W, r4t - r4b, "TAXABLE AMOUNT",
           f"P {taxable_amt:,.2f}", val_size=9, val_bold=True)
@@ -604,12 +643,14 @@ def generate_cedula_pdf(
         c.setFont("Helvetica-Bold" if bold else "Helvetica", 5.8 if bold else 5.4)
         c.setFillColor(BLACK)
         lines = text.split("\n")
-        c.drawString(L + 4 + indent * 6, ty + t_row_h - 8, lines[0])
         if len(lines) > 1:
-            c.drawString(L + 4 + indent * 6, ty + t_row_h - 14, lines[1])
+            c.drawString(L + 4 + indent * 6, ty + t_row_h / 2 + 1.5, lines[0])
+            c.drawString(L + 4 + indent * 6, ty + t_row_h / 2 - 5, lines[1])
+        else:
+            c.drawString(L + 4 + indent * 6, ty + t_row_h / 2 - 2, lines[0])
         if amt:
             c.setFont("Helvetica", 6.5)
-            c.drawRightString(R - 4, ty + t_row_h - 10, amt)
+            c.drawRightString(R - 4, ty + t_row_h / 2 - 2, amt)
 
     # ── SIGNATURE BLOCK ──────────────────────────────────────────────────
     sig_top  = tax_bot

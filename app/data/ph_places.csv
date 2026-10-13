@@ -1,0 +1,1726 @@
+name,display,type,province,region,psgc_id
+Angeles,Angeles City,city,,Region III (Central Luzon),0330100000
+Bacolod,Bacolod City,city,,Negros Island Region (NIR),1830200000
+Baguio,Baguio City,city,,Cordillera Administrative Region (CAR),1430300000
+Butuan,Butuan City,city,,Region XIII (Caraga),1630400000
+Cagayan de Oro,Cagayan de Oro City,city,,Region X (Northern Mindanao),1030500000
+Caloocan,Caloocan City,city,,National Capital Region (NCR),1380100000
+Cebu,Cebu City,city,,Region VII (Central Visayas),0730600000
+Davao,Davao City,city,,Region XI (Davao Region),1130700000
+General Santos,General Santos City,city,,Region XII (SOCCSKSARGEN),1230800000
+Iligan,Iligan City,city,,Region X (Northern Mindanao),1030900000
+Iloilo,Iloilo City,city,,Region VI (Western Visayas),0631000000
+Isabela,Isabela City,city,,Region IX (Zamboanga Peninsula),0990100000
+Isabela,Isabela City,city,,Region IX (Zamboanga Peninsula),0990101000
+Lapu-Lapu,Lapu-Lapu City,city,,Region VII (Central Visayas),0731100000
+Las Piñas,Las Piñas City,city,,National Capital Region (NCR),1380200000
+Lucena,Lucena City,city,,Region IV-A (CALABARZON),0431200000
+Makati,Makati City,city,,National Capital Region (NCR),1380300000
+Malabon,Malabon City,city,,National Capital Region (NCR),1380400000
+Mandaluyong,Mandaluyong City,city,,National Capital Region (NCR),1380500000
+Mandaue,Mandaue City,city,,Region VII (Central Visayas),0731300000
+Manila,Manila,city,,National Capital Region (NCR),1380600000
+Marikina,Marikina City,city,,National Capital Region (NCR),1380700000
+Muntinlupa,Muntinlupa City,city,,National Capital Region (NCR),1380800000
+Navotas,Navotas City,city,,National Capital Region (NCR),1380900000
+Olongapo,Olongapo City,city,,Region III (Central Luzon),0331400000
+Parañaque,Parañaque City,city,,National Capital Region (NCR),1381000000
+Pasay,Pasay City,city,,National Capital Region (NCR),1381100000
+Pasig,Pasig City,city,,National Capital Region (NCR),1381200000
+Puerto Princesa,Puerto Princesa City,city,,MIMAROPA Region,1731500000
+Quezon City,Quezon City,city,,National Capital Region (NCR),1381300000
+San Juan,San Juan City,city,,National Capital Region (NCR),1381400000
+Tacloban,Tacloban City,city,,Region VIII (Eastern Visayas),0831600000
+Taguig,Taguig City,city,,National Capital Region (NCR),1381500000
+Valenzuela,Valenzuela City,city,,National Capital Region (NCR),1381600000
+Zamboanga,Zamboanga City,city,,Region IX (Zamboanga Peninsula),0931700000
+Cabadbaran,Cabadbaran City,city,Agusan del Norte,Region XIII (Caraga),1600203000
+Bayugan,Bayugan City,city,Agusan del Sur,Region XIII (Caraga),1600301000
+Legazpi,Legazpi City,city,Albay,Region V (Bicol Region),0500506000
+Ligao,Ligao City,city,Albay,Region V (Bicol Region),0500508000
+Tabaco,Tabaco City,city,Albay,Region V (Bicol Region),0500517000
+Lamitan,Lamitan City,city,Basilan,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1900702000
+Balanga,Balanga City,city,Bataan,Region III (Central Luzon),0300803000
+Batangas,Batangas City,city,Batangas,Region IV-A (CALABARZON),0401005000
+Calaca,Calaca City,city,Batangas,Region IV-A (CALABARZON),0401007000
+Lipa,Lipa City,city,Batangas,Region IV-A (CALABARZON),0401014000
+Sto. Tomas,Sto. Tomas City,city,Batangas,Region IV-A (CALABARZON),0401028000
+Tanauan,Tanauan City,city,Batangas,Region IV-A (CALABARZON),0401031000
+Tagbilaran,Tagbilaran City,city,Bohol,Region VII (Central Visayas),0701242000
+Malaybalay,Malaybalay City,city,Bukidnon,Region X (Northern Mindanao),1001312000
+Valencia,Valencia City,city,Bukidnon,Region X (Northern Mindanao),1001321000
+Baliwag,Baliwag City,city,Bulacan,Region III (Central Luzon),0301403000
+Malolos,Malolos City,city,Bulacan,Region III (Central Luzon),0301410000
+Meycauayan,Meycauayan City,city,Bulacan,Region III (Central Luzon),0301412000
+San Jose del Monte,San Jose del Monte City,city,Bulacan,Region III (Central Luzon),0301420000
+Tuguegarao,Tuguegarao City,city,Cagayan,Region II (Cagayan Valley),0201529000
+Iriga,Iriga City,city,Camarines Sur,Region V (Bicol Region),0501716000
+Naga,Naga City,city,Camarines Sur,Region V (Bicol Region),0501724000
+Roxas,Roxas City,city,Capiz,Region VI (Western Visayas),0601914000
+Bacoor,Bacoor City,city,Cavite,Region IV-A (CALABARZON),0402103000
+Carmona,Carmona City,city,Cavite,Region IV-A (CALABARZON),0402104000
+Cavite,Cavite City,city,Cavite,Region IV-A (CALABARZON),0402105000
+Dasmariñas,Dasmariñas City,city,Cavite,Region IV-A (CALABARZON),0402106000
+General Trias,General Trias City,city,Cavite,Region IV-A (CALABARZON),0402108000
+Imus,Imus City,city,Cavite,Region IV-A (CALABARZON),0402109000
+Tagaytay,Tagaytay City,city,Cavite,Region IV-A (CALABARZON),0402119000
+Trece Martires,Trece Martires City,city,Cavite,Region IV-A (CALABARZON),0402122000
+Bogo,Bogo City,city,Cebu,Region VII (Central Visayas),0702211000
+Carcar,Carcar City,city,Cebu,Region VII (Central Visayas),0702214000
+Danao,Danao City,city,Cebu,Region VII (Central Visayas),0702223000
+Naga,Naga City,city,Cebu,Region VII (Central Visayas),0702234000
+Talisay,Talisay City,city,Cebu,Region VII (Central Visayas),0702250000
+Toledo,Toledo City,city,Cebu,Region VII (Central Visayas),0702251000
+Kidapawan,Kidapawan City,city,Cotabato,Region XII (SOCCSKSARGEN),1204704000
+Mati,Mati City,city,Davao Oriental,Region XI (Davao Region),1102509000
+Island Garden City of Samal,Island Garden City of Samal City,city,Davao del Norte,Region XI (Davao Region),1102317000
+Panabo,Panabo City,city,Davao del Norte,Region XI (Davao Region),1102315000
+Tagum,Tagum City,city,Davao del Norte,Region XI (Davao Region),1102319000
+Digos,Digos City,city,Davao del Sur,Region XI (Davao Region),1102403000
+Borongan,Borongan City,city,Eastern Samar,Region VIII (Eastern Visayas),0802604000
+Batac,Batac City,city,Ilocos Norte,Region I (Ilocos Region),0102805000
+Laoag,Laoag City,city,Ilocos Norte,Region I (Ilocos Region),0102812000
+Candon,Candon City,city,Ilocos Sur,Region I (Ilocos Region),0102906000
+Vigan,Vigan City,city,Ilocos Sur,Region I (Ilocos Region),0102934000
+Passi,Passi City,city,Iloilo,Region VI (Western Visayas),0603035000
+Cauayan,Cauayan City,city,Isabela,Region II (Cagayan Valley),0203108000
+Ilagan,Ilagan City,city,Isabela,Region II (Cagayan Valley),0203114000
+Santiago,Santiago City,city,Isabela,Region II (Cagayan Valley),0203135000
+Tabuk,Tabuk City,city,Kalinga,Cordillera Administrative Region (CAR),1403213000
+San Fernando,San Fernando City,city,La Union,Region I (Ilocos Region),0103314000
+Biñan,Biñan City,city,Laguna,Region IV-A (CALABARZON),0403403000
+Cabuyao,Cabuyao City,city,Laguna,Region IV-A (CALABARZON),0403404000
+Calamba,Calamba City,city,Laguna,Region IV-A (CALABARZON),0403405000
+San Pablo,San Pablo City,city,Laguna,Region IV-A (CALABARZON),0403424000
+San Pedro,San Pedro City,city,Laguna,Region IV-A (CALABARZON),0403425000
+Santa Rosa,Santa Rosa City,city,Laguna,Region IV-A (CALABARZON),0403428000
+Marawi,Marawi City,city,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903617000
+Baybay,Baybay City,city,Leyte,Region VIII (Eastern Visayas),0803708000
+Ormoc,Ormoc City,city,Leyte,Region VIII (Eastern Visayas),0803738000
+Cotabato,Cotabato City,city,Maguindanao del Norte,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908703000
+Masbate,Masbate City,city,Masbate,Region V (Bicol Region),0504111000
+Oroquieta,Oroquieta City,city,Misamis Occidental,Region X (Northern Mindanao),1004209000
+Ozamiz,Ozamiz City,city,Misamis Occidental,Region X (Northern Mindanao),1004210000
+Tangub,Tangub City,city,Misamis Occidental,Region X (Northern Mindanao),1004215000
+El Salvador,El Salvador City,city,Misamis Oriental,Region X (Northern Mindanao),1004307000
+Gingoog,Gingoog City,city,Misamis Oriental,Region X (Northern Mindanao),1004308000
+Bago,Bago City,city,Negros Occidental,Negros Island Region (NIR),1804502000
+Cadiz,Cadiz City,city,Negros Occidental,Negros Island Region (NIR),1804504000
+Escalante,Escalante City,city,Negros Occidental,Negros Island Region (NIR),1804509000
+Himamaylan,Himamaylan City,city,Negros Occidental,Negros Island Region (NIR),1804510000
+Kabankalan,Kabankalan City,city,Negros Occidental,Negros Island Region (NIR),1804515000
+La Carlota,La Carlota City,city,Negros Occidental,Negros Island Region (NIR),1804516000
+Sagay,Sagay City,city,Negros Occidental,Negros Island Region (NIR),1804523000
+San Carlos,San Carlos City,city,Negros Occidental,Negros Island Region (NIR),1804524000
+Silay,Silay City,city,Negros Occidental,Negros Island Region (NIR),1804526000
+Sipalay,Sipalay City,city,Negros Occidental,Negros Island Region (NIR),1804527000
+Talisay,Talisay City,city,Negros Occidental,Negros Island Region (NIR),1804528000
+Victorias,Victorias City,city,Negros Occidental,Negros Island Region (NIR),1804531000
+Bais,Bais City,city,Negros Oriental,Negros Island Region (NIR),1804604000
+Bayawan,Bayawan City,city,Negros Oriental,Negros Island Region (NIR),1804606000
+Canlaon,Canlaon City,city,Negros Oriental,Negros Island Region (NIR),1804608000
+Dumaguete,Dumaguete City,city,Negros Oriental,Negros Island Region (NIR),1804610000
+Guihulngan,Guihulngan City,city,Negros Oriental,Negros Island Region (NIR),1804611000
+Tanjay,Tanjay City,city,Negros Oriental,Negros Island Region (NIR),1804621000
+Cabanatuan,Cabanatuan City,city,Nueva Ecija,Region III (Central Luzon),0304903000
+Gapan,Gapan City,city,Nueva Ecija,Region III (Central Luzon),0304908000
+Palayan,Palayan City,city,Nueva Ecija,Region III (Central Luzon),0304919000
+San Jose,San Jose City,city,Nueva Ecija,Region III (Central Luzon),0304926000
+Science City of Muñoz,Science City of Muñoz City,city,Nueva Ecija,Region III (Central Luzon),0304917000
+Calapan,Calapan City,city,Oriental Mindoro,MIMAROPA Region,1705205000
+Mabalacat,Mabalacat City,city,Pampanga,Region III (Central Luzon),0305409000
+San Fernando,San Fernando City,city,Pampanga,Region III (Central Luzon),0305416000
+Alaminos,Alaminos City,city,Pangasinan,Region I (Ilocos Region),0105503000
+Dagupan,Dagupan City,city,Pangasinan,Region I (Ilocos Region),0105518000
+San Carlos,San Carlos City,city,Pangasinan,Region I (Ilocos Region),0105532000
+Urdaneta,Urdaneta City,city,Pangasinan,Region I (Ilocos Region),0105546000
+Tayabas,Tayabas City,city,Quezon,Region IV-A (CALABARZON),0405647000
+Antipolo,Antipolo City,city,Rizal,Region IV-A (CALABARZON),0405802000
+Calbayog,Calbayog City,city,Samar,Region VIII (Eastern Visayas),0806003000
+Catbalogan,Catbalogan City,city,Samar,Region VIII (Eastern Visayas),0806005000
+Sorsogon,Sorsogon City,city,Sorsogon,Region V (Bicol Region),0506216000
+Koronadal,Koronadal City,city,South Cotabato,Region XII (SOCCSKSARGEN),1206306000
+Maasin,Maasin City,city,Southern Leyte,Region VIII (Eastern Visayas),0806407000
+Tacurong,Tacurong City,city,Sultan Kudarat,Region XII (SOCCSKSARGEN),1206511000
+Surigao,Surigao City,city,Surigao del Norte,Region XIII (Caraga),1606724000
+Bislig,Bislig City,city,Surigao del Sur,Region XIII (Caraga),1606803000
+Tandag,Tandag City,city,Surigao del Sur,Region XIII (Caraga),1606819000
+Tarlac,Tarlac City,city,Tarlac,Region III (Central Luzon),0306916000
+Dapitan,Dapitan City,city,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907201000
+Dipolog,Dipolog City,city,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907202000
+Pagadian,Pagadian City,city,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907322000
+Kadayangan,Kadayangan,municipality,,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1999903000
+Kapalawan,Kapalawan,municipality,,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1999901000
+Ligawasan,Ligawasan,municipality,,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1999907000
+Malidegao,Malidegao,municipality,,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1999906000
+Nabalawag,Nabalawag,municipality,,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1999904000
+Old Kaabakan,Old Kaabakan,municipality,,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1999902000
+Pahamuddin,Pahamuddin,municipality,,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1999905000
+Pateros,Pateros,municipality,,National Capital Region (NCR),1381701000
+Tugunan,Tugunan,municipality,,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1999908000
+Bangued,Bangued,municipality,Abra,Cordillera Administrative Region (CAR),1400101000
+Boliney,Boliney,municipality,Abra,Cordillera Administrative Region (CAR),1400102000
+Bucay,Bucay,municipality,Abra,Cordillera Administrative Region (CAR),1400103000
+Bucloc,Bucloc,municipality,Abra,Cordillera Administrative Region (CAR),1400104000
+Daguioman,Daguioman,municipality,Abra,Cordillera Administrative Region (CAR),1400105000
+Danglas,Danglas,municipality,Abra,Cordillera Administrative Region (CAR),1400106000
+Dolores,Dolores,municipality,Abra,Cordillera Administrative Region (CAR),1400107000
+La Paz,La Paz,municipality,Abra,Cordillera Administrative Region (CAR),1400108000
+Lacub,Lacub,municipality,Abra,Cordillera Administrative Region (CAR),1400109000
+Lagangilang,Lagangilang,municipality,Abra,Cordillera Administrative Region (CAR),1400110000
+Lagayan,Lagayan,municipality,Abra,Cordillera Administrative Region (CAR),1400111000
+Langiden,Langiden,municipality,Abra,Cordillera Administrative Region (CAR),1400112000
+Licuan-Baay,Licuan-Baay,municipality,Abra,Cordillera Administrative Region (CAR),1400113000
+Luba,Luba,municipality,Abra,Cordillera Administrative Region (CAR),1400114000
+Malibcong,Malibcong,municipality,Abra,Cordillera Administrative Region (CAR),1400115000
+Manabo,Manabo,municipality,Abra,Cordillera Administrative Region (CAR),1400116000
+Peñarrubia,Peñarrubia,municipality,Abra,Cordillera Administrative Region (CAR),1400117000
+Pidigan,Pidigan,municipality,Abra,Cordillera Administrative Region (CAR),1400118000
+Pilar,Pilar,municipality,Abra,Cordillera Administrative Region (CAR),1400119000
+Sallapadan,Sallapadan,municipality,Abra,Cordillera Administrative Region (CAR),1400120000
+San Isidro,San Isidro,municipality,Abra,Cordillera Administrative Region (CAR),1400121000
+San Juan,San Juan,municipality,Abra,Cordillera Administrative Region (CAR),1400122000
+San Quintin,San Quintin,municipality,Abra,Cordillera Administrative Region (CAR),1400123000
+Tayum,Tayum,municipality,Abra,Cordillera Administrative Region (CAR),1400124000
+Tineg,Tineg,municipality,Abra,Cordillera Administrative Region (CAR),1400125000
+Tubo,Tubo,municipality,Abra,Cordillera Administrative Region (CAR),1400126000
+Villaviciosa,Villaviciosa,municipality,Abra,Cordillera Administrative Region (CAR),1400127000
+Buenavista,Buenavista,municipality,Agusan del Norte,Region XIII (Caraga),1600201000
+Carmen,Carmen,municipality,Agusan del Norte,Region XIII (Caraga),1600204000
+Jabonga,Jabonga,municipality,Agusan del Norte,Region XIII (Caraga),1600205000
+Kitcharao,Kitcharao,municipality,Agusan del Norte,Region XIII (Caraga),1600206000
+Las Nieves,Las Nieves,municipality,Agusan del Norte,Region XIII (Caraga),1600207000
+Magallanes,Magallanes,municipality,Agusan del Norte,Region XIII (Caraga),1600208000
+Nasipit,Nasipit,municipality,Agusan del Norte,Region XIII (Caraga),1600209000
+Remedios T. Romualdez,Remedios T. Romualdez,municipality,Agusan del Norte,Region XIII (Caraga),1600212000
+Santiago,Santiago,municipality,Agusan del Norte,Region XIII (Caraga),1600210000
+Tubay,Tubay,municipality,Agusan del Norte,Region XIII (Caraga),1600211000
+Bunawan,Bunawan,municipality,Agusan del Sur,Region XIII (Caraga),1600302000
+Esperanza,Esperanza,municipality,Agusan del Sur,Region XIII (Caraga),1600303000
+La Paz,La Paz,municipality,Agusan del Sur,Region XIII (Caraga),1600304000
+Loreto,Loreto,municipality,Agusan del Sur,Region XIII (Caraga),1600305000
+Prosperidad,Prosperidad,municipality,Agusan del Sur,Region XIII (Caraga),1600306000
+Rosario,Rosario,municipality,Agusan del Sur,Region XIII (Caraga),1600307000
+San Francisco,San Francisco,municipality,Agusan del Sur,Region XIII (Caraga),1600308000
+San Luis,San Luis,municipality,Agusan del Sur,Region XIII (Caraga),1600309000
+Santa Josefa,Santa Josefa,municipality,Agusan del Sur,Region XIII (Caraga),1600310000
+Sibagat,Sibagat,municipality,Agusan del Sur,Region XIII (Caraga),1600314000
+Talacogon,Talacogon,municipality,Agusan del Sur,Region XIII (Caraga),1600311000
+Trento,Trento,municipality,Agusan del Sur,Region XIII (Caraga),1600312000
+Veruela,Veruela,municipality,Agusan del Sur,Region XIII (Caraga),1600313000
+Altavas,Altavas,municipality,Aklan,Region VI (Western Visayas),0600401000
+Balete,Balete,municipality,Aklan,Region VI (Western Visayas),0600402000
+Banga,Banga,municipality,Aklan,Region VI (Western Visayas),0600403000
+Batan,Batan,municipality,Aklan,Region VI (Western Visayas),0600404000
+Buruanga,Buruanga,municipality,Aklan,Region VI (Western Visayas),0600405000
+Ibajay,Ibajay,municipality,Aklan,Region VI (Western Visayas),0600406000
+Kalibo,Kalibo,municipality,Aklan,Region VI (Western Visayas),0600407000
+Lezo,Lezo,municipality,Aklan,Region VI (Western Visayas),0600408000
+Libacao,Libacao,municipality,Aklan,Region VI (Western Visayas),0600409000
+Madalag,Madalag,municipality,Aklan,Region VI (Western Visayas),0600410000
+Makato,Makato,municipality,Aklan,Region VI (Western Visayas),0600411000
+Malay,Malay,municipality,Aklan,Region VI (Western Visayas),0600412000
+Malinao,Malinao,municipality,Aklan,Region VI (Western Visayas),0600413000
+Nabas,Nabas,municipality,Aklan,Region VI (Western Visayas),0600414000
+New Washington,New Washington,municipality,Aklan,Region VI (Western Visayas),0600415000
+Numancia,Numancia,municipality,Aklan,Region VI (Western Visayas),0600416000
+Tangalan,Tangalan,municipality,Aklan,Region VI (Western Visayas),0600417000
+Bacacay,Bacacay,municipality,Albay,Region V (Bicol Region),0500501000
+Camalig,Camalig,municipality,Albay,Region V (Bicol Region),0500502000
+Daraga,Daraga,municipality,Albay,Region V (Bicol Region),0500503000
+Guinobatan,Guinobatan,municipality,Albay,Region V (Bicol Region),0500504000
+Jovellar,Jovellar,municipality,Albay,Region V (Bicol Region),0500505000
+Libon,Libon,municipality,Albay,Region V (Bicol Region),0500507000
+Malilipot,Malilipot,municipality,Albay,Region V (Bicol Region),0500509000
+Malinao,Malinao,municipality,Albay,Region V (Bicol Region),0500510000
+Manito,Manito,municipality,Albay,Region V (Bicol Region),0500511000
+Oas,Oas,municipality,Albay,Region V (Bicol Region),0500512000
+Pio Duran,Pio Duran,municipality,Albay,Region V (Bicol Region),0500513000
+Polangui,Polangui,municipality,Albay,Region V (Bicol Region),0500514000
+Rapu-Rapu,Rapu-Rapu,municipality,Albay,Region V (Bicol Region),0500515000
+Santo Domingo,Santo Domingo,municipality,Albay,Region V (Bicol Region),0500516000
+Tiwi,Tiwi,municipality,Albay,Region V (Bicol Region),0500518000
+Anini-Y,Anini-Y,municipality,Antique,Region VI (Western Visayas),0600601000
+Barbaza,Barbaza,municipality,Antique,Region VI (Western Visayas),0600602000
+Belison,Belison,municipality,Antique,Region VI (Western Visayas),0600603000
+Bugasong,Bugasong,municipality,Antique,Region VI (Western Visayas),0600604000
+Caluya,Caluya,municipality,Antique,Region VI (Western Visayas),0600605000
+Culasi,Culasi,municipality,Antique,Region VI (Western Visayas),0600606000
+Hamtic,Hamtic,municipality,Antique,Region VI (Western Visayas),0600608000
+Laua-An,Laua-An,municipality,Antique,Region VI (Western Visayas),0600609000
+Libertad,Libertad,municipality,Antique,Region VI (Western Visayas),0600610000
+Pandan,Pandan,municipality,Antique,Region VI (Western Visayas),0600611000
+Patnongon,Patnongon,municipality,Antique,Region VI (Western Visayas),0600612000
+San Jose,San Jose,municipality,Antique,Region VI (Western Visayas),0600613000
+San Remigio,San Remigio,municipality,Antique,Region VI (Western Visayas),0600614000
+Sebaste,Sebaste,municipality,Antique,Region VI (Western Visayas),0600615000
+Sibalom,Sibalom,municipality,Antique,Region VI (Western Visayas),0600616000
+Tibiao,Tibiao,municipality,Antique,Region VI (Western Visayas),0600617000
+Tobias Fornier,Tobias Fornier,municipality,Antique,Region VI (Western Visayas),0600607000
+Valderrama,Valderrama,municipality,Antique,Region VI (Western Visayas),0600618000
+Calanasan,Calanasan,municipality,Apayao,Cordillera Administrative Region (CAR),1408101000
+Conner,Conner,municipality,Apayao,Cordillera Administrative Region (CAR),1408102000
+Flora,Flora,municipality,Apayao,Cordillera Administrative Region (CAR),1408103000
+Kabugao,Kabugao,municipality,Apayao,Cordillera Administrative Region (CAR),1408104000
+Luna,Luna,municipality,Apayao,Cordillera Administrative Region (CAR),1408105000
+Pudtol,Pudtol,municipality,Apayao,Cordillera Administrative Region (CAR),1408106000
+Santa Marcela,Santa Marcela,municipality,Apayao,Cordillera Administrative Region (CAR),1408107000
+Baler,Baler,municipality,Aurora,Region III (Central Luzon),0307701000
+Casiguran,Casiguran,municipality,Aurora,Region III (Central Luzon),0307702000
+Dilasag,Dilasag,municipality,Aurora,Region III (Central Luzon),0307703000
+Dinalungan,Dinalungan,municipality,Aurora,Region III (Central Luzon),0307704000
+Dingalan,Dingalan,municipality,Aurora,Region III (Central Luzon),0307705000
+Dipaculao,Dipaculao,municipality,Aurora,Region III (Central Luzon),0307706000
+Maria Aurora,Maria Aurora,municipality,Aurora,Region III (Central Luzon),0307707000
+San Luis,San Luis,municipality,Aurora,Region III (Central Luzon),0307708000
+Akbar,Akbar,municipality,Basilan,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1900708000
+Al-Barka,Al-Barka,municipality,Basilan,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1900709000
+Hadji Mohammad Ajul,Hadji Mohammad Ajul,municipality,Basilan,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1900710000
+Hadji Muhtamad,Hadji Muhtamad,municipality,Basilan,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1900712000
+Lantawan,Lantawan,municipality,Basilan,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1900703000
+Maluso,Maluso,municipality,Basilan,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1900704000
+Sumisip,Sumisip,municipality,Basilan,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1900705000
+Tabuan-Lasa,Tabuan-Lasa,municipality,Basilan,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1900713000
+Tipo-Tipo,Tipo-Tipo,municipality,Basilan,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1900706000
+Tuburan,Tuburan,municipality,Basilan,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1900707000
+Ungkaya Pukan,Ungkaya Pukan,municipality,Basilan,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1900711000
+Abucay,Abucay,municipality,Bataan,Region III (Central Luzon),0300801000
+Bagac,Bagac,municipality,Bataan,Region III (Central Luzon),0300802000
+Dinalupihan,Dinalupihan,municipality,Bataan,Region III (Central Luzon),0300804000
+Hermosa,Hermosa,municipality,Bataan,Region III (Central Luzon),0300805000
+Limay,Limay,municipality,Bataan,Region III (Central Luzon),0300806000
+Mariveles,Mariveles,municipality,Bataan,Region III (Central Luzon),0300807000
+Morong,Morong,municipality,Bataan,Region III (Central Luzon),0300808000
+Orani,Orani,municipality,Bataan,Region III (Central Luzon),0300809000
+Orion,Orion,municipality,Bataan,Region III (Central Luzon),0300810000
+Pilar,Pilar,municipality,Bataan,Region III (Central Luzon),0300811000
+Samal,Samal,municipality,Bataan,Region III (Central Luzon),0300812000
+Basco,Basco,municipality,Batanes,Region II (Cagayan Valley),0200901000
+Itbayat,Itbayat,municipality,Batanes,Region II (Cagayan Valley),0200902000
+Ivana,Ivana,municipality,Batanes,Region II (Cagayan Valley),0200903000
+Mahatao,Mahatao,municipality,Batanes,Region II (Cagayan Valley),0200904000
+Sabtang,Sabtang,municipality,Batanes,Region II (Cagayan Valley),0200905000
+Uyugan,Uyugan,municipality,Batanes,Region II (Cagayan Valley),0200906000
+Agoncillo,Agoncillo,municipality,Batangas,Region IV-A (CALABARZON),0401001000
+Alitagtag,Alitagtag,municipality,Batangas,Region IV-A (CALABARZON),0401002000
+Balayan,Balayan,municipality,Batangas,Region IV-A (CALABARZON),0401003000
+Balete,Balete,municipality,Batangas,Region IV-A (CALABARZON),0401004000
+Bauan,Bauan,municipality,Batangas,Region IV-A (CALABARZON),0401006000
+Calatagan,Calatagan,municipality,Batangas,Region IV-A (CALABARZON),0401008000
+Cuenca,Cuenca,municipality,Batangas,Region IV-A (CALABARZON),0401009000
+Ibaan,Ibaan,municipality,Batangas,Region IV-A (CALABARZON),0401010000
+Laurel,Laurel,municipality,Batangas,Region IV-A (CALABARZON),0401011000
+Lemery,Lemery,municipality,Batangas,Region IV-A (CALABARZON),0401012000
+Lian,Lian,municipality,Batangas,Region IV-A (CALABARZON),0401013000
+Lobo,Lobo,municipality,Batangas,Region IV-A (CALABARZON),0401015000
+Mabini,Mabini,municipality,Batangas,Region IV-A (CALABARZON),0401016000
+Malvar,Malvar,municipality,Batangas,Region IV-A (CALABARZON),0401017000
+Mataasnakahoy,Mataasnakahoy,municipality,Batangas,Region IV-A (CALABARZON),0401018000
+Nasugbu,Nasugbu,municipality,Batangas,Region IV-A (CALABARZON),0401019000
+Padre Garcia,Padre Garcia,municipality,Batangas,Region IV-A (CALABARZON),0401020000
+Rosario,Rosario,municipality,Batangas,Region IV-A (CALABARZON),0401021000
+San Jose,San Jose,municipality,Batangas,Region IV-A (CALABARZON),0401022000
+San Juan,San Juan,municipality,Batangas,Region IV-A (CALABARZON),0401023000
+San Luis,San Luis,municipality,Batangas,Region IV-A (CALABARZON),0401024000
+San Nicolas,San Nicolas,municipality,Batangas,Region IV-A (CALABARZON),0401025000
+San Pascual,San Pascual,municipality,Batangas,Region IV-A (CALABARZON),0401026000
+Santa Teresita,Santa Teresita,municipality,Batangas,Region IV-A (CALABARZON),0401027000
+Taal,Taal,municipality,Batangas,Region IV-A (CALABARZON),0401029000
+Talisay,Talisay,municipality,Batangas,Region IV-A (CALABARZON),0401030000
+Taysan,Taysan,municipality,Batangas,Region IV-A (CALABARZON),0401032000
+Tingloy,Tingloy,municipality,Batangas,Region IV-A (CALABARZON),0401033000
+Tuy,Tuy,municipality,Batangas,Region IV-A (CALABARZON),0401034000
+Atok,Atok,municipality,Benguet,Cordillera Administrative Region (CAR),1401101000
+Bakun,Bakun,municipality,Benguet,Cordillera Administrative Region (CAR),1401103000
+Bokod,Bokod,municipality,Benguet,Cordillera Administrative Region (CAR),1401104000
+Buguias,Buguias,municipality,Benguet,Cordillera Administrative Region (CAR),1401105000
+Itogon,Itogon,municipality,Benguet,Cordillera Administrative Region (CAR),1401106000
+Kabayan,Kabayan,municipality,Benguet,Cordillera Administrative Region (CAR),1401107000
+Kapangan,Kapangan,municipality,Benguet,Cordillera Administrative Region (CAR),1401108000
+Kibungan,Kibungan,municipality,Benguet,Cordillera Administrative Region (CAR),1401109000
+La Trinidad,La Trinidad,municipality,Benguet,Cordillera Administrative Region (CAR),1401110000
+Mankayan,Mankayan,municipality,Benguet,Cordillera Administrative Region (CAR),1401111000
+Sablan,Sablan,municipality,Benguet,Cordillera Administrative Region (CAR),1401112000
+Tuba,Tuba,municipality,Benguet,Cordillera Administrative Region (CAR),1401113000
+Tublay,Tublay,municipality,Benguet,Cordillera Administrative Region (CAR),1401114000
+Almeria,Almeria,municipality,Biliran,Region VIII (Eastern Visayas),0807801000
+Biliran,Biliran,municipality,Biliran,Region VIII (Eastern Visayas),0807802000
+Cabucgayan,Cabucgayan,municipality,Biliran,Region VIII (Eastern Visayas),0807803000
+Caibiran,Caibiran,municipality,Biliran,Region VIII (Eastern Visayas),0807804000
+Culaba,Culaba,municipality,Biliran,Region VIII (Eastern Visayas),0807805000
+Kawayan,Kawayan,municipality,Biliran,Region VIII (Eastern Visayas),0807806000
+Maripipi,Maripipi,municipality,Biliran,Region VIII (Eastern Visayas),0807807000
+Naval,Naval,municipality,Biliran,Region VIII (Eastern Visayas),0807808000
+Alburquerque,Alburquerque,municipality,Bohol,Region VII (Central Visayas),0701201000
+Alicia,Alicia,municipality,Bohol,Region VII (Central Visayas),0701202000
+Anda,Anda,municipality,Bohol,Region VII (Central Visayas),0701203000
+Antequera,Antequera,municipality,Bohol,Region VII (Central Visayas),0701204000
+Baclayon,Baclayon,municipality,Bohol,Region VII (Central Visayas),0701205000
+Balilihan,Balilihan,municipality,Bohol,Region VII (Central Visayas),0701206000
+Batuan,Batuan,municipality,Bohol,Region VII (Central Visayas),0701207000
+Bien Unido,Bien Unido,municipality,Bohol,Region VII (Central Visayas),0701248000
+Bilar,Bilar,municipality,Bohol,Region VII (Central Visayas),0701208000
+Buenavista,Buenavista,municipality,Bohol,Region VII (Central Visayas),0701209000
+Calape,Calape,municipality,Bohol,Region VII (Central Visayas),0701210000
+Candijay,Candijay,municipality,Bohol,Region VII (Central Visayas),0701211000
+Carmen,Carmen,municipality,Bohol,Region VII (Central Visayas),0701212000
+Catigbian,Catigbian,municipality,Bohol,Region VII (Central Visayas),0701213000
+Clarin,Clarin,municipality,Bohol,Region VII (Central Visayas),0701214000
+Corella,Corella,municipality,Bohol,Region VII (Central Visayas),0701215000
+Cortes,Cortes,municipality,Bohol,Region VII (Central Visayas),0701216000
+Dagohoy,Dagohoy,municipality,Bohol,Region VII (Central Visayas),0701217000
+Danao,Danao,municipality,Bohol,Region VII (Central Visayas),0701218000
+Dauis,Dauis,municipality,Bohol,Region VII (Central Visayas),0701219000
+Dimiao,Dimiao,municipality,Bohol,Region VII (Central Visayas),0701220000
+Duero,Duero,municipality,Bohol,Region VII (Central Visayas),0701221000
+Garcia Hernandez,Garcia Hernandez,municipality,Bohol,Region VII (Central Visayas),0701222000
+Getafe,Getafe,municipality,Bohol,Region VII (Central Visayas),0701226000
+Guindulman,Guindulman,municipality,Bohol,Region VII (Central Visayas),0701223000
+Inabanga,Inabanga,municipality,Bohol,Region VII (Central Visayas),0701224000
+Jagna,Jagna,municipality,Bohol,Region VII (Central Visayas),0701225000
+Lila,Lila,municipality,Bohol,Region VII (Central Visayas),0701227000
+Loay,Loay,municipality,Bohol,Region VII (Central Visayas),0701228000
+Loboc,Loboc,municipality,Bohol,Region VII (Central Visayas),0701229000
+Loon,Loon,municipality,Bohol,Region VII (Central Visayas),0701230000
+Mabini,Mabini,municipality,Bohol,Region VII (Central Visayas),0701231000
+Maribojoc,Maribojoc,municipality,Bohol,Region VII (Central Visayas),0701232000
+Panglao,Panglao,municipality,Bohol,Region VII (Central Visayas),0701233000
+Pilar,Pilar,municipality,Bohol,Region VII (Central Visayas),0701234000
+President Carlos P. Garcia,President Carlos P. Garcia,municipality,Bohol,Region VII (Central Visayas),0701235000
+Sagbayan,Sagbayan,municipality,Bohol,Region VII (Central Visayas),0701236000
+San Isidro,San Isidro,municipality,Bohol,Region VII (Central Visayas),0701237000
+San Miguel,San Miguel,municipality,Bohol,Region VII (Central Visayas),0701238000
+Sevilla,Sevilla,municipality,Bohol,Region VII (Central Visayas),0701239000
+Sierra Bullones,Sierra Bullones,municipality,Bohol,Region VII (Central Visayas),0701240000
+Sikatuna,Sikatuna,municipality,Bohol,Region VII (Central Visayas),0701241000
+Talibon,Talibon,municipality,Bohol,Region VII (Central Visayas),0701243000
+Trinidad,Trinidad,municipality,Bohol,Region VII (Central Visayas),0701244000
+Tubigon,Tubigon,municipality,Bohol,Region VII (Central Visayas),0701245000
+Ubay,Ubay,municipality,Bohol,Region VII (Central Visayas),0701246000
+Valencia,Valencia,municipality,Bohol,Region VII (Central Visayas),0701247000
+Baungon,Baungon,municipality,Bukidnon,Region X (Northern Mindanao),1001301000
+Cabanglasan,Cabanglasan,municipality,Bukidnon,Region X (Northern Mindanao),1001322000
+Damulog,Damulog,municipality,Bukidnon,Region X (Northern Mindanao),1001302000
+Dangcagan,Dangcagan,municipality,Bukidnon,Region X (Northern Mindanao),1001303000
+Don Carlos,Don Carlos,municipality,Bukidnon,Region X (Northern Mindanao),1001304000
+Impasug-ong,Impasug-ong,municipality,Bukidnon,Region X (Northern Mindanao),1001305000
+Kadingilan,Kadingilan,municipality,Bukidnon,Region X (Northern Mindanao),1001306000
+Kalilangan,Kalilangan,municipality,Bukidnon,Region X (Northern Mindanao),1001307000
+Kibawe,Kibawe,municipality,Bukidnon,Region X (Northern Mindanao),1001308000
+Kitaotao,Kitaotao,municipality,Bukidnon,Region X (Northern Mindanao),1001309000
+Lantapan,Lantapan,municipality,Bukidnon,Region X (Northern Mindanao),1001310000
+Libona,Libona,municipality,Bukidnon,Region X (Northern Mindanao),1001311000
+Malitbog,Malitbog,municipality,Bukidnon,Region X (Northern Mindanao),1001313000
+Manolo Fortich,Manolo Fortich,municipality,Bukidnon,Region X (Northern Mindanao),1001314000
+Maramag,Maramag,municipality,Bukidnon,Region X (Northern Mindanao),1001315000
+Pangantucan,Pangantucan,municipality,Bukidnon,Region X (Northern Mindanao),1001316000
+Quezon,Quezon,municipality,Bukidnon,Region X (Northern Mindanao),1001317000
+San Fernando,San Fernando,municipality,Bukidnon,Region X (Northern Mindanao),1001318000
+Sumilao,Sumilao,municipality,Bukidnon,Region X (Northern Mindanao),1001319000
+Talakag,Talakag,municipality,Bukidnon,Region X (Northern Mindanao),1001320000
+Angat,Angat,municipality,Bulacan,Region III (Central Luzon),0301401000
+Balagtas,Balagtas,municipality,Bulacan,Region III (Central Luzon),0301402000
+Bocaue,Bocaue,municipality,Bulacan,Region III (Central Luzon),0301404000
+Bulacan,Bulacan,municipality,Bulacan,Region III (Central Luzon),0301405000
+Bustos,Bustos,municipality,Bulacan,Region III (Central Luzon),0301406000
+Calumpit,Calumpit,municipality,Bulacan,Region III (Central Luzon),0301407000
+Doña Remedios Trinidad,Doña Remedios Trinidad,municipality,Bulacan,Region III (Central Luzon),0301424000
+Guiguinto,Guiguinto,municipality,Bulacan,Region III (Central Luzon),0301408000
+Hagonoy,Hagonoy,municipality,Bulacan,Region III (Central Luzon),0301409000
+Marilao,Marilao,municipality,Bulacan,Region III (Central Luzon),0301411000
+Norzagaray,Norzagaray,municipality,Bulacan,Region III (Central Luzon),0301413000
+Obando,Obando,municipality,Bulacan,Region III (Central Luzon),0301414000
+Pandi,Pandi,municipality,Bulacan,Region III (Central Luzon),0301415000
+Paombong,Paombong,municipality,Bulacan,Region III (Central Luzon),0301416000
+Plaridel,Plaridel,municipality,Bulacan,Region III (Central Luzon),0301417000
+Pulilan,Pulilan,municipality,Bulacan,Region III (Central Luzon),0301418000
+San Ildefonso,San Ildefonso,municipality,Bulacan,Region III (Central Luzon),0301419000
+San Miguel,San Miguel,municipality,Bulacan,Region III (Central Luzon),0301421000
+San Rafael,San Rafael,municipality,Bulacan,Region III (Central Luzon),0301422000
+Santa Maria,Santa Maria,municipality,Bulacan,Region III (Central Luzon),0301423000
+Abulug,Abulug,municipality,Cagayan,Region II (Cagayan Valley),0201501000
+Alcala,Alcala,municipality,Cagayan,Region II (Cagayan Valley),0201502000
+Allacapan,Allacapan,municipality,Cagayan,Region II (Cagayan Valley),0201503000
+Amulung,Amulung,municipality,Cagayan,Region II (Cagayan Valley),0201504000
+Aparri,Aparri,municipality,Cagayan,Region II (Cagayan Valley),0201505000
+Baggao,Baggao,municipality,Cagayan,Region II (Cagayan Valley),0201506000
+Ballesteros,Ballesteros,municipality,Cagayan,Region II (Cagayan Valley),0201507000
+Buguey,Buguey,municipality,Cagayan,Region II (Cagayan Valley),0201508000
+Calayan,Calayan,municipality,Cagayan,Region II (Cagayan Valley),0201509000
+Camalaniugan,Camalaniugan,municipality,Cagayan,Region II (Cagayan Valley),0201510000
+Claveria,Claveria,municipality,Cagayan,Region II (Cagayan Valley),0201511000
+Enrile,Enrile,municipality,Cagayan,Region II (Cagayan Valley),0201512000
+Gattaran,Gattaran,municipality,Cagayan,Region II (Cagayan Valley),0201513000
+Gonzaga,Gonzaga,municipality,Cagayan,Region II (Cagayan Valley),0201514000
+Iguig,Iguig,municipality,Cagayan,Region II (Cagayan Valley),0201515000
+Lal-Lo,Lal-Lo,municipality,Cagayan,Region II (Cagayan Valley),0201516000
+Lasam,Lasam,municipality,Cagayan,Region II (Cagayan Valley),0201517000
+Pamplona,Pamplona,municipality,Cagayan,Region II (Cagayan Valley),0201518000
+Peñablanca,Peñablanca,municipality,Cagayan,Region II (Cagayan Valley),0201519000
+Piat,Piat,municipality,Cagayan,Region II (Cagayan Valley),0201520000
+Rizal,Rizal,municipality,Cagayan,Region II (Cagayan Valley),0201521000
+Sanchez Mira,Sanchez Mira,municipality,Cagayan,Region II (Cagayan Valley),0201522000
+Santa Ana,Santa Ana,municipality,Cagayan,Region II (Cagayan Valley),0201523000
+Santa Praxedes,Santa Praxedes,municipality,Cagayan,Region II (Cagayan Valley),0201524000
+Santa Teresita,Santa Teresita,municipality,Cagayan,Region II (Cagayan Valley),0201525000
+Santo Niño,Santo Niño,municipality,Cagayan,Region II (Cagayan Valley),0201526000
+Solana,Solana,municipality,Cagayan,Region II (Cagayan Valley),0201527000
+Tuao,Tuao,municipality,Cagayan,Region II (Cagayan Valley),0201528000
+Basud,Basud,municipality,Camarines Norte,Region V (Bicol Region),0501601000
+Capalonga,Capalonga,municipality,Camarines Norte,Region V (Bicol Region),0501602000
+Daet,Daet,municipality,Camarines Norte,Region V (Bicol Region),0501603000
+Jose Panganiban,Jose Panganiban,municipality,Camarines Norte,Region V (Bicol Region),0501605000
+Labo,Labo,municipality,Camarines Norte,Region V (Bicol Region),0501606000
+Mercedes,Mercedes,municipality,Camarines Norte,Region V (Bicol Region),0501607000
+Paracale,Paracale,municipality,Camarines Norte,Region V (Bicol Region),0501608000
+San Lorenzo Ruiz,San Lorenzo Ruiz,municipality,Camarines Norte,Region V (Bicol Region),0501604000
+San Vicente,San Vicente,municipality,Camarines Norte,Region V (Bicol Region),0501609000
+Santa Elena,Santa Elena,municipality,Camarines Norte,Region V (Bicol Region),0501610000
+Talisay,Talisay,municipality,Camarines Norte,Region V (Bicol Region),0501611000
+Vinzons,Vinzons,municipality,Camarines Norte,Region V (Bicol Region),0501612000
+Baao,Baao,municipality,Camarines Sur,Region V (Bicol Region),0501701000
+Balatan,Balatan,municipality,Camarines Sur,Region V (Bicol Region),0501702000
+Bato,Bato,municipality,Camarines Sur,Region V (Bicol Region),0501703000
+Bombon,Bombon,municipality,Camarines Sur,Region V (Bicol Region),0501704000
+Buhi,Buhi,municipality,Camarines Sur,Region V (Bicol Region),0501705000
+Bula,Bula,municipality,Camarines Sur,Region V (Bicol Region),0501706000
+Cabusao,Cabusao,municipality,Camarines Sur,Region V (Bicol Region),0501707000
+Calabanga,Calabanga,municipality,Camarines Sur,Region V (Bicol Region),0501708000
+Camaligan,Camaligan,municipality,Camarines Sur,Region V (Bicol Region),0501709000
+Canaman,Canaman,municipality,Camarines Sur,Region V (Bicol Region),0501710000
+Caramoan,Caramoan,municipality,Camarines Sur,Region V (Bicol Region),0501711000
+Del Gallego,Del Gallego,municipality,Camarines Sur,Region V (Bicol Region),0501712000
+Gainza,Gainza,municipality,Camarines Sur,Region V (Bicol Region),0501713000
+Garchitorena,Garchitorena,municipality,Camarines Sur,Region V (Bicol Region),0501714000
+Goa,Goa,municipality,Camarines Sur,Region V (Bicol Region),0501715000
+Lagonoy,Lagonoy,municipality,Camarines Sur,Region V (Bicol Region),0501717000
+Libmanan,Libmanan,municipality,Camarines Sur,Region V (Bicol Region),0501718000
+Lupi,Lupi,municipality,Camarines Sur,Region V (Bicol Region),0501719000
+Magarao,Magarao,municipality,Camarines Sur,Region V (Bicol Region),0501720000
+Milaor,Milaor,municipality,Camarines Sur,Region V (Bicol Region),0501721000
+Minalabac,Minalabac,municipality,Camarines Sur,Region V (Bicol Region),0501722000
+Nabua,Nabua,municipality,Camarines Sur,Region V (Bicol Region),0501723000
+Ocampo,Ocampo,municipality,Camarines Sur,Region V (Bicol Region),0501725000
+Pamplona,Pamplona,municipality,Camarines Sur,Region V (Bicol Region),0501726000
+Pasacao,Pasacao,municipality,Camarines Sur,Region V (Bicol Region),0501727000
+Pili,Pili,municipality,Camarines Sur,Region V (Bicol Region),0501728000
+Presentacion,Presentacion,municipality,Camarines Sur,Region V (Bicol Region),0501729000
+Ragay,Ragay,municipality,Camarines Sur,Region V (Bicol Region),0501730000
+Sagñay,Sagñay,municipality,Camarines Sur,Region V (Bicol Region),0501731000
+San Fernando,San Fernando,municipality,Camarines Sur,Region V (Bicol Region),0501732000
+San Jose,San Jose,municipality,Camarines Sur,Region V (Bicol Region),0501733000
+Sipocot,Sipocot,municipality,Camarines Sur,Region V (Bicol Region),0501734000
+Siruma,Siruma,municipality,Camarines Sur,Region V (Bicol Region),0501735000
+Tigaon,Tigaon,municipality,Camarines Sur,Region V (Bicol Region),0501736000
+Tinambac,Tinambac,municipality,Camarines Sur,Region V (Bicol Region),0501737000
+Catarman,Catarman,municipality,Camiguin,Region X (Northern Mindanao),1001801000
+Guinsiliban,Guinsiliban,municipality,Camiguin,Region X (Northern Mindanao),1001802000
+Mahinog,Mahinog,municipality,Camiguin,Region X (Northern Mindanao),1001803000
+Mambajao,Mambajao,municipality,Camiguin,Region X (Northern Mindanao),1001804000
+Sagay,Sagay,municipality,Camiguin,Region X (Northern Mindanao),1001805000
+Cuartero,Cuartero,municipality,Capiz,Region VI (Western Visayas),0601901000
+Dao,Dao,municipality,Capiz,Region VI (Western Visayas),0601902000
+Dumalag,Dumalag,municipality,Capiz,Region VI (Western Visayas),0601903000
+Dumarao,Dumarao,municipality,Capiz,Region VI (Western Visayas),0601904000
+Ivisan,Ivisan,municipality,Capiz,Region VI (Western Visayas),0601905000
+Jamindan,Jamindan,municipality,Capiz,Region VI (Western Visayas),0601906000
+Ma-Ayon,Ma-Ayon,municipality,Capiz,Region VI (Western Visayas),0601907000
+Mambusao,Mambusao,municipality,Capiz,Region VI (Western Visayas),0601908000
+Panay,Panay,municipality,Capiz,Region VI (Western Visayas),0601909000
+Panitan,Panitan,municipality,Capiz,Region VI (Western Visayas),0601910000
+Pilar,Pilar,municipality,Capiz,Region VI (Western Visayas),0601911000
+Pontevedra,Pontevedra,municipality,Capiz,Region VI (Western Visayas),0601912000
+President Roxas,President Roxas,municipality,Capiz,Region VI (Western Visayas),0601913000
+Sapi-An,Sapi-An,municipality,Capiz,Region VI (Western Visayas),0601915000
+Sigma,Sigma,municipality,Capiz,Region VI (Western Visayas),0601916000
+Tapaz,Tapaz,municipality,Capiz,Region VI (Western Visayas),0601917000
+Bagamanoc,Bagamanoc,municipality,Catanduanes,Region V (Bicol Region),0502001000
+Baras,Baras,municipality,Catanduanes,Region V (Bicol Region),0502002000
+Bato,Bato,municipality,Catanduanes,Region V (Bicol Region),0502003000
+Caramoran,Caramoran,municipality,Catanduanes,Region V (Bicol Region),0502004000
+Gigmoto,Gigmoto,municipality,Catanduanes,Region V (Bicol Region),0502005000
+Pandan,Pandan,municipality,Catanduanes,Region V (Bicol Region),0502006000
+Panganiban,Panganiban,municipality,Catanduanes,Region V (Bicol Region),0502007000
+San Andres,San Andres,municipality,Catanduanes,Region V (Bicol Region),0502008000
+San Miguel,San Miguel,municipality,Catanduanes,Region V (Bicol Region),0502009000
+Viga,Viga,municipality,Catanduanes,Region V (Bicol Region),0502010000
+Virac,Virac,municipality,Catanduanes,Region V (Bicol Region),0502011000
+Alfonso,Alfonso,municipality,Cavite,Region IV-A (CALABARZON),0402101000
+Amadeo,Amadeo,municipality,Cavite,Region IV-A (CALABARZON),0402102000
+Gen. Mariano Alvarez,Gen. Mariano Alvarez,municipality,Cavite,Region IV-A (CALABARZON),0402123000
+General Emilio Aguinaldo,General Emilio Aguinaldo,municipality,Cavite,Region IV-A (CALABARZON),0402107000
+Indang,Indang,municipality,Cavite,Region IV-A (CALABARZON),0402110000
+Kawit,Kawit,municipality,Cavite,Region IV-A (CALABARZON),0402111000
+Magallanes,Magallanes,municipality,Cavite,Region IV-A (CALABARZON),0402112000
+Maragondon,Maragondon,municipality,Cavite,Region IV-A (CALABARZON),0402113000
+Mendez,Mendez,municipality,Cavite,Region IV-A (CALABARZON),0402114000
+Naic,Naic,municipality,Cavite,Region IV-A (CALABARZON),0402115000
+Noveleta,Noveleta,municipality,Cavite,Region IV-A (CALABARZON),0402116000
+Rosario,Rosario,municipality,Cavite,Region IV-A (CALABARZON),0402117000
+Silang,Silang,municipality,Cavite,Region IV-A (CALABARZON),0402118000
+Tanza,Tanza,municipality,Cavite,Region IV-A (CALABARZON),0402120000
+Ternate,Ternate,municipality,Cavite,Region IV-A (CALABARZON),0402121000
+Alcantara,Alcantara,municipality,Cebu,Region VII (Central Visayas),0702201000
+Alcoy,Alcoy,municipality,Cebu,Region VII (Central Visayas),0702202000
+Alegria,Alegria,municipality,Cebu,Region VII (Central Visayas),0702203000
+Aloguinsan,Aloguinsan,municipality,Cebu,Region VII (Central Visayas),0702204000
+Argao,Argao,municipality,Cebu,Region VII (Central Visayas),0702205000
+Asturias,Asturias,municipality,Cebu,Region VII (Central Visayas),0702206000
+Badian,Badian,municipality,Cebu,Region VII (Central Visayas),0702207000
+Balamban,Balamban,municipality,Cebu,Region VII (Central Visayas),0702208000
+Bantayan,Bantayan,municipality,Cebu,Region VII (Central Visayas),0702209000
+Barili,Barili,municipality,Cebu,Region VII (Central Visayas),0702210000
+Boljoon,Boljoon,municipality,Cebu,Region VII (Central Visayas),0702212000
+Borbon,Borbon,municipality,Cebu,Region VII (Central Visayas),0702213000
+Carmen,Carmen,municipality,Cebu,Region VII (Central Visayas),0702215000
+Catmon,Catmon,municipality,Cebu,Region VII (Central Visayas),0702216000
+Compostela,Compostela,municipality,Cebu,Region VII (Central Visayas),0702218000
+Consolacion,Consolacion,municipality,Cebu,Region VII (Central Visayas),0702219000
+Cordova,Cordova,municipality,Cebu,Region VII (Central Visayas),0702220000
+Daanbantayan,Daanbantayan,municipality,Cebu,Region VII (Central Visayas),0702221000
+Dalaguete,Dalaguete,municipality,Cebu,Region VII (Central Visayas),0702222000
+Dumanjug,Dumanjug,municipality,Cebu,Region VII (Central Visayas),0702224000
+Ginatilan,Ginatilan,municipality,Cebu,Region VII (Central Visayas),0702225000
+Liloan,Liloan,municipality,Cebu,Region VII (Central Visayas),0702227000
+Madridejos,Madridejos,municipality,Cebu,Region VII (Central Visayas),0702228000
+Malabuyoc,Malabuyoc,municipality,Cebu,Region VII (Central Visayas),0702229000
+Medellin,Medellin,municipality,Cebu,Region VII (Central Visayas),0702231000
+Minglanilla,Minglanilla,municipality,Cebu,Region VII (Central Visayas),0702232000
+Moalboal,Moalboal,municipality,Cebu,Region VII (Central Visayas),0702233000
+Oslob,Oslob,municipality,Cebu,Region VII (Central Visayas),0702235000
+Pilar,Pilar,municipality,Cebu,Region VII (Central Visayas),0702236000
+Pinamungajan,Pinamungajan,municipality,Cebu,Region VII (Central Visayas),0702237000
+Poro,Poro,municipality,Cebu,Region VII (Central Visayas),0702238000
+Ronda,Ronda,municipality,Cebu,Region VII (Central Visayas),0702239000
+Samboan,Samboan,municipality,Cebu,Region VII (Central Visayas),0702240000
+San Fernando,San Fernando,municipality,Cebu,Region VII (Central Visayas),0702241000
+San Francisco,San Francisco,municipality,Cebu,Region VII (Central Visayas),0702242000
+San Remigio,San Remigio,municipality,Cebu,Region VII (Central Visayas),0702243000
+Santa Fe,Santa Fe,municipality,Cebu,Region VII (Central Visayas),0702244000
+Santander,Santander,municipality,Cebu,Region VII (Central Visayas),0702245000
+Sibonga,Sibonga,municipality,Cebu,Region VII (Central Visayas),0702246000
+Sogod,Sogod,municipality,Cebu,Region VII (Central Visayas),0702247000
+Tabogon,Tabogon,municipality,Cebu,Region VII (Central Visayas),0702248000
+Tabuelan,Tabuelan,municipality,Cebu,Region VII (Central Visayas),0702249000
+Tuburan,Tuburan,municipality,Cebu,Region VII (Central Visayas),0702252000
+Tudela,Tudela,municipality,Cebu,Region VII (Central Visayas),0702253000
+Alamada,Alamada,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204701000
+Aleosan,Aleosan,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204717000
+Antipas,Antipas,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204715000
+Arakan,Arakan,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204718000
+Banisilan,Banisilan,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204716000
+Carmen,Carmen,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204702000
+Kabacan,Kabacan,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204703000
+Libungan,Libungan,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204705000
+M'Lang,M'Lang,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204710000
+Magpet,Magpet,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204706000
+Makilala,Makilala,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204707000
+Matalam,Matalam,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204708000
+Midsayap,Midsayap,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204709000
+Pigkawayan,Pigkawayan,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204711000
+Pikit,Pikit,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204712000
+President Roxas,President Roxas,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204713000
+Tulunan,Tulunan,municipality,Cotabato,Region XII (SOCCSKSARGEN),1204714000
+Don Marcelino,Don Marcelino,municipality,Davao Occidental,Region XI (Davao Region),1108601000
+Jose Abad Santos,Jose Abad Santos,municipality,Davao Occidental,Region XI (Davao Region),1108602000
+Malita,Malita,municipality,Davao Occidental,Region XI (Davao Region),1108603000
+Santa Maria,Santa Maria,municipality,Davao Occidental,Region XI (Davao Region),1108604000
+Sarangani,Sarangani,municipality,Davao Occidental,Region XI (Davao Region),1108605000
+Baganga,Baganga,municipality,Davao Oriental,Region XI (Davao Region),1102501000
+Banaybanay,Banaybanay,municipality,Davao Oriental,Region XI (Davao Region),1102502000
+Boston,Boston,municipality,Davao Oriental,Region XI (Davao Region),1102503000
+Caraga,Caraga,municipality,Davao Oriental,Region XI (Davao Region),1102504000
+Cateel,Cateel,municipality,Davao Oriental,Region XI (Davao Region),1102505000
+Governor Generoso,Governor Generoso,municipality,Davao Oriental,Region XI (Davao Region),1102506000
+Lupon,Lupon,municipality,Davao Oriental,Region XI (Davao Region),1102507000
+Manay,Manay,municipality,Davao Oriental,Region XI (Davao Region),1102508000
+San Isidro,San Isidro,municipality,Davao Oriental,Region XI (Davao Region),1102510000
+Tarragona,Tarragona,municipality,Davao Oriental,Region XI (Davao Region),1102511000
+Compostela,Compostela,municipality,Davao de Oro,Region XI (Davao Region),1108201000
+Laak,Laak,municipality,Davao de Oro,Region XI (Davao Region),1108202000
+Mabini,Mabini,municipality,Davao de Oro,Region XI (Davao Region),1108203000
+Maco,Maco,municipality,Davao de Oro,Region XI (Davao Region),1108204000
+Maragusan,Maragusan,municipality,Davao de Oro,Region XI (Davao Region),1108205000
+Mawab,Mawab,municipality,Davao de Oro,Region XI (Davao Region),1108206000
+Monkayo,Monkayo,municipality,Davao de Oro,Region XI (Davao Region),1108207000
+Montevista,Montevista,municipality,Davao de Oro,Region XI (Davao Region),1108208000
+Nabunturan,Nabunturan,municipality,Davao de Oro,Region XI (Davao Region),1108209000
+New Bataan,New Bataan,municipality,Davao de Oro,Region XI (Davao Region),1108210000
+Pantukan,Pantukan,municipality,Davao de Oro,Region XI (Davao Region),1108211000
+Asuncion,Asuncion,municipality,Davao del Norte,Region XI (Davao Region),1102301000
+Braulio E. Dujali,Braulio E. Dujali,municipality,Davao del Norte,Region XI (Davao Region),1102323000
+Carmen,Carmen,municipality,Davao del Norte,Region XI (Davao Region),1102303000
+Kapalong,Kapalong,municipality,Davao del Norte,Region XI (Davao Region),1102305000
+New Corella,New Corella,municipality,Davao del Norte,Region XI (Davao Region),1102314000
+Santo Tomas,Santo Tomas,municipality,Davao del Norte,Region XI (Davao Region),1102318000
+Sawata,Sawata,municipality,Davao del Norte,Region XI (Davao Region),1102324000
+Talaingod,Talaingod,municipality,Davao del Norte,Region XI (Davao Region),1102322000
+Bansalan,Bansalan,municipality,Davao del Sur,Region XI (Davao Region),1102401000
+Hagonoy,Hagonoy,municipality,Davao del Sur,Region XI (Davao Region),1102404000
+Kiblawan,Kiblawan,municipality,Davao del Sur,Region XI (Davao Region),1102406000
+Magsaysay,Magsaysay,municipality,Davao del Sur,Region XI (Davao Region),1102407000
+Malalag,Malalag,municipality,Davao del Sur,Region XI (Davao Region),1102408000
+Matanao,Matanao,municipality,Davao del Sur,Region XI (Davao Region),1102410000
+Padada,Padada,municipality,Davao del Sur,Region XI (Davao Region),1102411000
+Santa Cruz,Santa Cruz,municipality,Davao del Sur,Region XI (Davao Region),1102412000
+Sulop,Sulop,municipality,Davao del Sur,Region XI (Davao Region),1102414000
+Basilisa,Basilisa,municipality,Dinagat Islands,Region XIII (Caraga),1608501000
+Cagdianao,Cagdianao,municipality,Dinagat Islands,Region XIII (Caraga),1608502000
+Dinagat,Dinagat,municipality,Dinagat Islands,Region XIII (Caraga),1608503000
+Libjo,Libjo,municipality,Dinagat Islands,Region XIII (Caraga),1608504000
+Loreto,Loreto,municipality,Dinagat Islands,Region XIII (Caraga),1608505000
+San Jose,San Jose,municipality,Dinagat Islands,Region XIII (Caraga),1608506000
+Tubajon,Tubajon,municipality,Dinagat Islands,Region XIII (Caraga),1608507000
+Arteche,Arteche,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802601000
+Balangiga,Balangiga,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802602000
+Balangkayan,Balangkayan,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802603000
+Can-Avid,Can-Avid,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802605000
+Dolores,Dolores,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802606000
+General Macarthur,General Macarthur,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802607000
+Giporlos,Giporlos,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802608000
+Guiuan,Guiuan,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802609000
+Hernani,Hernani,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802610000
+Jipapad,Jipapad,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802611000
+Lawaan,Lawaan,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802612000
+Llorente,Llorente,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802613000
+Maslog,Maslog,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802614000
+Maydolong,Maydolong,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802615000
+Mercedes,Mercedes,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802616000
+Oras,Oras,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802617000
+Quinapondan,Quinapondan,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802618000
+Salcedo,Salcedo,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802619000
+San Julian,San Julian,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802620000
+San Policarpo,San Policarpo,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802621000
+Sulat,Sulat,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802622000
+Taft,Taft,municipality,Eastern Samar,Region VIII (Eastern Visayas),0802623000
+Buenavista,Buenavista,municipality,Guimaras,Region VI (Western Visayas),0607901000
+Jordan,Jordan,municipality,Guimaras,Region VI (Western Visayas),0607902000
+Nueva Valencia,Nueva Valencia,municipality,Guimaras,Region VI (Western Visayas),0607903000
+San Lorenzo,San Lorenzo,municipality,Guimaras,Region VI (Western Visayas),0607904000
+Sibunag,Sibunag,municipality,Guimaras,Region VI (Western Visayas),0607905000
+Aguinaldo,Aguinaldo,municipality,Ifugao,Cordillera Administrative Region (CAR),1402708000
+Alfonso Lista,Alfonso Lista,municipality,Ifugao,Cordillera Administrative Region (CAR),1402707000
+Asipulo,Asipulo,municipality,Ifugao,Cordillera Administrative Region (CAR),1402711000
+Banaue,Banaue,municipality,Ifugao,Cordillera Administrative Region (CAR),1402701000
+Hingyon,Hingyon,municipality,Ifugao,Cordillera Administrative Region (CAR),1402709000
+Hungduan,Hungduan,municipality,Ifugao,Cordillera Administrative Region (CAR),1402702000
+Kiangan,Kiangan,municipality,Ifugao,Cordillera Administrative Region (CAR),1402703000
+Lagawe,Lagawe,municipality,Ifugao,Cordillera Administrative Region (CAR),1402704000
+Lamut,Lamut,municipality,Ifugao,Cordillera Administrative Region (CAR),1402705000
+Mayoyao,Mayoyao,municipality,Ifugao,Cordillera Administrative Region (CAR),1402706000
+Tinoc,Tinoc,municipality,Ifugao,Cordillera Administrative Region (CAR),1402710000
+Adams,Adams,municipality,Ilocos Norte,Region I (Ilocos Region),0102801000
+Bacarra,Bacarra,municipality,Ilocos Norte,Region I (Ilocos Region),0102802000
+Badoc,Badoc,municipality,Ilocos Norte,Region I (Ilocos Region),0102803000
+Bangui,Bangui,municipality,Ilocos Norte,Region I (Ilocos Region),0102804000
+Banna,Banna,municipality,Ilocos Norte,Region I (Ilocos Region),0102811000
+Burgos,Burgos,municipality,Ilocos Norte,Region I (Ilocos Region),0102806000
+Carasi,Carasi,municipality,Ilocos Norte,Region I (Ilocos Region),0102807000
+Currimao,Currimao,municipality,Ilocos Norte,Region I (Ilocos Region),0102808000
+Dingras,Dingras,municipality,Ilocos Norte,Region I (Ilocos Region),0102809000
+Dumalneg,Dumalneg,municipality,Ilocos Norte,Region I (Ilocos Region),0102810000
+Marcos,Marcos,municipality,Ilocos Norte,Region I (Ilocos Region),0102813000
+Nueva Era,Nueva Era,municipality,Ilocos Norte,Region I (Ilocos Region),0102814000
+Pagudpud,Pagudpud,municipality,Ilocos Norte,Region I (Ilocos Region),0102815000
+Paoay,Paoay,municipality,Ilocos Norte,Region I (Ilocos Region),0102816000
+Pasuquin,Pasuquin,municipality,Ilocos Norte,Region I (Ilocos Region),0102817000
+Piddig,Piddig,municipality,Ilocos Norte,Region I (Ilocos Region),0102818000
+Pinili,Pinili,municipality,Ilocos Norte,Region I (Ilocos Region),0102819000
+San Nicolas,San Nicolas,municipality,Ilocos Norte,Region I (Ilocos Region),0102820000
+Sarrat,Sarrat,municipality,Ilocos Norte,Region I (Ilocos Region),0102821000
+Solsona,Solsona,municipality,Ilocos Norte,Region I (Ilocos Region),0102822000
+Vintar,Vintar,municipality,Ilocos Norte,Region I (Ilocos Region),0102823000
+Alilem,Alilem,municipality,Ilocos Sur,Region I (Ilocos Region),0102901000
+Banayoyo,Banayoyo,municipality,Ilocos Sur,Region I (Ilocos Region),0102902000
+Bantay,Bantay,municipality,Ilocos Sur,Region I (Ilocos Region),0102903000
+Burgos,Burgos,municipality,Ilocos Sur,Region I (Ilocos Region),0102904000
+Cabugao,Cabugao,municipality,Ilocos Sur,Region I (Ilocos Region),0102905000
+Caoayan,Caoayan,municipality,Ilocos Sur,Region I (Ilocos Region),0102907000
+Cervantes,Cervantes,municipality,Ilocos Sur,Region I (Ilocos Region),0102908000
+Galimuyod,Galimuyod,municipality,Ilocos Sur,Region I (Ilocos Region),0102909000
+Gregorio del Pilar,Gregorio del Pilar,municipality,Ilocos Sur,Region I (Ilocos Region),0102910000
+Lidlidda,Lidlidda,municipality,Ilocos Sur,Region I (Ilocos Region),0102911000
+Magsingal,Magsingal,municipality,Ilocos Sur,Region I (Ilocos Region),0102912000
+Nagbukel,Nagbukel,municipality,Ilocos Sur,Region I (Ilocos Region),0102913000
+Narvacan,Narvacan,municipality,Ilocos Sur,Region I (Ilocos Region),0102914000
+Quirino,Quirino,municipality,Ilocos Sur,Region I (Ilocos Region),0102915000
+Salcedo,Salcedo,municipality,Ilocos Sur,Region I (Ilocos Region),0102916000
+San Emilio,San Emilio,municipality,Ilocos Sur,Region I (Ilocos Region),0102917000
+San Esteban,San Esteban,municipality,Ilocos Sur,Region I (Ilocos Region),0102918000
+San Ildefonso,San Ildefonso,municipality,Ilocos Sur,Region I (Ilocos Region),0102919000
+San Juan,San Juan,municipality,Ilocos Sur,Region I (Ilocos Region),0102920000
+San Vicente,San Vicente,municipality,Ilocos Sur,Region I (Ilocos Region),0102921000
+Santa,Santa,municipality,Ilocos Sur,Region I (Ilocos Region),0102922000
+Santa Catalina,Santa Catalina,municipality,Ilocos Sur,Region I (Ilocos Region),0102923000
+Santa Cruz,Santa Cruz,municipality,Ilocos Sur,Region I (Ilocos Region),0102924000
+Santa Lucia,Santa Lucia,municipality,Ilocos Sur,Region I (Ilocos Region),0102925000
+Santa Maria,Santa Maria,municipality,Ilocos Sur,Region I (Ilocos Region),0102926000
+Santiago,Santiago,municipality,Ilocos Sur,Region I (Ilocos Region),0102927000
+Santo Domingo,Santo Domingo,municipality,Ilocos Sur,Region I (Ilocos Region),0102928000
+Sigay,Sigay,municipality,Ilocos Sur,Region I (Ilocos Region),0102929000
+Sinait,Sinait,municipality,Ilocos Sur,Region I (Ilocos Region),0102930000
+Sugpon,Sugpon,municipality,Ilocos Sur,Region I (Ilocos Region),0102931000
+Suyo,Suyo,municipality,Ilocos Sur,Region I (Ilocos Region),0102932000
+Tagudin,Tagudin,municipality,Ilocos Sur,Region I (Ilocos Region),0102933000
+Ajuy,Ajuy,municipality,Iloilo,Region VI (Western Visayas),0603001000
+Alimodian,Alimodian,municipality,Iloilo,Region VI (Western Visayas),0603002000
+Anilao,Anilao,municipality,Iloilo,Region VI (Western Visayas),0603003000
+Badiangan,Badiangan,municipality,Iloilo,Region VI (Western Visayas),0603004000
+Balasan,Balasan,municipality,Iloilo,Region VI (Western Visayas),0603005000
+Banate,Banate,municipality,Iloilo,Region VI (Western Visayas),0603006000
+Barotac Nuevo,Barotac Nuevo,municipality,Iloilo,Region VI (Western Visayas),0603007000
+Barotac Viejo,Barotac Viejo,municipality,Iloilo,Region VI (Western Visayas),0603008000
+Batad,Batad,municipality,Iloilo,Region VI (Western Visayas),0603009000
+Bingawan,Bingawan,municipality,Iloilo,Region VI (Western Visayas),0603010000
+Cabatuan,Cabatuan,municipality,Iloilo,Region VI (Western Visayas),0603012000
+Calinog,Calinog,municipality,Iloilo,Region VI (Western Visayas),0603013000
+Carles,Carles,municipality,Iloilo,Region VI (Western Visayas),0603014000
+Concepcion,Concepcion,municipality,Iloilo,Region VI (Western Visayas),0603015000
+Dingle,Dingle,municipality,Iloilo,Region VI (Western Visayas),0603016000
+Dueñas,Dueñas,municipality,Iloilo,Region VI (Western Visayas),0603017000
+Dumangas,Dumangas,municipality,Iloilo,Region VI (Western Visayas),0603018000
+Estancia,Estancia,municipality,Iloilo,Region VI (Western Visayas),0603019000
+Guimbal,Guimbal,municipality,Iloilo,Region VI (Western Visayas),0603020000
+Igbaras,Igbaras,municipality,Iloilo,Region VI (Western Visayas),0603021000
+Janiuay,Janiuay,municipality,Iloilo,Region VI (Western Visayas),0603023000
+Lambunao,Lambunao,municipality,Iloilo,Region VI (Western Visayas),0603025000
+Leganes,Leganes,municipality,Iloilo,Region VI (Western Visayas),0603026000
+Lemery,Lemery,municipality,Iloilo,Region VI (Western Visayas),0603027000
+Leon,Leon,municipality,Iloilo,Region VI (Western Visayas),0603028000
+Maasin,Maasin,municipality,Iloilo,Region VI (Western Visayas),0603029000
+Miagao,Miagao,municipality,Iloilo,Region VI (Western Visayas),0603030000
+Mina,Mina,municipality,Iloilo,Region VI (Western Visayas),0603031000
+New Lucena,New Lucena,municipality,Iloilo,Region VI (Western Visayas),0603032000
+Oton,Oton,municipality,Iloilo,Region VI (Western Visayas),0603034000
+Pavia,Pavia,municipality,Iloilo,Region VI (Western Visayas),0603036000
+Pototan,Pototan,municipality,Iloilo,Region VI (Western Visayas),0603037000
+San Dionisio,San Dionisio,municipality,Iloilo,Region VI (Western Visayas),0603038000
+San Enrique,San Enrique,municipality,Iloilo,Region VI (Western Visayas),0603039000
+San Joaquin,San Joaquin,municipality,Iloilo,Region VI (Western Visayas),0603040000
+San Miguel,San Miguel,municipality,Iloilo,Region VI (Western Visayas),0603041000
+San Rafael,San Rafael,municipality,Iloilo,Region VI (Western Visayas),0603042000
+Santa Barbara,Santa Barbara,municipality,Iloilo,Region VI (Western Visayas),0603043000
+Sara,Sara,municipality,Iloilo,Region VI (Western Visayas),0603044000
+Tigbauan,Tigbauan,municipality,Iloilo,Region VI (Western Visayas),0603045000
+Tubungan,Tubungan,municipality,Iloilo,Region VI (Western Visayas),0603046000
+Zarraga,Zarraga,municipality,Iloilo,Region VI (Western Visayas),0603047000
+Alicia,Alicia,municipality,Isabela,Region II (Cagayan Valley),0203101000
+Angadanan,Angadanan,municipality,Isabela,Region II (Cagayan Valley),0203102000
+Aurora,Aurora,municipality,Isabela,Region II (Cagayan Valley),0203103000
+Benito Soliven,Benito Soliven,municipality,Isabela,Region II (Cagayan Valley),0203104000
+Burgos,Burgos,municipality,Isabela,Region II (Cagayan Valley),0203105000
+Cabagan,Cabagan,municipality,Isabela,Region II (Cagayan Valley),0203106000
+Cabatuan,Cabatuan,municipality,Isabela,Region II (Cagayan Valley),0203107000
+Cordon,Cordon,municipality,Isabela,Region II (Cagayan Valley),0203109000
+Delfin Albano,Delfin Albano,municipality,Isabela,Region II (Cagayan Valley),0203118000
+Dinapigue,Dinapigue,municipality,Isabela,Region II (Cagayan Valley),0203110000
+Divilacan,Divilacan,municipality,Isabela,Region II (Cagayan Valley),0203111000
+Echague,Echague,municipality,Isabela,Region II (Cagayan Valley),0203112000
+Gamu,Gamu,municipality,Isabela,Region II (Cagayan Valley),0203113000
+Jones,Jones,municipality,Isabela,Region II (Cagayan Valley),0203115000
+Luna,Luna,municipality,Isabela,Region II (Cagayan Valley),0203116000
+Maconacon,Maconacon,municipality,Isabela,Region II (Cagayan Valley),0203117000
+Mallig,Mallig,municipality,Isabela,Region II (Cagayan Valley),0203119000
+Naguilian,Naguilian,municipality,Isabela,Region II (Cagayan Valley),0203120000
+Palanan,Palanan,municipality,Isabela,Region II (Cagayan Valley),0203121000
+Quezon,Quezon,municipality,Isabela,Region II (Cagayan Valley),0203122000
+Quirino,Quirino,municipality,Isabela,Region II (Cagayan Valley),0203123000
+Ramon,Ramon,municipality,Isabela,Region II (Cagayan Valley),0203124000
+Reina Mercedes,Reina Mercedes,municipality,Isabela,Region II (Cagayan Valley),0203125000
+Roxas,Roxas,municipality,Isabela,Region II (Cagayan Valley),0203126000
+San Agustin,San Agustin,municipality,Isabela,Region II (Cagayan Valley),0203127000
+San Guillermo,San Guillermo,municipality,Isabela,Region II (Cagayan Valley),0203128000
+San Isidro,San Isidro,municipality,Isabela,Region II (Cagayan Valley),0203129000
+San Manuel,San Manuel,municipality,Isabela,Region II (Cagayan Valley),0203130000
+San Mariano,San Mariano,municipality,Isabela,Region II (Cagayan Valley),0203131000
+San Mateo,San Mateo,municipality,Isabela,Region II (Cagayan Valley),0203132000
+San Pablo,San Pablo,municipality,Isabela,Region II (Cagayan Valley),0203133000
+Santa Maria,Santa Maria,municipality,Isabela,Region II (Cagayan Valley),0203134000
+Santo Tomas,Santo Tomas,municipality,Isabela,Region II (Cagayan Valley),0203136000
+Tumauini,Tumauini,municipality,Isabela,Region II (Cagayan Valley),0203137000
+Balbalan,Balbalan,municipality,Kalinga,Cordillera Administrative Region (CAR),1403201000
+Lubuagan,Lubuagan,municipality,Kalinga,Cordillera Administrative Region (CAR),1403206000
+Pasil,Pasil,municipality,Kalinga,Cordillera Administrative Region (CAR),1403208000
+Pinukpuk,Pinukpuk,municipality,Kalinga,Cordillera Administrative Region (CAR),1403209000
+Rizal,Rizal,municipality,Kalinga,Cordillera Administrative Region (CAR),1403211000
+Tanudan,Tanudan,municipality,Kalinga,Cordillera Administrative Region (CAR),1403214000
+Tinglayan,Tinglayan,municipality,Kalinga,Cordillera Administrative Region (CAR),1403215000
+Agoo,Agoo,municipality,La Union,Region I (Ilocos Region),0103301000
+Aringay,Aringay,municipality,La Union,Region I (Ilocos Region),0103302000
+Bacnotan,Bacnotan,municipality,La Union,Region I (Ilocos Region),0103303000
+Bagulin,Bagulin,municipality,La Union,Region I (Ilocos Region),0103304000
+Balaoan,Balaoan,municipality,La Union,Region I (Ilocos Region),0103305000
+Bangar,Bangar,municipality,La Union,Region I (Ilocos Region),0103306000
+Bauang,Bauang,municipality,La Union,Region I (Ilocos Region),0103307000
+Burgos,Burgos,municipality,La Union,Region I (Ilocos Region),0103308000
+Caba,Caba,municipality,La Union,Region I (Ilocos Region),0103309000
+Luna,Luna,municipality,La Union,Region I (Ilocos Region),0103310000
+Naguilian,Naguilian,municipality,La Union,Region I (Ilocos Region),0103311000
+Pugo,Pugo,municipality,La Union,Region I (Ilocos Region),0103312000
+Rosario,Rosario,municipality,La Union,Region I (Ilocos Region),0103313000
+San Gabriel,San Gabriel,municipality,La Union,Region I (Ilocos Region),0103315000
+San Juan,San Juan,municipality,La Union,Region I (Ilocos Region),0103316000
+Santo Tomas,Santo Tomas,municipality,La Union,Region I (Ilocos Region),0103317000
+Santol,Santol,municipality,La Union,Region I (Ilocos Region),0103318000
+Sudipen,Sudipen,municipality,La Union,Region I (Ilocos Region),0103319000
+Tubao,Tubao,municipality,La Union,Region I (Ilocos Region),0103320000
+Alaminos,Alaminos,municipality,Laguna,Region IV-A (CALABARZON),0403401000
+Bay,Bay,municipality,Laguna,Region IV-A (CALABARZON),0403402000
+Calauan,Calauan,municipality,Laguna,Region IV-A (CALABARZON),0403406000
+Cavinti,Cavinti,municipality,Laguna,Region IV-A (CALABARZON),0403407000
+Famy,Famy,municipality,Laguna,Region IV-A (CALABARZON),0403408000
+Kalayaan,Kalayaan,municipality,Laguna,Region IV-A (CALABARZON),0403409000
+Liliw,Liliw,municipality,Laguna,Region IV-A (CALABARZON),0403410000
+Los Baños,Los Baños,municipality,Laguna,Region IV-A (CALABARZON),0403411000
+Luisiana,Luisiana,municipality,Laguna,Region IV-A (CALABARZON),0403412000
+Lumban,Lumban,municipality,Laguna,Region IV-A (CALABARZON),0403413000
+Mabitac,Mabitac,municipality,Laguna,Region IV-A (CALABARZON),0403414000
+Magdalena,Magdalena,municipality,Laguna,Region IV-A (CALABARZON),0403415000
+Majayjay,Majayjay,municipality,Laguna,Region IV-A (CALABARZON),0403416000
+Nagcarlan,Nagcarlan,municipality,Laguna,Region IV-A (CALABARZON),0403417000
+Paete,Paete,municipality,Laguna,Region IV-A (CALABARZON),0403418000
+Pagsanjan,Pagsanjan,municipality,Laguna,Region IV-A (CALABARZON),0403419000
+Pakil,Pakil,municipality,Laguna,Region IV-A (CALABARZON),0403420000
+Pangil,Pangil,municipality,Laguna,Region IV-A (CALABARZON),0403421000
+Pila,Pila,municipality,Laguna,Region IV-A (CALABARZON),0403422000
+Rizal,Rizal,municipality,Laguna,Region IV-A (CALABARZON),0403423000
+Santa Cruz,Santa Cruz,municipality,Laguna,Region IV-A (CALABARZON),0403426000
+Santa Maria,Santa Maria,municipality,Laguna,Region IV-A (CALABARZON),0403427000
+Siniloan,Siniloan,municipality,Laguna,Region IV-A (CALABARZON),0403429000
+Victoria,Victoria,municipality,Laguna,Region IV-A (CALABARZON),0403430000
+Bacolod,Bacolod,municipality,Lanao del Norte,Region X (Northern Mindanao),1003501000
+Baloi,Baloi,municipality,Lanao del Norte,Region X (Northern Mindanao),1003502000
+Baroy,Baroy,municipality,Lanao del Norte,Region X (Northern Mindanao),1003503000
+Kapatagan,Kapatagan,municipality,Lanao del Norte,Region X (Northern Mindanao),1003505000
+Kauswagan,Kauswagan,municipality,Lanao del Norte,Region X (Northern Mindanao),1003507000
+Kolambugan,Kolambugan,municipality,Lanao del Norte,Region X (Northern Mindanao),1003508000
+Lala,Lala,municipality,Lanao del Norte,Region X (Northern Mindanao),1003509000
+Linamon,Linamon,municipality,Lanao del Norte,Region X (Northern Mindanao),1003510000
+Magsaysay,Magsaysay,municipality,Lanao del Norte,Region X (Northern Mindanao),1003511000
+Maigo,Maigo,municipality,Lanao del Norte,Region X (Northern Mindanao),1003512000
+Matungao,Matungao,municipality,Lanao del Norte,Region X (Northern Mindanao),1003513000
+Munai,Munai,municipality,Lanao del Norte,Region X (Northern Mindanao),1003514000
+Nunungan,Nunungan,municipality,Lanao del Norte,Region X (Northern Mindanao),1003515000
+Pantao Ragat,Pantao Ragat,municipality,Lanao del Norte,Region X (Northern Mindanao),1003516000
+Pantar,Pantar,municipality,Lanao del Norte,Region X (Northern Mindanao),1003523000
+Poona Piagapo,Poona Piagapo,municipality,Lanao del Norte,Region X (Northern Mindanao),1003517000
+Salvador,Salvador,municipality,Lanao del Norte,Region X (Northern Mindanao),1003518000
+Sapad,Sapad,municipality,Lanao del Norte,Region X (Northern Mindanao),1003519000
+Sultan Naga Dimaporo,Sultan Naga Dimaporo,municipality,Lanao del Norte,Region X (Northern Mindanao),1003506000
+Tagoloan,Tagoloan,municipality,Lanao del Norte,Region X (Northern Mindanao),1003520000
+Tangcal,Tangcal,municipality,Lanao del Norte,Region X (Northern Mindanao),1003521000
+Tubod,Tubod,municipality,Lanao del Norte,Region X (Northern Mindanao),1003522000
+Amai Manabilang,Amai Manabilang,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903637000
+Bacolod-Kalawi,Bacolod-Kalawi,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903601000
+Balabagan,Balabagan,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903602000
+Balindong,Balindong,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903603000
+Bayang,Bayang,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903604000
+Binidayan,Binidayan,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903605000
+Buadiposo-Buntong,Buadiposo-Buntong,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903633000
+Bubong,Bubong,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903606000
+Butig,Butig,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903607000
+Calanogas,Calanogas,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903632000
+Ditsaan-Ramain,Ditsaan-Ramain,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903624000
+Ganassi,Ganassi,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903609000
+Kapai,Kapai,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903610000
+Kapatagan,Kapatagan,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903639000
+Lumba-Bayabao,Lumba-Bayabao,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903611000
+Lumbaca-Unayan,Lumbaca-Unayan,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903641000
+Lumbatan,Lumbatan,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903612000
+Lumbayanague,Lumbayanague,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903636000
+Madalum,Madalum,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903613000
+Madamba,Madamba,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903614000
+Maguing,Maguing,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903634000
+Malabang,Malabang,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903615000
+Marantao,Marantao,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903616000
+Marogong,Marogong,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903631000
+Masiu,Masiu,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903618000
+Mulondo,Mulondo,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903619000
+Pagayawan,Pagayawan,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903620000
+Piagapo,Piagapo,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903621000
+Picong,Picong,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903635000
+Poona Bayabao,Poona Bayabao,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903622000
+Pualas,Pualas,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903623000
+Saguiaran,Saguiaran,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903625000
+Sultan Dumalondong,Sultan Dumalondong,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903640000
+Tagoloan II,Tagoloan II,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903638000
+Tamparan,Tamparan,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903626000
+Taraka,Taraka,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903627000
+Tubaran,Tubaran,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903628000
+Tugaya,Tugaya,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903629000
+Wao,Wao,municipality,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903630000
+Abuyog,Abuyog,municipality,Leyte,Region VIII (Eastern Visayas),0803701000
+Alangalang,Alangalang,municipality,Leyte,Region VIII (Eastern Visayas),0803702000
+Albuera,Albuera,municipality,Leyte,Region VIII (Eastern Visayas),0803703000
+Babatngon,Babatngon,municipality,Leyte,Region VIII (Eastern Visayas),0803705000
+Barugo,Barugo,municipality,Leyte,Region VIII (Eastern Visayas),0803706000
+Bato,Bato,municipality,Leyte,Region VIII (Eastern Visayas),0803707000
+Burauen,Burauen,municipality,Leyte,Region VIII (Eastern Visayas),0803710000
+Calubian,Calubian,municipality,Leyte,Region VIII (Eastern Visayas),0803713000
+Capoocan,Capoocan,municipality,Leyte,Region VIII (Eastern Visayas),0803714000
+Carigara,Carigara,municipality,Leyte,Region VIII (Eastern Visayas),0803715000
+Dagami,Dagami,municipality,Leyte,Region VIII (Eastern Visayas),0803717000
+Dulag,Dulag,municipality,Leyte,Region VIII (Eastern Visayas),0803718000
+Hilongos,Hilongos,municipality,Leyte,Region VIII (Eastern Visayas),0803719000
+Hindang,Hindang,municipality,Leyte,Region VIII (Eastern Visayas),0803720000
+Inopacan,Inopacan,municipality,Leyte,Region VIII (Eastern Visayas),0803721000
+Isabel,Isabel,municipality,Leyte,Region VIII (Eastern Visayas),0803722000
+Jaro,Jaro,municipality,Leyte,Region VIII (Eastern Visayas),0803723000
+Javier,Javier,municipality,Leyte,Region VIII (Eastern Visayas),0803724000
+Julita,Julita,municipality,Leyte,Region VIII (Eastern Visayas),0803725000
+Kananga,Kananga,municipality,Leyte,Region VIII (Eastern Visayas),0803726000
+La Paz,La Paz,municipality,Leyte,Region VIII (Eastern Visayas),0803728000
+Leyte,Leyte,municipality,Leyte,Region VIII (Eastern Visayas),0803729000
+Macarthur,Macarthur,municipality,Leyte,Region VIII (Eastern Visayas),0803730000
+Mahaplag,Mahaplag,municipality,Leyte,Region VIII (Eastern Visayas),0803731000
+Matag-Ob,Matag-Ob,municipality,Leyte,Region VIII (Eastern Visayas),0803733000
+Matalom,Matalom,municipality,Leyte,Region VIII (Eastern Visayas),0803734000
+Mayorga,Mayorga,municipality,Leyte,Region VIII (Eastern Visayas),0803735000
+Merida,Merida,municipality,Leyte,Region VIII (Eastern Visayas),0803736000
+Palo,Palo,municipality,Leyte,Region VIII (Eastern Visayas),0803739000
+Palompon,Palompon,municipality,Leyte,Region VIII (Eastern Visayas),0803740000
+Pastrana,Pastrana,municipality,Leyte,Region VIII (Eastern Visayas),0803741000
+San Isidro,San Isidro,municipality,Leyte,Region VIII (Eastern Visayas),0803742000
+San Miguel,San Miguel,municipality,Leyte,Region VIII (Eastern Visayas),0803743000
+Santa Fe,Santa Fe,municipality,Leyte,Region VIII (Eastern Visayas),0803744000
+Tabango,Tabango,municipality,Leyte,Region VIII (Eastern Visayas),0803745000
+Tabontabon,Tabontabon,municipality,Leyte,Region VIII (Eastern Visayas),0803746000
+Tanauan,Tanauan,municipality,Leyte,Region VIII (Eastern Visayas),0803748000
+Tolosa,Tolosa,municipality,Leyte,Region VIII (Eastern Visayas),0803749000
+Tunga,Tunga,municipality,Leyte,Region VIII (Eastern Visayas),0803750000
+Villaba,Villaba,municipality,Leyte,Region VIII (Eastern Visayas),0803751000
+Barira,Barira,municipality,Maguindanao del Norte,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908701000
+Buldon,Buldon,municipality,Maguindanao del Norte,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908702000
+Datu Blah T. Sinsuat,Datu Blah T. Sinsuat,municipality,Maguindanao del Norte,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908704000
+Datu Odin Sinsuat,Datu Odin Sinsuat,municipality,Maguindanao del Norte,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908705000
+Kabuntalan,Kabuntalan,municipality,Maguindanao del Norte,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908706000
+Matanog,Matanog,municipality,Maguindanao del Norte,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908707000
+Northern Kabuntalan,Northern Kabuntalan,municipality,Maguindanao del Norte,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908708000
+Parang,Parang,municipality,Maguindanao del Norte,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908709000
+Sultan Kudarat,Sultan Kudarat,municipality,Maguindanao del Norte,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908710000
+Sultan Mastura,Sultan Mastura,municipality,Maguindanao del Norte,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908711000
+Talitay,Talitay,municipality,Maguindanao del Norte,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908712000
+Upi,Upi,municipality,Maguindanao del Norte,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908713000
+Ampatuan,Ampatuan,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908801000
+Buluan,Buluan,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908802000
+Datu Abdullah Sangki,Datu Abdullah Sangki,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908803000
+Datu Anggal Midtimbang,Datu Anggal Midtimbang,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908804000
+Datu Hoffer Ampatuan,Datu Hoffer Ampatuan,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908805000
+Datu Paglas,Datu Paglas,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908806000
+Datu Piang,Datu Piang,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908807000
+Datu Salibo,Datu Salibo,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908808000
+Datu Saudi Ampatuan,Datu Saudi Ampatuan,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908809000
+Datu Unsay,Datu Unsay,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908810000
+Gen. S.K. Pendatun,Gen. S.K. Pendatun,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908811000
+Guindulungan,Guindulungan,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908812000
+Mamasapano,Mamasapano,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908813000
+Mangudadatu,Mangudadatu,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908814000
+Pagagawan,Pagagawan,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908815000
+Pagalungan,Pagalungan,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908816000
+Paglat,Paglat,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908817000
+Pandag,Pandag,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908818000
+Rajah Buayan,Rajah Buayan,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908819000
+Shariff Aguak,Shariff Aguak,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908820000
+Shariff Saydona Mustapha,Shariff Saydona Mustapha,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908821000
+South Upi,South Upi,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908822000
+Sultan Sa Barongis,Sultan Sa Barongis,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908823000
+Talayan,Talayan,municipality,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908824000
+Boac,Boac,municipality,Marinduque,MIMAROPA Region,1704001000
+Buenavista,Buenavista,municipality,Marinduque,MIMAROPA Region,1704002000
+Gasan,Gasan,municipality,Marinduque,MIMAROPA Region,1704003000
+Mogpog,Mogpog,municipality,Marinduque,MIMAROPA Region,1704004000
+Santa Cruz,Santa Cruz,municipality,Marinduque,MIMAROPA Region,1704005000
+Torrijos,Torrijos,municipality,Marinduque,MIMAROPA Region,1704006000
+Aroroy,Aroroy,municipality,Masbate,Region V (Bicol Region),0504101000
+Baleno,Baleno,municipality,Masbate,Region V (Bicol Region),0504102000
+Balud,Balud,municipality,Masbate,Region V (Bicol Region),0504103000
+Batuan,Batuan,municipality,Masbate,Region V (Bicol Region),0504104000
+Cataingan,Cataingan,municipality,Masbate,Region V (Bicol Region),0504105000
+Cawayan,Cawayan,municipality,Masbate,Region V (Bicol Region),0504106000
+Claveria,Claveria,municipality,Masbate,Region V (Bicol Region),0504107000
+Dimasalang,Dimasalang,municipality,Masbate,Region V (Bicol Region),0504108000
+Esperanza,Esperanza,municipality,Masbate,Region V (Bicol Region),0504109000
+Mandaon,Mandaon,municipality,Masbate,Region V (Bicol Region),0504110000
+Milagros,Milagros,municipality,Masbate,Region V (Bicol Region),0504112000
+Mobo,Mobo,municipality,Masbate,Region V (Bicol Region),0504113000
+Monreal,Monreal,municipality,Masbate,Region V (Bicol Region),0504114000
+Palanas,Palanas,municipality,Masbate,Region V (Bicol Region),0504115000
+Pio V. Corpus,Pio V. Corpus,municipality,Masbate,Region V (Bicol Region),0504116000
+Placer,Placer,municipality,Masbate,Region V (Bicol Region),0504117000
+San Fernando,San Fernando,municipality,Masbate,Region V (Bicol Region),0504118000
+San Jacinto,San Jacinto,municipality,Masbate,Region V (Bicol Region),0504119000
+San Pascual,San Pascual,municipality,Masbate,Region V (Bicol Region),0504120000
+Uson,Uson,municipality,Masbate,Region V (Bicol Region),0504121000
+Aloran,Aloran,municipality,Misamis Occidental,Region X (Northern Mindanao),1004201000
+Baliangao,Baliangao,municipality,Misamis Occidental,Region X (Northern Mindanao),1004202000
+Bonifacio,Bonifacio,municipality,Misamis Occidental,Region X (Northern Mindanao),1004203000
+Calamba,Calamba,municipality,Misamis Occidental,Region X (Northern Mindanao),1004204000
+Clarin,Clarin,municipality,Misamis Occidental,Region X (Northern Mindanao),1004205000
+Concepcion,Concepcion,municipality,Misamis Occidental,Region X (Northern Mindanao),1004206000
+Don Victoriano,Don Victoriano,municipality,Misamis Occidental,Region X (Northern Mindanao),1004217000
+Jimenez,Jimenez,municipality,Misamis Occidental,Region X (Northern Mindanao),1004207000
+Lopez Jaena,Lopez Jaena,municipality,Misamis Occidental,Region X (Northern Mindanao),1004208000
+Panaon,Panaon,municipality,Misamis Occidental,Region X (Northern Mindanao),1004211000
+Plaridel,Plaridel,municipality,Misamis Occidental,Region X (Northern Mindanao),1004212000
+Sapang Dalaga,Sapang Dalaga,municipality,Misamis Occidental,Region X (Northern Mindanao),1004213000
+Sinacaban,Sinacaban,municipality,Misamis Occidental,Region X (Northern Mindanao),1004214000
+Tudela,Tudela,municipality,Misamis Occidental,Region X (Northern Mindanao),1004216000
+Alubijid,Alubijid,municipality,Misamis Oriental,Region X (Northern Mindanao),1004301000
+Balingasag,Balingasag,municipality,Misamis Oriental,Region X (Northern Mindanao),1004302000
+Balingoan,Balingoan,municipality,Misamis Oriental,Region X (Northern Mindanao),1004303000
+Binuangan,Binuangan,municipality,Misamis Oriental,Region X (Northern Mindanao),1004304000
+Claveria,Claveria,municipality,Misamis Oriental,Region X (Northern Mindanao),1004306000
+Gitagum,Gitagum,municipality,Misamis Oriental,Region X (Northern Mindanao),1004309000
+Initao,Initao,municipality,Misamis Oriental,Region X (Northern Mindanao),1004310000
+Jasaan,Jasaan,municipality,Misamis Oriental,Region X (Northern Mindanao),1004311000
+Kinoguitan,Kinoguitan,municipality,Misamis Oriental,Region X (Northern Mindanao),1004312000
+Lagonglong,Lagonglong,municipality,Misamis Oriental,Region X (Northern Mindanao),1004313000
+Laguindingan,Laguindingan,municipality,Misamis Oriental,Region X (Northern Mindanao),1004314000
+Libertad,Libertad,municipality,Misamis Oriental,Region X (Northern Mindanao),1004315000
+Lugait,Lugait,municipality,Misamis Oriental,Region X (Northern Mindanao),1004316000
+Magsaysay,Magsaysay,municipality,Misamis Oriental,Region X (Northern Mindanao),1004317000
+Manticao,Manticao,municipality,Misamis Oriental,Region X (Northern Mindanao),1004318000
+Medina,Medina,municipality,Misamis Oriental,Region X (Northern Mindanao),1004319000
+Naawan,Naawan,municipality,Misamis Oriental,Region X (Northern Mindanao),1004320000
+Opol,Opol,municipality,Misamis Oriental,Region X (Northern Mindanao),1004321000
+Salay,Salay,municipality,Misamis Oriental,Region X (Northern Mindanao),1004322000
+Sugbongcogon,Sugbongcogon,municipality,Misamis Oriental,Region X (Northern Mindanao),1004323000
+Tagoloan,Tagoloan,municipality,Misamis Oriental,Region X (Northern Mindanao),1004324000
+Talisayan,Talisayan,municipality,Misamis Oriental,Region X (Northern Mindanao),1004325000
+Villanueva,Villanueva,municipality,Misamis Oriental,Region X (Northern Mindanao),1004326000
+Barlig,Barlig,municipality,Mountain Province,Cordillera Administrative Region (CAR),1404401000
+Bauko,Bauko,municipality,Mountain Province,Cordillera Administrative Region (CAR),1404402000
+Besao,Besao,municipality,Mountain Province,Cordillera Administrative Region (CAR),1404403000
+Bontoc,Bontoc,municipality,Mountain Province,Cordillera Administrative Region (CAR),1404404000
+Natonin,Natonin,municipality,Mountain Province,Cordillera Administrative Region (CAR),1404405000
+Paracelis,Paracelis,municipality,Mountain Province,Cordillera Administrative Region (CAR),1404406000
+Sabangan,Sabangan,municipality,Mountain Province,Cordillera Administrative Region (CAR),1404407000
+Sadanga,Sadanga,municipality,Mountain Province,Cordillera Administrative Region (CAR),1404408000
+Sagada,Sagada,municipality,Mountain Province,Cordillera Administrative Region (CAR),1404409000
+Tadian,Tadian,municipality,Mountain Province,Cordillera Administrative Region (CAR),1404410000
+Binalbagan,Binalbagan,municipality,Negros Occidental,Negros Island Region (NIR),1804503000
+Calatrava,Calatrava,municipality,Negros Occidental,Negros Island Region (NIR),1804505000
+Candoni,Candoni,municipality,Negros Occidental,Negros Island Region (NIR),1804506000
+Cauayan,Cauayan,municipality,Negros Occidental,Negros Island Region (NIR),1804507000
+Enrique B. Magalona,Enrique B. Magalona,municipality,Negros Occidental,Negros Island Region (NIR),1804508000
+Hinigaran,Hinigaran,municipality,Negros Occidental,Negros Island Region (NIR),1804511000
+Hinoba-an,Hinoba-an,municipality,Negros Occidental,Negros Island Region (NIR),1804512000
+Ilog,Ilog,municipality,Negros Occidental,Negros Island Region (NIR),1804513000
+Isabela,Isabela,municipality,Negros Occidental,Negros Island Region (NIR),1804514000
+La Castellana,La Castellana,municipality,Negros Occidental,Negros Island Region (NIR),1804517000
+Manapla,Manapla,municipality,Negros Occidental,Negros Island Region (NIR),1804518000
+Moises Padilla,Moises Padilla,municipality,Negros Occidental,Negros Island Region (NIR),1804519000
+Murcia,Murcia,municipality,Negros Occidental,Negros Island Region (NIR),1804520000
+Pontevedra,Pontevedra,municipality,Negros Occidental,Negros Island Region (NIR),1804521000
+Pulupandan,Pulupandan,municipality,Negros Occidental,Negros Island Region (NIR),1804522000
+Salvador Benedicto,Salvador Benedicto,municipality,Negros Occidental,Negros Island Region (NIR),1804532000
+San Enrique,San Enrique,municipality,Negros Occidental,Negros Island Region (NIR),1804525000
+Toboso,Toboso,municipality,Negros Occidental,Negros Island Region (NIR),1804529000
+Valladolid,Valladolid,municipality,Negros Occidental,Negros Island Region (NIR),1804530000
+Amlan,Amlan,municipality,Negros Oriental,Negros Island Region (NIR),1804601000
+Ayungon,Ayungon,municipality,Negros Oriental,Negros Island Region (NIR),1804602000
+Bacong,Bacong,municipality,Negros Oriental,Negros Island Region (NIR),1804603000
+Basay,Basay,municipality,Negros Oriental,Negros Island Region (NIR),1804605000
+Bindoy,Bindoy,municipality,Negros Oriental,Negros Island Region (NIR),1804607000
+Dauin,Dauin,municipality,Negros Oriental,Negros Island Region (NIR),1804609000
+Jimalalud,Jimalalud,municipality,Negros Oriental,Negros Island Region (NIR),1804612000
+La Libertad,La Libertad,municipality,Negros Oriental,Negros Island Region (NIR),1804613000
+Mabinay,Mabinay,municipality,Negros Oriental,Negros Island Region (NIR),1804614000
+Manjuyod,Manjuyod,municipality,Negros Oriental,Negros Island Region (NIR),1804615000
+Pamplona,Pamplona,municipality,Negros Oriental,Negros Island Region (NIR),1804616000
+San Jose,San Jose,municipality,Negros Oriental,Negros Island Region (NIR),1804617000
+Santa Catalina,Santa Catalina,municipality,Negros Oriental,Negros Island Region (NIR),1804618000
+Siaton,Siaton,municipality,Negros Oriental,Negros Island Region (NIR),1804619000
+Sibulan,Sibulan,municipality,Negros Oriental,Negros Island Region (NIR),1804620000
+Tayasan,Tayasan,municipality,Negros Oriental,Negros Island Region (NIR),1804622000
+Valencia,Valencia,municipality,Negros Oriental,Negros Island Region (NIR),1804623000
+Vallehermoso,Vallehermoso,municipality,Negros Oriental,Negros Island Region (NIR),1804624000
+Zamboanguita,Zamboanguita,municipality,Negros Oriental,Negros Island Region (NIR),1804625000
+Allen,Allen,municipality,Northern Samar,Region VIII (Eastern Visayas),0804801000
+Biri,Biri,municipality,Northern Samar,Region VIII (Eastern Visayas),0804802000
+Bobon,Bobon,municipality,Northern Samar,Region VIII (Eastern Visayas),0804803000
+Capul,Capul,municipality,Northern Samar,Region VIII (Eastern Visayas),0804804000
+Catarman,Catarman,municipality,Northern Samar,Region VIII (Eastern Visayas),0804805000
+Catubig,Catubig,municipality,Northern Samar,Region VIII (Eastern Visayas),0804806000
+Gamay,Gamay,municipality,Northern Samar,Region VIII (Eastern Visayas),0804807000
+Laoang,Laoang,municipality,Northern Samar,Region VIII (Eastern Visayas),0804808000
+Lapinig,Lapinig,municipality,Northern Samar,Region VIII (Eastern Visayas),0804809000
+Las Navas,Las Navas,municipality,Northern Samar,Region VIII (Eastern Visayas),0804810000
+Lavezares,Lavezares,municipality,Northern Samar,Region VIII (Eastern Visayas),0804811000
+Lope de Vega,Lope de Vega,municipality,Northern Samar,Region VIII (Eastern Visayas),0804824000
+Mapanas,Mapanas,municipality,Northern Samar,Region VIII (Eastern Visayas),0804812000
+Mondragon,Mondragon,municipality,Northern Samar,Region VIII (Eastern Visayas),0804813000
+Palapag,Palapag,municipality,Northern Samar,Region VIII (Eastern Visayas),0804814000
+Pambujan,Pambujan,municipality,Northern Samar,Region VIII (Eastern Visayas),0804815000
+Rosario,Rosario,municipality,Northern Samar,Region VIII (Eastern Visayas),0804816000
+San Antonio,San Antonio,municipality,Northern Samar,Region VIII (Eastern Visayas),0804817000
+San Isidro,San Isidro,municipality,Northern Samar,Region VIII (Eastern Visayas),0804818000
+San Jose,San Jose,municipality,Northern Samar,Region VIII (Eastern Visayas),0804819000
+San Roque,San Roque,municipality,Northern Samar,Region VIII (Eastern Visayas),0804820000
+San Vicente,San Vicente,municipality,Northern Samar,Region VIII (Eastern Visayas),0804821000
+Silvino Lobos,Silvino Lobos,municipality,Northern Samar,Region VIII (Eastern Visayas),0804822000
+Victoria,Victoria,municipality,Northern Samar,Region VIII (Eastern Visayas),0804823000
+Aliaga,Aliaga,municipality,Nueva Ecija,Region III (Central Luzon),0304901000
+Bongabon,Bongabon,municipality,Nueva Ecija,Region III (Central Luzon),0304902000
+Cabiao,Cabiao,municipality,Nueva Ecija,Region III (Central Luzon),0304904000
+Carranglan,Carranglan,municipality,Nueva Ecija,Region III (Central Luzon),0304905000
+Cuyapo,Cuyapo,municipality,Nueva Ecija,Region III (Central Luzon),0304906000
+Gabaldon,Gabaldon,municipality,Nueva Ecija,Region III (Central Luzon),0304907000
+General Mamerto Natividad,General Mamerto Natividad,municipality,Nueva Ecija,Region III (Central Luzon),0304909000
+General Tinio,General Tinio,municipality,Nueva Ecija,Region III (Central Luzon),0304910000
+Guimba,Guimba,municipality,Nueva Ecija,Region III (Central Luzon),0304911000
+Jaen,Jaen,municipality,Nueva Ecija,Region III (Central Luzon),0304912000
+Laur,Laur,municipality,Nueva Ecija,Region III (Central Luzon),0304913000
+Licab,Licab,municipality,Nueva Ecija,Region III (Central Luzon),0304914000
+Llanera,Llanera,municipality,Nueva Ecija,Region III (Central Luzon),0304915000
+Lupao,Lupao,municipality,Nueva Ecija,Region III (Central Luzon),0304916000
+Nampicuan,Nampicuan,municipality,Nueva Ecija,Region III (Central Luzon),0304918000
+Pantabangan,Pantabangan,municipality,Nueva Ecija,Region III (Central Luzon),0304920000
+Peñaranda,Peñaranda,municipality,Nueva Ecija,Region III (Central Luzon),0304921000
+Quezon,Quezon,municipality,Nueva Ecija,Region III (Central Luzon),0304922000
+Rizal,Rizal,municipality,Nueva Ecija,Region III (Central Luzon),0304923000
+San Antonio,San Antonio,municipality,Nueva Ecija,Region III (Central Luzon),0304924000
+San Isidro,San Isidro,municipality,Nueva Ecija,Region III (Central Luzon),0304925000
+San Leonardo,San Leonardo,municipality,Nueva Ecija,Region III (Central Luzon),0304927000
+Santa Rosa,Santa Rosa,municipality,Nueva Ecija,Region III (Central Luzon),0304928000
+Santo Domingo,Santo Domingo,municipality,Nueva Ecija,Region III (Central Luzon),0304929000
+Talavera,Talavera,municipality,Nueva Ecija,Region III (Central Luzon),0304930000
+Talugtug,Talugtug,municipality,Nueva Ecija,Region III (Central Luzon),0304931000
+Zaragoza,Zaragoza,municipality,Nueva Ecija,Region III (Central Luzon),0304932000
+Alfonso Castaneda,Alfonso Castaneda,municipality,Nueva Vizcaya,Region II (Cagayan Valley),0205015000
+Ambaguio,Ambaguio,municipality,Nueva Vizcaya,Region II (Cagayan Valley),0205001000
+Aritao,Aritao,municipality,Nueva Vizcaya,Region II (Cagayan Valley),0205002000
+Bagabag,Bagabag,municipality,Nueva Vizcaya,Region II (Cagayan Valley),0205003000
+Bambang,Bambang,municipality,Nueva Vizcaya,Region II (Cagayan Valley),0205004000
+Bayombong,Bayombong,municipality,Nueva Vizcaya,Region II (Cagayan Valley),0205005000
+Diadi,Diadi,municipality,Nueva Vizcaya,Region II (Cagayan Valley),0205006000
+Dupax del Norte,Dupax del Norte,municipality,Nueva Vizcaya,Region II (Cagayan Valley),0205007000
+Dupax del Sur,Dupax del Sur,municipality,Nueva Vizcaya,Region II (Cagayan Valley),0205008000
+Kasibu,Kasibu,municipality,Nueva Vizcaya,Region II (Cagayan Valley),0205009000
+Kayapa,Kayapa,municipality,Nueva Vizcaya,Region II (Cagayan Valley),0205010000
+Quezon,Quezon,municipality,Nueva Vizcaya,Region II (Cagayan Valley),0205011000
+Santa Fe,Santa Fe,municipality,Nueva Vizcaya,Region II (Cagayan Valley),0205012000
+Solano,Solano,municipality,Nueva Vizcaya,Region II (Cagayan Valley),0205013000
+Villaverde,Villaverde,municipality,Nueva Vizcaya,Region II (Cagayan Valley),0205014000
+Abra de Ilog,Abra de Ilog,municipality,Occidental Mindoro,MIMAROPA Region,1705101000
+Calintaan,Calintaan,municipality,Occidental Mindoro,MIMAROPA Region,1705102000
+Looc,Looc,municipality,Occidental Mindoro,MIMAROPA Region,1705103000
+Lubang,Lubang,municipality,Occidental Mindoro,MIMAROPA Region,1705104000
+Magsaysay,Magsaysay,municipality,Occidental Mindoro,MIMAROPA Region,1705105000
+Mamburao,Mamburao,municipality,Occidental Mindoro,MIMAROPA Region,1705106000
+Paluan,Paluan,municipality,Occidental Mindoro,MIMAROPA Region,1705107000
+Rizal,Rizal,municipality,Occidental Mindoro,MIMAROPA Region,1705108000
+Sablayan,Sablayan,municipality,Occidental Mindoro,MIMAROPA Region,1705109000
+San Jose,San Jose,municipality,Occidental Mindoro,MIMAROPA Region,1705110000
+Santa Cruz,Santa Cruz,municipality,Occidental Mindoro,MIMAROPA Region,1705111000
+Baco,Baco,municipality,Oriental Mindoro,MIMAROPA Region,1705201000
+Bansud,Bansud,municipality,Oriental Mindoro,MIMAROPA Region,1705202000
+Bongabong,Bongabong,municipality,Oriental Mindoro,MIMAROPA Region,1705203000
+Bulalacao,Bulalacao,municipality,Oriental Mindoro,MIMAROPA Region,1705204000
+Gloria,Gloria,municipality,Oriental Mindoro,MIMAROPA Region,1705206000
+Mansalay,Mansalay,municipality,Oriental Mindoro,MIMAROPA Region,1705207000
+Naujan,Naujan,municipality,Oriental Mindoro,MIMAROPA Region,1705208000
+Pinamalayan,Pinamalayan,municipality,Oriental Mindoro,MIMAROPA Region,1705209000
+Pola,Pola,municipality,Oriental Mindoro,MIMAROPA Region,1705210000
+Puerto Galera,Puerto Galera,municipality,Oriental Mindoro,MIMAROPA Region,1705211000
+Roxas,Roxas,municipality,Oriental Mindoro,MIMAROPA Region,1705212000
+San Teodoro,San Teodoro,municipality,Oriental Mindoro,MIMAROPA Region,1705213000
+Socorro,Socorro,municipality,Oriental Mindoro,MIMAROPA Region,1705214000
+Victoria,Victoria,municipality,Oriental Mindoro,MIMAROPA Region,1705215000
+Aborlan,Aborlan,municipality,Palawan,MIMAROPA Region,1705301000
+Agutaya,Agutaya,municipality,Palawan,MIMAROPA Region,1705302000
+Araceli,Araceli,municipality,Palawan,MIMAROPA Region,1705303000
+Balabac,Balabac,municipality,Palawan,MIMAROPA Region,1705304000
+Bataraza,Bataraza,municipality,Palawan,MIMAROPA Region,1705305000
+Brooke's Point,Brooke's Point,municipality,Palawan,MIMAROPA Region,1705306000
+Busuanga,Busuanga,municipality,Palawan,MIMAROPA Region,1705307000
+Cagayancillo,Cagayancillo,municipality,Palawan,MIMAROPA Region,1705308000
+Coron,Coron,municipality,Palawan,MIMAROPA Region,1705309000
+Culion,Culion,municipality,Palawan,MIMAROPA Region,1705322000
+Cuyo,Cuyo,municipality,Palawan,MIMAROPA Region,1705310000
+Dr. Jose P. Rizal,Dr. Jose P. Rizal,municipality,Palawan,MIMAROPA Region,1705323000
+Dumaran,Dumaran,municipality,Palawan,MIMAROPA Region,1705311000
+El Nido,El Nido,municipality,Palawan,MIMAROPA Region,1705312000
+Kalayaan,Kalayaan,municipality,Palawan,MIMAROPA Region,1705321000
+Linapacan,Linapacan,municipality,Palawan,MIMAROPA Region,1705313000
+Magsaysay,Magsaysay,municipality,Palawan,MIMAROPA Region,1705314000
+Narra,Narra,municipality,Palawan,MIMAROPA Region,1705315000
+Quezon,Quezon,municipality,Palawan,MIMAROPA Region,1705317000
+Roxas,Roxas,municipality,Palawan,MIMAROPA Region,1705318000
+San Vicente,San Vicente,municipality,Palawan,MIMAROPA Region,1705319000
+Sofronio Española,Sofronio Española,municipality,Palawan,MIMAROPA Region,1705324000
+Taytay,Taytay,municipality,Palawan,MIMAROPA Region,1705320000
+Apalit,Apalit,municipality,Pampanga,Region III (Central Luzon),0305402000
+Arayat,Arayat,municipality,Pampanga,Region III (Central Luzon),0305403000
+Bacolor,Bacolor,municipality,Pampanga,Region III (Central Luzon),0305404000
+Candaba,Candaba,municipality,Pampanga,Region III (Central Luzon),0305405000
+Floridablanca,Floridablanca,municipality,Pampanga,Region III (Central Luzon),0305406000
+Guagua,Guagua,municipality,Pampanga,Region III (Central Luzon),0305407000
+Lubao,Lubao,municipality,Pampanga,Region III (Central Luzon),0305408000
+Macabebe,Macabebe,municipality,Pampanga,Region III (Central Luzon),0305410000
+Magalang,Magalang,municipality,Pampanga,Region III (Central Luzon),0305411000
+Masantol,Masantol,municipality,Pampanga,Region III (Central Luzon),0305412000
+Mexico,Mexico,municipality,Pampanga,Region III (Central Luzon),0305413000
+Minalin,Minalin,municipality,Pampanga,Region III (Central Luzon),0305414000
+Porac,Porac,municipality,Pampanga,Region III (Central Luzon),0305415000
+San Luis,San Luis,municipality,Pampanga,Region III (Central Luzon),0305417000
+San Simon,San Simon,municipality,Pampanga,Region III (Central Luzon),0305418000
+Santa Ana,Santa Ana,municipality,Pampanga,Region III (Central Luzon),0305419000
+Santa Rita,Santa Rita,municipality,Pampanga,Region III (Central Luzon),0305420000
+Sasmuan,Sasmuan,municipality,Pampanga,Region III (Central Luzon),0305422000
+Sto. Tomas,Sto. Tomas,municipality,Pampanga,Region III (Central Luzon),0305421000
+Agno,Agno,municipality,Pangasinan,Region I (Ilocos Region),0105501000
+Aguilar,Aguilar,municipality,Pangasinan,Region I (Ilocos Region),0105502000
+Alcala,Alcala,municipality,Pangasinan,Region I (Ilocos Region),0105504000
+Anda,Anda,municipality,Pangasinan,Region I (Ilocos Region),0105505000
+Asingan,Asingan,municipality,Pangasinan,Region I (Ilocos Region),0105506000
+Balungao,Balungao,municipality,Pangasinan,Region I (Ilocos Region),0105507000
+Bani,Bani,municipality,Pangasinan,Region I (Ilocos Region),0105508000
+Basista,Basista,municipality,Pangasinan,Region I (Ilocos Region),0105509000
+Bautista,Bautista,municipality,Pangasinan,Region I (Ilocos Region),0105510000
+Bayambang,Bayambang,municipality,Pangasinan,Region I (Ilocos Region),0105511000
+Binalonan,Binalonan,municipality,Pangasinan,Region I (Ilocos Region),0105512000
+Binmaley,Binmaley,municipality,Pangasinan,Region I (Ilocos Region),0105513000
+Bolinao,Bolinao,municipality,Pangasinan,Region I (Ilocos Region),0105514000
+Bugallon,Bugallon,municipality,Pangasinan,Region I (Ilocos Region),0105515000
+Burgos,Burgos,municipality,Pangasinan,Region I (Ilocos Region),0105516000
+Calasiao,Calasiao,municipality,Pangasinan,Region I (Ilocos Region),0105517000
+Dasol,Dasol,municipality,Pangasinan,Region I (Ilocos Region),0105519000
+Infanta,Infanta,municipality,Pangasinan,Region I (Ilocos Region),0105520000
+Labrador,Labrador,municipality,Pangasinan,Region I (Ilocos Region),0105521000
+Laoac,Laoac,municipality,Pangasinan,Region I (Ilocos Region),0105548000
+Lingayen,Lingayen,municipality,Pangasinan,Region I (Ilocos Region),0105522000
+Mabini,Mabini,municipality,Pangasinan,Region I (Ilocos Region),0105523000
+Malasiqui,Malasiqui,municipality,Pangasinan,Region I (Ilocos Region),0105524000
+Manaoag,Manaoag,municipality,Pangasinan,Region I (Ilocos Region),0105525000
+Mangaldan,Mangaldan,municipality,Pangasinan,Region I (Ilocos Region),0105526000
+Mangatarem,Mangatarem,municipality,Pangasinan,Region I (Ilocos Region),0105527000
+Mapandan,Mapandan,municipality,Pangasinan,Region I (Ilocos Region),0105528000
+Natividad,Natividad,municipality,Pangasinan,Region I (Ilocos Region),0105529000
+Pozorrubio,Pozorrubio,municipality,Pangasinan,Region I (Ilocos Region),0105530000
+Rosales,Rosales,municipality,Pangasinan,Region I (Ilocos Region),0105531000
+San Fabian,San Fabian,municipality,Pangasinan,Region I (Ilocos Region),0105533000
+San Jacinto,San Jacinto,municipality,Pangasinan,Region I (Ilocos Region),0105534000
+San Manuel,San Manuel,municipality,Pangasinan,Region I (Ilocos Region),0105535000
+San Nicolas,San Nicolas,municipality,Pangasinan,Region I (Ilocos Region),0105536000
+San Quintin,San Quintin,municipality,Pangasinan,Region I (Ilocos Region),0105537000
+Santa Barbara,Santa Barbara,municipality,Pangasinan,Region I (Ilocos Region),0105538000
+Santa Maria,Santa Maria,municipality,Pangasinan,Region I (Ilocos Region),0105539000
+Santo Tomas,Santo Tomas,municipality,Pangasinan,Region I (Ilocos Region),0105540000
+Sison,Sison,municipality,Pangasinan,Region I (Ilocos Region),0105541000
+Sual,Sual,municipality,Pangasinan,Region I (Ilocos Region),0105542000
+Tayug,Tayug,municipality,Pangasinan,Region I (Ilocos Region),0105543000
+Umingan,Umingan,municipality,Pangasinan,Region I (Ilocos Region),0105544000
+Urbiztondo,Urbiztondo,municipality,Pangasinan,Region I (Ilocos Region),0105545000
+Villasis,Villasis,municipality,Pangasinan,Region I (Ilocos Region),0105547000
+Agdangan,Agdangan,municipality,Quezon,Region IV-A (CALABARZON),0405601000
+Alabat,Alabat,municipality,Quezon,Region IV-A (CALABARZON),0405602000
+Atimonan,Atimonan,municipality,Quezon,Region IV-A (CALABARZON),0405603000
+Buenavista,Buenavista,municipality,Quezon,Region IV-A (CALABARZON),0405605000
+Burdeos,Burdeos,municipality,Quezon,Region IV-A (CALABARZON),0405606000
+Calauag,Calauag,municipality,Quezon,Region IV-A (CALABARZON),0405607000
+Candelaria,Candelaria,municipality,Quezon,Region IV-A (CALABARZON),0405608000
+Catanauan,Catanauan,municipality,Quezon,Region IV-A (CALABARZON),0405610000
+Dolores,Dolores,municipality,Quezon,Region IV-A (CALABARZON),0405615000
+General Luna,General Luna,municipality,Quezon,Region IV-A (CALABARZON),0405616000
+General Nakar,General Nakar,municipality,Quezon,Region IV-A (CALABARZON),0405617000
+Guinayangan,Guinayangan,municipality,Quezon,Region IV-A (CALABARZON),0405618000
+Gumaca,Gumaca,municipality,Quezon,Region IV-A (CALABARZON),0405619000
+Infanta,Infanta,municipality,Quezon,Region IV-A (CALABARZON),0405620000
+Jomalig,Jomalig,municipality,Quezon,Region IV-A (CALABARZON),0405621000
+Lopez,Lopez,municipality,Quezon,Region IV-A (CALABARZON),0405622000
+Lucban,Lucban,municipality,Quezon,Region IV-A (CALABARZON),0405623000
+Macalelon,Macalelon,municipality,Quezon,Region IV-A (CALABARZON),0405625000
+Mauban,Mauban,municipality,Quezon,Region IV-A (CALABARZON),0405627000
+Mulanay,Mulanay,municipality,Quezon,Region IV-A (CALABARZON),0405628000
+Padre Burgos,Padre Burgos,municipality,Quezon,Region IV-A (CALABARZON),0405629000
+Pagbilao,Pagbilao,municipality,Quezon,Region IV-A (CALABARZON),0405630000
+Panukulan,Panukulan,municipality,Quezon,Region IV-A (CALABARZON),0405631000
+Patnanungan,Patnanungan,municipality,Quezon,Region IV-A (CALABARZON),0405632000
+Perez,Perez,municipality,Quezon,Region IV-A (CALABARZON),0405633000
+Pitogo,Pitogo,municipality,Quezon,Region IV-A (CALABARZON),0405634000
+Plaridel,Plaridel,municipality,Quezon,Region IV-A (CALABARZON),0405635000
+Polillo,Polillo,municipality,Quezon,Region IV-A (CALABARZON),0405636000
+Quezon,Quezon,municipality,Quezon,Region IV-A (CALABARZON),0405637000
+Real,Real,municipality,Quezon,Region IV-A (CALABARZON),0405638000
+Sampaloc,Sampaloc,municipality,Quezon,Region IV-A (CALABARZON),0405639000
+San Andres,San Andres,municipality,Quezon,Region IV-A (CALABARZON),0405640000
+San Antonio,San Antonio,municipality,Quezon,Region IV-A (CALABARZON),0405641000
+San Francisco,San Francisco,municipality,Quezon,Region IV-A (CALABARZON),0405642000
+San Narciso,San Narciso,municipality,Quezon,Region IV-A (CALABARZON),0405644000
+Sariaya,Sariaya,municipality,Quezon,Region IV-A (CALABARZON),0405645000
+Tagkawayan,Tagkawayan,municipality,Quezon,Region IV-A (CALABARZON),0405646000
+Tiaong,Tiaong,municipality,Quezon,Region IV-A (CALABARZON),0405648000
+Unisan,Unisan,municipality,Quezon,Region IV-A (CALABARZON),0405649000
+Aglipay,Aglipay,municipality,Quirino,Region II (Cagayan Valley),0205701000
+Cabarroguis,Cabarroguis,municipality,Quirino,Region II (Cagayan Valley),0205702000
+Diffun,Diffun,municipality,Quirino,Region II (Cagayan Valley),0205703000
+Maddela,Maddela,municipality,Quirino,Region II (Cagayan Valley),0205704000
+Nagtipunan,Nagtipunan,municipality,Quirino,Region II (Cagayan Valley),0205706000
+Saguday,Saguday,municipality,Quirino,Region II (Cagayan Valley),0205705000
+Angono,Angono,municipality,Rizal,Region IV-A (CALABARZON),0405801000
+Baras,Baras,municipality,Rizal,Region IV-A (CALABARZON),0405803000
+Binangonan,Binangonan,municipality,Rizal,Region IV-A (CALABARZON),0405804000
+Cainta,Cainta,municipality,Rizal,Region IV-A (CALABARZON),0405805000
+Cardona,Cardona,municipality,Rizal,Region IV-A (CALABARZON),0405806000
+Jala-Jala,Jala-Jala,municipality,Rizal,Region IV-A (CALABARZON),0405807000
+Morong,Morong,municipality,Rizal,Region IV-A (CALABARZON),0405809000
+Pililla,Pililla,municipality,Rizal,Region IV-A (CALABARZON),0405810000
+Rodriguez,Rodriguez,municipality,Rizal,Region IV-A (CALABARZON),0405808000
+San Mateo,San Mateo,municipality,Rizal,Region IV-A (CALABARZON),0405811000
+Tanay,Tanay,municipality,Rizal,Region IV-A (CALABARZON),0405812000
+Taytay,Taytay,municipality,Rizal,Region IV-A (CALABARZON),0405813000
+Teresa,Teresa,municipality,Rizal,Region IV-A (CALABARZON),0405814000
+Alcantara,Alcantara,municipality,Romblon,MIMAROPA Region,1705901000
+Banton,Banton,municipality,Romblon,MIMAROPA Region,1705902000
+Cajidiocan,Cajidiocan,municipality,Romblon,MIMAROPA Region,1705903000
+Calatrava,Calatrava,municipality,Romblon,MIMAROPA Region,1705904000
+Concepcion,Concepcion,municipality,Romblon,MIMAROPA Region,1705905000
+Corcuera,Corcuera,municipality,Romblon,MIMAROPA Region,1705906000
+Ferrol,Ferrol,municipality,Romblon,MIMAROPA Region,1705916000
+Looc,Looc,municipality,Romblon,MIMAROPA Region,1705907000
+Magdiwang,Magdiwang,municipality,Romblon,MIMAROPA Region,1705908000
+Odiongan,Odiongan,municipality,Romblon,MIMAROPA Region,1705909000
+Romblon,Romblon,municipality,Romblon,MIMAROPA Region,1705910000
+San Agustin,San Agustin,municipality,Romblon,MIMAROPA Region,1705911000
+San Andres,San Andres,municipality,Romblon,MIMAROPA Region,1705912000
+San Fernando,San Fernando,municipality,Romblon,MIMAROPA Region,1705913000
+San Jose,San Jose,municipality,Romblon,MIMAROPA Region,1705914000
+Santa Fe,Santa Fe,municipality,Romblon,MIMAROPA Region,1705915000
+Santa Maria,Santa Maria,municipality,Romblon,MIMAROPA Region,1705917000
+Almagro,Almagro,municipality,Samar,Region VIII (Eastern Visayas),0806001000
+Basey,Basey,municipality,Samar,Region VIII (Eastern Visayas),0806002000
+Calbiga,Calbiga,municipality,Samar,Region VIII (Eastern Visayas),0806004000
+Daram,Daram,municipality,Samar,Region VIII (Eastern Visayas),0806006000
+Gandara,Gandara,municipality,Samar,Region VIII (Eastern Visayas),0806007000
+Hinabangan,Hinabangan,municipality,Samar,Region VIII (Eastern Visayas),0806008000
+Jiabong,Jiabong,municipality,Samar,Region VIII (Eastern Visayas),0806009000
+Marabut,Marabut,municipality,Samar,Region VIII (Eastern Visayas),0806010000
+Matuguinao,Matuguinao,municipality,Samar,Region VIII (Eastern Visayas),0806011000
+Motiong,Motiong,municipality,Samar,Region VIII (Eastern Visayas),0806012000
+Pagsanghan,Pagsanghan,municipality,Samar,Region VIII (Eastern Visayas),0806026000
+Paranas,Paranas,municipality,Samar,Region VIII (Eastern Visayas),0806022000
+Pinabacdao,Pinabacdao,municipality,Samar,Region VIII (Eastern Visayas),0806013000
+San Jorge,San Jorge,municipality,Samar,Region VIII (Eastern Visayas),0806025000
+San Jose de Buan,San Jose de Buan,municipality,Samar,Region VIII (Eastern Visayas),0806014000
+San Sebastian,San Sebastian,municipality,Samar,Region VIII (Eastern Visayas),0806015000
+Santa Margarita,Santa Margarita,municipality,Samar,Region VIII (Eastern Visayas),0806016000
+Santa Rita,Santa Rita,municipality,Samar,Region VIII (Eastern Visayas),0806017000
+Santo Niño,Santo Niño,municipality,Samar,Region VIII (Eastern Visayas),0806018000
+Tagapul-An,Tagapul-An,municipality,Samar,Region VIII (Eastern Visayas),0806024000
+Talalora,Talalora,municipality,Samar,Region VIII (Eastern Visayas),0806019000
+Tarangnan,Tarangnan,municipality,Samar,Region VIII (Eastern Visayas),0806020000
+Villareal,Villareal,municipality,Samar,Region VIII (Eastern Visayas),0806021000
+Zumarraga,Zumarraga,municipality,Samar,Region VIII (Eastern Visayas),0806023000
+Alabel,Alabel,municipality,Sarangani,Region XII (SOCCSKSARGEN),1208001000
+Glan,Glan,municipality,Sarangani,Region XII (SOCCSKSARGEN),1208002000
+Kiamba,Kiamba,municipality,Sarangani,Region XII (SOCCSKSARGEN),1208003000
+Maasim,Maasim,municipality,Sarangani,Region XII (SOCCSKSARGEN),1208004000
+Maitum,Maitum,municipality,Sarangani,Region XII (SOCCSKSARGEN),1208005000
+Malapatan,Malapatan,municipality,Sarangani,Region XII (SOCCSKSARGEN),1208006000
+Malungon,Malungon,municipality,Sarangani,Region XII (SOCCSKSARGEN),1208007000
+Enrique Villanueva,Enrique Villanueva,municipality,Siquijor,Negros Island Region (NIR),1806101000
+Larena,Larena,municipality,Siquijor,Negros Island Region (NIR),1806102000
+Lazi,Lazi,municipality,Siquijor,Negros Island Region (NIR),1806103000
+Maria,Maria,municipality,Siquijor,Negros Island Region (NIR),1806104000
+San Juan,San Juan,municipality,Siquijor,Negros Island Region (NIR),1806105000
+Siquijor,Siquijor,municipality,Siquijor,Negros Island Region (NIR),1806106000
+Barcelona,Barcelona,municipality,Sorsogon,Region V (Bicol Region),0506202000
+Bulan,Bulan,municipality,Sorsogon,Region V (Bicol Region),0506203000
+Bulusan,Bulusan,municipality,Sorsogon,Region V (Bicol Region),0506204000
+Casiguran,Casiguran,municipality,Sorsogon,Region V (Bicol Region),0506205000
+Castilla,Castilla,municipality,Sorsogon,Region V (Bicol Region),0506206000
+Donsol,Donsol,municipality,Sorsogon,Region V (Bicol Region),0506207000
+Gubat,Gubat,municipality,Sorsogon,Region V (Bicol Region),0506208000
+Irosin,Irosin,municipality,Sorsogon,Region V (Bicol Region),0506209000
+Juban,Juban,municipality,Sorsogon,Region V (Bicol Region),0506210000
+Magallanes,Magallanes,municipality,Sorsogon,Region V (Bicol Region),0506211000
+Matnog,Matnog,municipality,Sorsogon,Region V (Bicol Region),0506212000
+Pilar,Pilar,municipality,Sorsogon,Region V (Bicol Region),0506213000
+Prieto Diaz,Prieto Diaz,municipality,Sorsogon,Region V (Bicol Region),0506214000
+Santa Magdalena,Santa Magdalena,municipality,Sorsogon,Region V (Bicol Region),0506215000
+Banga,Banga,municipality,South Cotabato,Region XII (SOCCSKSARGEN),1206302000
+Lake Sebu,Lake Sebu,municipality,South Cotabato,Region XII (SOCCSKSARGEN),1206319000
+Norala,Norala,municipality,South Cotabato,Region XII (SOCCSKSARGEN),1206311000
+Polomolok,Polomolok,municipality,South Cotabato,Region XII (SOCCSKSARGEN),1206312000
+Santo Niño,Santo Niño,municipality,South Cotabato,Region XII (SOCCSKSARGEN),1206318000
+Surallah,Surallah,municipality,South Cotabato,Region XII (SOCCSKSARGEN),1206313000
+T'Boli,T'Boli,municipality,South Cotabato,Region XII (SOCCSKSARGEN),1206316000
+Tampakan,Tampakan,municipality,South Cotabato,Region XII (SOCCSKSARGEN),1206314000
+Tantangan,Tantangan,municipality,South Cotabato,Region XII (SOCCSKSARGEN),1206315000
+Tupi,Tupi,municipality,South Cotabato,Region XII (SOCCSKSARGEN),1206317000
+Anahawan,Anahawan,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806401000
+Bontoc,Bontoc,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806402000
+Hinunangan,Hinunangan,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806403000
+Hinundayan,Hinundayan,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806404000
+Libagon,Libagon,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806405000
+Liloan,Liloan,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806406000
+Limasawa,Limasawa,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806419000
+Macrohon,Macrohon,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806408000
+Malitbog,Malitbog,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806409000
+Padre Burgos,Padre Burgos,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806410000
+Pintuyan,Pintuyan,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806411000
+Saint Bernard,Saint Bernard,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806412000
+San Francisco,San Francisco,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806413000
+San Juan,San Juan,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806414000
+San Ricardo,San Ricardo,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806415000
+Silago,Silago,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806416000
+Sogod,Sogod,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806417000
+Tomas Oppus,Tomas Oppus,municipality,Southern Leyte,Region VIII (Eastern Visayas),0806418000
+Bagumbayan,Bagumbayan,municipality,Sultan Kudarat,Region XII (SOCCSKSARGEN),1206501000
+Columbio,Columbio,municipality,Sultan Kudarat,Region XII (SOCCSKSARGEN),1206502000
+Esperanza,Esperanza,municipality,Sultan Kudarat,Region XII (SOCCSKSARGEN),1206503000
+Isulan,Isulan,municipality,Sultan Kudarat,Region XII (SOCCSKSARGEN),1206504000
+Kalamansig,Kalamansig,municipality,Sultan Kudarat,Region XII (SOCCSKSARGEN),1206505000
+Lambayong,Lambayong,municipality,Sultan Kudarat,Region XII (SOCCSKSARGEN),1206508000
+Lebak,Lebak,municipality,Sultan Kudarat,Region XII (SOCCSKSARGEN),1206506000
+Lutayan,Lutayan,municipality,Sultan Kudarat,Region XII (SOCCSKSARGEN),1206507000
+Palimbang,Palimbang,municipality,Sultan Kudarat,Region XII (SOCCSKSARGEN),1206509000
+President Quirino,President Quirino,municipality,Sultan Kudarat,Region XII (SOCCSKSARGEN),1206510000
+Sen. Ninoy Aquino,Sen. Ninoy Aquino,municipality,Sultan Kudarat,Region XII (SOCCSKSARGEN),1206512000
+Hadji Panglima Tahil,Hadji Panglima Tahil,municipality,Sulu,Region IX (Zamboanga Peninsula),0906606000
+Indanan,Indanan,municipality,Sulu,Region IX (Zamboanga Peninsula),0906601000
+Jolo,Jolo,municipality,Sulu,Region IX (Zamboanga Peninsula),0906602000
+Kalingalan Caluang,Kalingalan Caluang,municipality,Sulu,Region IX (Zamboanga Peninsula),0906603000
+Lugus,Lugus,municipality,Sulu,Region IX (Zamboanga Peninsula),0906617000
+Luuk,Luuk,municipality,Sulu,Region IX (Zamboanga Peninsula),0906604000
+Maimbung,Maimbung,municipality,Sulu,Region IX (Zamboanga Peninsula),0906605000
+Old Panamao,Old Panamao,municipality,Sulu,Region IX (Zamboanga Peninsula),0906607000
+Omar,Omar,municipality,Sulu,Region IX (Zamboanga Peninsula),0906619000
+Pandami,Pandami,municipality,Sulu,Region IX (Zamboanga Peninsula),0906618000
+Panglima Estino,Panglima Estino,municipality,Sulu,Region IX (Zamboanga Peninsula),0906616000
+Pangutaran,Pangutaran,municipality,Sulu,Region IX (Zamboanga Peninsula),0906608000
+Parang,Parang,municipality,Sulu,Region IX (Zamboanga Peninsula),0906609000
+Pata,Pata,municipality,Sulu,Region IX (Zamboanga Peninsula),0906610000
+Patikul,Patikul,municipality,Sulu,Region IX (Zamboanga Peninsula),0906611000
+Siasi,Siasi,municipality,Sulu,Region IX (Zamboanga Peninsula),0906612000
+Talipao,Talipao,municipality,Sulu,Region IX (Zamboanga Peninsula),0906613000
+Tapul,Tapul,municipality,Sulu,Region IX (Zamboanga Peninsula),0906614000
+Tongkil,Tongkil,municipality,Sulu,Region IX (Zamboanga Peninsula),0906615000
+Alegria,Alegria,municipality,Surigao del Norte,Region XIII (Caraga),1606701000
+Bacuag,Bacuag,municipality,Surigao del Norte,Region XIII (Caraga),1606702000
+Burgos,Burgos,municipality,Surigao del Norte,Region XIII (Caraga),1606704000
+Claver,Claver,municipality,Surigao del Norte,Region XIII (Caraga),1606706000
+Dapa,Dapa,municipality,Surigao del Norte,Region XIII (Caraga),1606707000
+Del Carmen,Del Carmen,municipality,Surigao del Norte,Region XIII (Caraga),1606708000
+General Luna,General Luna,municipality,Surigao del Norte,Region XIII (Caraga),1606710000
+Gigaquit,Gigaquit,municipality,Surigao del Norte,Region XIII (Caraga),1606711000
+Mainit,Mainit,municipality,Surigao del Norte,Region XIII (Caraga),1606714000
+Malimono,Malimono,municipality,Surigao del Norte,Region XIII (Caraga),1606715000
+Pilar,Pilar,municipality,Surigao del Norte,Region XIII (Caraga),1606716000
+Placer,Placer,municipality,Surigao del Norte,Region XIII (Caraga),1606717000
+San Benito,San Benito,municipality,Surigao del Norte,Region XIII (Caraga),1606718000
+San Francisco,San Francisco,municipality,Surigao del Norte,Region XIII (Caraga),1606719000
+San Isidro,San Isidro,municipality,Surigao del Norte,Region XIII (Caraga),1606720000
+Santa Monica,Santa Monica,municipality,Surigao del Norte,Region XIII (Caraga),1606721000
+Sison,Sison,municipality,Surigao del Norte,Region XIII (Caraga),1606722000
+Socorro,Socorro,municipality,Surigao del Norte,Region XIII (Caraga),1606723000
+Tagana-An,Tagana-An,municipality,Surigao del Norte,Region XIII (Caraga),1606725000
+Tubod,Tubod,municipality,Surigao del Norte,Region XIII (Caraga),1606727000
+Barobo,Barobo,municipality,Surigao del Sur,Region XIII (Caraga),1606801000
+Bayabas,Bayabas,municipality,Surigao del Sur,Region XIII (Caraga),1606802000
+Cagwait,Cagwait,municipality,Surigao del Sur,Region XIII (Caraga),1606804000
+Cantilan,Cantilan,municipality,Surigao del Sur,Region XIII (Caraga),1606805000
+Carmen,Carmen,municipality,Surigao del Sur,Region XIII (Caraga),1606806000
+Carrascal,Carrascal,municipality,Surigao del Sur,Region XIII (Caraga),1606807000
+Cortes,Cortes,municipality,Surigao del Sur,Region XIII (Caraga),1606808000
+Hinatuan,Hinatuan,municipality,Surigao del Sur,Region XIII (Caraga),1606809000
+Lanuza,Lanuza,municipality,Surigao del Sur,Region XIII (Caraga),1606810000
+Lianga,Lianga,municipality,Surigao del Sur,Region XIII (Caraga),1606811000
+Lingig,Lingig,municipality,Surigao del Sur,Region XIII (Caraga),1606812000
+Madrid,Madrid,municipality,Surigao del Sur,Region XIII (Caraga),1606813000
+Marihatag,Marihatag,municipality,Surigao del Sur,Region XIII (Caraga),1606814000
+San Agustin,San Agustin,municipality,Surigao del Sur,Region XIII (Caraga),1606815000
+San Miguel,San Miguel,municipality,Surigao del Sur,Region XIII (Caraga),1606816000
+Tagbina,Tagbina,municipality,Surigao del Sur,Region XIII (Caraga),1606817000
+Tago,Tago,municipality,Surigao del Sur,Region XIII (Caraga),1606818000
+Anao,Anao,municipality,Tarlac,Region III (Central Luzon),0306901000
+Bamban,Bamban,municipality,Tarlac,Region III (Central Luzon),0306902000
+Camiling,Camiling,municipality,Tarlac,Region III (Central Luzon),0306903000
+Capas,Capas,municipality,Tarlac,Region III (Central Luzon),0306904000
+Concepcion,Concepcion,municipality,Tarlac,Region III (Central Luzon),0306905000
+Gerona,Gerona,municipality,Tarlac,Region III (Central Luzon),0306906000
+La Paz,La Paz,municipality,Tarlac,Region III (Central Luzon),0306907000
+Mayantoc,Mayantoc,municipality,Tarlac,Region III (Central Luzon),0306908000
+Moncada,Moncada,municipality,Tarlac,Region III (Central Luzon),0306909000
+Paniqui,Paniqui,municipality,Tarlac,Region III (Central Luzon),0306910000
+Pura,Pura,municipality,Tarlac,Region III (Central Luzon),0306911000
+Ramos,Ramos,municipality,Tarlac,Region III (Central Luzon),0306912000
+San Clemente,San Clemente,municipality,Tarlac,Region III (Central Luzon),0306913000
+San Jose,San Jose,municipality,Tarlac,Region III (Central Luzon),0306918000
+San Manuel,San Manuel,municipality,Tarlac,Region III (Central Luzon),0306914000
+Santa Ignacia,Santa Ignacia,municipality,Tarlac,Region III (Central Luzon),0306915000
+Victoria,Victoria,municipality,Tarlac,Region III (Central Luzon),0306917000
+Bongao,Bongao,municipality,Tawi-Tawi,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1907002000
+Languyan,Languyan,municipality,Tawi-Tawi,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1907009000
+Mapun,Mapun,municipality,Tawi-Tawi,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1907003000
+Panglima Sugala,Panglima Sugala,municipality,Tawi-Tawi,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1907001000
+Sapa-Sapa,Sapa-Sapa,municipality,Tawi-Tawi,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1907010000
+Sibutu,Sibutu,municipality,Tawi-Tawi,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1907011000
+Simunul,Simunul,municipality,Tawi-Tawi,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1907004000
+Sitangkai,Sitangkai,municipality,Tawi-Tawi,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1907005000
+South Ubian,South Ubian,municipality,Tawi-Tawi,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1907006000
+Tandubas,Tandubas,municipality,Tawi-Tawi,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1907007000
+Turtle Islands,Turtle Islands,municipality,Tawi-Tawi,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1907008000
+Botolan,Botolan,municipality,Zambales,Region III (Central Luzon),0307101000
+Cabangan,Cabangan,municipality,Zambales,Region III (Central Luzon),0307102000
+Candelaria,Candelaria,municipality,Zambales,Region III (Central Luzon),0307103000
+Castillejos,Castillejos,municipality,Zambales,Region III (Central Luzon),0307104000
+Iba,Iba,municipality,Zambales,Region III (Central Luzon),0307105000
+Masinloc,Masinloc,municipality,Zambales,Region III (Central Luzon),0307106000
+Palauig,Palauig,municipality,Zambales,Region III (Central Luzon),0307108000
+San Antonio,San Antonio,municipality,Zambales,Region III (Central Luzon),0307109000
+San Felipe,San Felipe,municipality,Zambales,Region III (Central Luzon),0307110000
+San Marcelino,San Marcelino,municipality,Zambales,Region III (Central Luzon),0307111000
+San Narciso,San Narciso,municipality,Zambales,Region III (Central Luzon),0307112000
+Santa Cruz,Santa Cruz,municipality,Zambales,Region III (Central Luzon),0307113000
+Subic,Subic,municipality,Zambales,Region III (Central Luzon),0307114000
+Alicia,Alicia,municipality,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908301000
+Buug,Buug,municipality,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908302000
+Diplahan,Diplahan,municipality,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908303000
+Imelda,Imelda,municipality,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908304000
+Ipil,Ipil,municipality,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908305000
+Kabasalan,Kabasalan,municipality,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908306000
+Mabuhay,Mabuhay,municipality,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908307000
+Malangas,Malangas,municipality,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908308000
+Naga,Naga,municipality,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908309000
+Olutanga,Olutanga,municipality,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908310000
+Payao,Payao,municipality,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908311000
+Roseller Lim,Roseller Lim,municipality,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908312000
+Siay,Siay,municipality,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908313000
+Talusan,Talusan,municipality,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908314000
+Titay,Titay,municipality,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908315000
+Tungawan,Tungawan,municipality,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908316000
+Baliguian,Baliguian,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907224000
+Godod,Godod,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907225000
+Gutalac,Gutalac,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907223000
+Jose Dalman,Jose Dalman,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907222000
+Kalawit,Kalawit,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907227000
+Katipunan,Katipunan,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907203000
+La Libertad,La Libertad,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907204000
+Labason,Labason,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907205000
+Leon T. Postigo,Leon T. Postigo,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907226000
+Liloy,Liloy,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907206000
+Manukan,Manukan,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907207000
+Mutia,Mutia,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907208000
+Piñan,Piñan,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907209000
+Polanco,Polanco,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907210000
+Pres. Manuel A. Roxas,Pres. Manuel A. Roxas,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907211000
+Rizal,Rizal,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907212000
+Salug,Salug,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907213000
+Sergio Osmeña Sr.,Sergio Osmeña Sr.,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907214000
+Siayan,Siayan,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907215000
+Sibuco,Sibuco,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907216000
+Sibutad,Sibutad,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907217000
+Sindangan,Sindangan,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907218000
+Siocon,Siocon,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907219000
+Sirawai,Sirawai,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907220000
+Tampilisan,Tampilisan,municipality,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907221000
+Aurora,Aurora,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907302000
+Bayog,Bayog,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907303000
+Dimataling,Dimataling,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907305000
+Dinas,Dinas,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907306000
+Dumalinao,Dumalinao,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907307000
+Dumingag,Dumingag,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907308000
+Guipos,Guipos,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907343000
+Josefina,Josefina,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907337000
+Kumalarang,Kumalarang,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907311000
+Labangan,Labangan,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907312000
+Lakewood,Lakewood,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907333000
+Lapuyan,Lapuyan,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907313000
+Mahayag,Mahayag,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907315000
+Margosatubig,Margosatubig,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907317000
+Midsalip,Midsalip,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907318000
+Molave,Molave,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907319000
+Pitogo,Pitogo,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907338000
+Ramon Magsaysay,Ramon Magsaysay,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907323000
+San Miguel,San Miguel,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907324000
+San Pablo,San Pablo,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907325000
+Sominot,Sominot,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907340000
+Tabina,Tabina,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907327000
+Tambulig,Tambulig,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907328000
+Tigbao,Tigbao,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907344000
+Tukuran,Tukuran,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907330000
+Vincenzo A. Sagun,Vincenzo A. Sagun,municipality,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907341000
+Abra,Abra,province,Abra,Cordillera Administrative Region (CAR),1400100000
+Agusan del Norte,Agusan del Norte,province,Agusan del Norte,Region XIII (Caraga),1600200000
+Agusan del Sur,Agusan del Sur,province,Agusan del Sur,Region XIII (Caraga),1600300000
+Aklan,Aklan,province,Aklan,Region VI (Western Visayas),0600400000
+Albay,Albay,province,Albay,Region V (Bicol Region),0500500000
+Antique,Antique,province,Antique,Region VI (Western Visayas),0600600000
+Apayao,Apayao,province,Apayao,Cordillera Administrative Region (CAR),1408100000
+Aurora,Aurora,province,Aurora,Region III (Central Luzon),0307700000
+Basilan,Basilan,province,Basilan,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1900700000
+Bataan,Bataan,province,Bataan,Region III (Central Luzon),0300800000
+Batanes,Batanes,province,Batanes,Region II (Cagayan Valley),0200900000
+Batangas,Batangas,province,Batangas,Region IV-A (CALABARZON),0401000000
+Benguet,Benguet,province,Benguet,Cordillera Administrative Region (CAR),1401100000
+Biliran,Biliran,province,Biliran,Region VIII (Eastern Visayas),0807800000
+Bohol,Bohol,province,Bohol,Region VII (Central Visayas),0701200000
+Bukidnon,Bukidnon,province,Bukidnon,Region X (Northern Mindanao),1001300000
+Bulacan,Bulacan,province,Bulacan,Region III (Central Luzon),0301400000
+Cagayan,Cagayan,province,Cagayan,Region II (Cagayan Valley),0201500000
+Camarines Norte,Camarines Norte,province,Camarines Norte,Region V (Bicol Region),0501600000
+Camarines Sur,Camarines Sur,province,Camarines Sur,Region V (Bicol Region),0501700000
+Camiguin,Camiguin,province,Camiguin,Region X (Northern Mindanao),1001800000
+Capiz,Capiz,province,Capiz,Region VI (Western Visayas),0601900000
+Catanduanes,Catanduanes,province,Catanduanes,Region V (Bicol Region),0502000000
+Cavite,Cavite,province,Cavite,Region IV-A (CALABARZON),0402100000
+Cebu,Cebu,province,Cebu,Region VII (Central Visayas),0702200000
+Cotabato,Cotabato,province,Cotabato,Region XII (SOCCSKSARGEN),1204700000
+Davao Occidental,Davao Occidental,province,Davao Occidental,Region XI (Davao Region),1108600000
+Davao Oriental,Davao Oriental,province,Davao Oriental,Region XI (Davao Region),1102500000
+Davao de Oro,Davao de Oro,province,Davao de Oro,Region XI (Davao Region),1108200000
+Davao del Norte,Davao del Norte,province,Davao del Norte,Region XI (Davao Region),1102300000
+Davao del Sur,Davao del Sur,province,Davao del Sur,Region XI (Davao Region),1102400000
+Dinagat Islands,Dinagat Islands,province,Dinagat Islands,Region XIII (Caraga),1608500000
+Eastern Samar,Eastern Samar,province,Eastern Samar,Region VIII (Eastern Visayas),0802600000
+Guimaras,Guimaras,province,Guimaras,Region VI (Western Visayas),0607900000
+Ifugao,Ifugao,province,Ifugao,Cordillera Administrative Region (CAR),1402700000
+Ilocos Norte,Ilocos Norte,province,Ilocos Norte,Region I (Ilocos Region),0102800000
+Ilocos Sur,Ilocos Sur,province,Ilocos Sur,Region I (Ilocos Region),0102900000
+Iloilo,Iloilo,province,Iloilo,Region VI (Western Visayas),0603000000
+Isabela,Isabela,province,Isabela,Region II (Cagayan Valley),0203100000
+Kalinga,Kalinga,province,Kalinga,Cordillera Administrative Region (CAR),1403200000
+La Union,La Union,province,La Union,Region I (Ilocos Region),0103300000
+Laguna,Laguna,province,Laguna,Region IV-A (CALABARZON),0403400000
+Lanao del Norte,Lanao del Norte,province,Lanao del Norte,Region X (Northern Mindanao),1003500000
+Lanao del Sur,Lanao del Sur,province,Lanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1903600000
+Leyte,Leyte,province,Leyte,Region VIII (Eastern Visayas),0803700000
+Maguindanao del Norte,Maguindanao del Norte,province,Maguindanao del Norte,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908700000
+Maguindanao del Sur,Maguindanao del Sur,province,Maguindanao del Sur,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1908800000
+Marinduque,Marinduque,province,Marinduque,MIMAROPA Region,1704000000
+Masbate,Masbate,province,Masbate,Region V (Bicol Region),0504100000
+Misamis Occidental,Misamis Occidental,province,Misamis Occidental,Region X (Northern Mindanao),1004200000
+Misamis Oriental,Misamis Oriental,province,Misamis Oriental,Region X (Northern Mindanao),1004300000
+Mountain Province,Mountain Province,province,Mountain Province,Cordillera Administrative Region (CAR),1404400000
+Negros Occidental,Negros Occidental,province,Negros Occidental,Negros Island Region (NIR),1804500000
+Negros Oriental,Negros Oriental,province,Negros Oriental,Negros Island Region (NIR),1804600000
+Northern Samar,Northern Samar,province,Northern Samar,Region VIII (Eastern Visayas),0804800000
+Nueva Ecija,Nueva Ecija,province,Nueva Ecija,Region III (Central Luzon),0304900000
+Nueva Vizcaya,Nueva Vizcaya,province,Nueva Vizcaya,Region II (Cagayan Valley),0205000000
+Occidental Mindoro,Occidental Mindoro,province,Occidental Mindoro,MIMAROPA Region,1705100000
+Oriental Mindoro,Oriental Mindoro,province,Oriental Mindoro,MIMAROPA Region,1705200000
+Palawan,Palawan,province,Palawan,MIMAROPA Region,1705300000
+Pampanga,Pampanga,province,Pampanga,Region III (Central Luzon),0305400000
+Pangasinan,Pangasinan,province,Pangasinan,Region I (Ilocos Region),0105500000
+Quezon,Quezon,province,Quezon,Region IV-A (CALABARZON),0405600000
+Quirino,Quirino,province,Quirino,Region II (Cagayan Valley),0205700000
+Rizal,Rizal,province,Rizal,Region IV-A (CALABARZON),0405800000
+Romblon,Romblon,province,Romblon,MIMAROPA Region,1705900000
+Samar,Samar,province,Samar,Region VIII (Eastern Visayas),0806000000
+Sarangani,Sarangani,province,Sarangani,Region XII (SOCCSKSARGEN),1208000000
+Siquijor,Siquijor,province,Siquijor,Negros Island Region (NIR),1806100000
+Sorsogon,Sorsogon,province,Sorsogon,Region V (Bicol Region),0506200000
+South Cotabato,South Cotabato,province,South Cotabato,Region XII (SOCCSKSARGEN),1206300000
+Southern Leyte,Southern Leyte,province,Southern Leyte,Region VIII (Eastern Visayas),0806400000
+Sultan Kudarat,Sultan Kudarat,province,Sultan Kudarat,Region XII (SOCCSKSARGEN),1206500000
+Sulu,Sulu,province,Sulu,Region IX (Zamboanga Peninsula),0906600000
+Surigao del Norte,Surigao del Norte,province,Surigao del Norte,Region XIII (Caraga),1606700000
+Surigao del Sur,Surigao del Sur,province,Surigao del Sur,Region XIII (Caraga),1606800000
+Tarlac,Tarlac,province,Tarlac,Region III (Central Luzon),0306900000
+Tawi-Tawi,Tawi-Tawi,province,Tawi-Tawi,Bangsamoro Autonomous Region In Muslim Mindanao (BARMM),1907000000
+Zambales,Zambales,province,Zambales,Region III (Central Luzon),0307100000
+Zamboanga Sibugay,Zamboanga Sibugay,province,Zamboanga Sibugay,Region IX (Zamboanga Peninsula),0908300000
+Zamboanga del Norte,Zamboanga del Norte,province,Zamboanga del Norte,Region IX (Zamboanga Peninsula),0907200000
+Zamboanga del Sur,Zamboanga del Sur,province,Zamboanga del Sur,Region IX (Zamboanga Peninsula),0907300000
