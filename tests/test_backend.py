@@ -22,6 +22,7 @@ os.environ["SECRET_KEY"] = "test-secret-key-32chars-minimum-xx"
 # Keep tests off the real Supabase Storage even when .env has credentials.
 os.environ["SUPABASE_URL"] = ""
 os.environ["SUPABASE_SECRET_KEY"] = ""
+os.environ["NER_ENABLED"] = "false"   # don't load DistilBERT in unit tests
 
 from app.main import app
 from app.core.database import Base, get_db
@@ -502,6 +503,82 @@ class TestPermissions:
 
     def test_pdfs_not_publicly_served(self, client):
         assert client.get("/pdfs/CTC_20260101_0001.pdf").status_code == 404
+
+
+# ─── Live interview answers ────────────────────────────────────────────────────
+
+class TestInterviewAnswers:
+    @pytest.mark.parametrize("key,spoken,value", [
+        ("sex", "I'm female po", "Female"),
+        ("sex", "lalaki", "Male"),
+        ("civil_status", "not married", "Single"),
+        ("civil_status", "biyuda", "Widowed"),
+        ("date", "May 10 1990", "May 10, 1990"),
+        ("date", "the tenth of May nineteen ninety", "May 10, 1990"),
+        ("date", "ika-10 ng Mayo 1990", "May 10, 1990"),
+        ("date", "05/10/1990", "May 10, 1990"),
+        ("date", "25/12/1985", "December 25, 1985"),
+        ("date", "March twenty first nineteen ninety five", "March 21, 1995"),
+        ("height", "five feet six inches", "168"),
+        ("height", "160", "160"),
+        ("weight", "130 pounds", "59"),
+        ("gross_annual_income", "25 thousand a month", "300000"),
+        ("gross_annual_income", "two hundred fifty thousand pesos", "250000"),
+        ("gross_annual_income", "wala po", "0"),
+        ("citizenship", "Pilipino", "Filipino"),
+        ("icr_no", "none", ""),
+        ("icr_no", "zero one two three four", "01234"),
+        ("surname", "my surname is dela cruz", "Dela Cruz"),
+        ("surname", "C R U Z", "Cruz"),
+        ("middle_name", "wala po", ""),
+        ("occupation", "I'm a tricycle driver", "Tricycle Driver"),
+    ])
+    def test_understands_natural_answers(self, key, spoken, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer(key, spoken)
+        assert result.ok, result.message
+        assert result.value == value
+
+    @pytest.mark.parametrize("key,spoken", [
+        ("sex", "nails"), ("civil_status", "nails"), ("date", "nails"), ("date", "May 10"),
+        ("date", "February 30 1990"), ("date", "May 10 2090"), ("height", "nails"), ("height", "900"),
+        ("weight", "nails"), ("gross_annual_income", "nails"), ("citizenship", "nails"),
+        ("address", "nails"), ("surname", "12345"), ("icr_no", "yes"), ("sex", "can you repeat that"),
+    ])
+    def test_rejects_answers_that_do_not_fit_the_question(self, key, spoken):
+        from app.services.answer_service import understand_answer
+        result = understand_answer(key, spoken)
+        assert not result.ok
+        assert result.message
+
+    def test_unrecognized_place_or_job_asks_for_confirmation(self):
+        from app.services.answer_service import understand_answer
+        assert understand_answer("place_of_birth", "nails").needs_confirmation
+        assert understand_answer("occupation", "nails").needs_confirmation
+        assert not understand_answer("occupation", "farmer").needs_confirmation
+
+    def test_answer_endpoint(self, client, staff_token):
+        headers = {"Authorization": f"Bearer {staff_token}"}
+        r = client.post("/api/extraction/answer", headers=headers, json={"field_key": "sex", "transcript": "nails"})
+        assert r.status_code == 200 and r.json()["ok"] is False and r.json()["message"]
+        r = client.post("/api/extraction/answer", headers=headers, json={"field_key": "date", "transcript": "May 10 1990"})
+        assert r.json()["ok"] and r.json()["normalized"] == "1990-05-10"
+        r = client.post("/api/extraction/answer", headers=headers, json={"field_key": "bogus", "transcript": "x"})
+        assert r.status_code == 422
+        assert client.post("/api/extraction/answer", json={"field_key": "sex", "transcript": "male"}).status_code == 401
+
+    def test_answers_endpoint_checks_everything(self, client, staff_token):
+        headers = {"Authorization": f"Bearer {staff_token}"}
+        answers = {
+            "surname": "Santos", "given_name": "Maria", "middle_name": "", "address": "Purok 2, Barangay Agoho",
+            "date": "May 10, 1990", "sex": "Female", "civil_status": "Single", "citizenship": "Filipino",
+            "icr_no": "", "place_of_birth": "Mambajao", "height": "160", "weight": "55",
+            "occupation": "Teacher", "gross_annual_income": "240000",
+        }
+        r = client.post("/api/extraction/answers", headers=headers, json={"answers": answers})
+        assert r.status_code == 200 and r.json()["ok"] is True
+        r = client.post("/api/extraction/answers", headers=headers, json={"answers": {**answers, "sex": "nails"}})
+        assert r.json()["ok"] is False and r.json()["results"]["sex"]["ok"] is False
 
 
 # ─── SUS Survey ────────────────────────────────────────────────────────────────

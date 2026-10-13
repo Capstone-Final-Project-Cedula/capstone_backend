@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     WHISPER_NO_SPEECH_THRESHOLD: float = 0.35
     WHISPER_LOGPROB_THRESHOLD: float = -1.5
 
+    # DistilBERT NER used to understand interview answers (names, places).
+    # False skips the model (regex/gazetteer only), e.g. in the test suite.
+    NER_ENABLED: bool = True
+
     # QR Code
     QR_EXPIRY_MINUTES: int = 60
 

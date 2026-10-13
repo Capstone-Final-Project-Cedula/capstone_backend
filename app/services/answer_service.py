@@ -1,0 +1,975 @@
+"""
+app/services/answer_service.py
+Understands ONE interview answer at a time for the live voice interview.
+
+The web interview asks one question per field ("What is your sex?"). Each
+spoken or typed answer is sent here with its field key, and this module:
+
+  * cleans it (drops "my surname is", "po", "it's", fillers),
+  * extracts the value with regex (dates, numbers, units, sex, civil status,
+    ICR, income) and DistilBERT NER (person names, places),
+  * checks it is a real answer for that question ("nails" is not a sex),
+  * returns a normalized value plus a short spoken message when it is not
+    usable, so the interview asks again instead of saving nonsense.
+
+extraction_service.extract_fields() remains the whole-sentence extractor;
+this module reuses its DistilBERT pipeline and barangay gazetteer.
+"""
+from __future__ import annotations
+
+import logging
+import re
+from dataclasses import dataclass, field
+from datetime import date
+from typing import Callable, Dict, List, Optional, Tuple
+
+from rapidfuzz import fuzz, process
+
+from app.core.config import settings
+from app.services import extraction_service
+from app.services.barangay_gazetteer import load_barangays, match_barangay
+
+logger = logging.getLogger(__name__)
+
+
+# ─── Result type ──────────────────────────────────────────────────────────────
+
+@dataclass
+class AnswerResult:
+    field_key: str
+    ok: bool
+    value: Optional[str] = None          # what the form stores / shows
+    display: Optional[str] = None        # how the assistant reads it back
+    normalized: Optional[str] = None     # machine form (ISO date, number)
+    message: Optional[str] = None        # what to say when not ok / to confirm
+    reason: Optional[str] = None         # empty | unclear | invalid | partial
+    needs_confirmation: bool = False     # plausible but unrecognized: ask "is that right?"
+    methods: List[str] = field(default_factory=list)  # "regex", "distilbert", "gazetteer"
+    confidence: float = 0.0
+    warnings: List[str] = field(default_factory=list)
+
+    def as_dict(self) -> dict:
+        return self.__dict__.copy()
+
+
+def _ok(key, value, display=None, normalized=None, methods=None, confidence=1.0,
+        needs_confirmation=False, message=None, warnings=None) -> AnswerResult:
+    return AnswerResult(
+        field_key=key, ok=True, value=value, display=display or value,
+        normalized=normalized if normalized is not None else value,
+        methods=methods or ["regex"], confidence=confidence,
+        needs_confirmation=needs_confirmation, message=message, warnings=warnings or [],
+    )
+
+
+def _fail(key, message, reason="invalid", methods=None) -> AnswerResult:
+    return AnswerResult(field_key=key, ok=False, message=message, reason=reason,
+                        methods=methods or ["regex"])
+
+
+# ─── Text helpers ─────────────────────────────────────────────────────────────
+
+# Whole answers that mean "I didn't understand / say it again".
+UNCLEAR_PATTERN = re.compile(
+    r"^(?:what|huh|pardon|sorry|excuse me|come again|say (?:it )?again|again|repeat(?: (?:it|that|please))?"
+    r"|can you repeat(?: (?:it|that))?|i don'?t (?:know|understand)|not sure|ano|ano po|ha|hindi ko alam"
+    r"|pakiulit|ulit|ulitin|what do you mean|i didn'?t (?:hear|catch) (?:you|that))[\s?.!]*$",
+    re.IGNORECASE,
+)
+
+BLANK_ANSWERS = {
+    "none", "no", "nope", "n/a", "na", "not applicable", "nothing", "blank", "skip",
+    "wala", "wala po", "wala akong", "no i don't have", "i don't have", "i don't have one",
+    "i have none", "no middle name", "i don't have a middle name", "walang", "no icr",
+}
+
+
+def _squash(text: str) -> str:
+    return re.sub(r"\s+", " ", str(text or "")).strip()
+
+
+def _basic_clean(text: str) -> str:
+    """Lowercase-free cleanup shared by every field: polite particles, edge punctuation."""
+    t = _squash(text)
+    t = re.sub(r"\b(?:po|opo|ho|uhm+|umm+|uh+|ah+|eh+|er+|ahm+|yung|iyong)\b", " ", t, flags=re.IGNORECASE)
+    t = re.sub(r"^(?:yes|yeah|oo|okay|ok|sure|well|so)[,\s]+", "", t, flags=re.IGNORECASE)
+    return _squash(t).strip(" ,.;:!?\"'")
+
+
+def _strip_prefix(text: str, patterns: List[str]) -> str:
+    t = text
+    changed = True
+    while changed:
+        changed = False
+        for p in patterns:
+            new = re.sub(p, "", t, flags=re.IGNORECASE).strip(" ,.:;")
+            if new != t:
+                t, changed = new, True
+    return t
+
+
+def _is_unclear(text: str) -> bool:
+    return bool(UNCLEAR_PATTERN.match(_squash(text)))
+
+
+def _is_blank_answer(text: str) -> bool:
+    t = re.sub(r"[.!?,]", "", _squash(text).lower())
+    t = re.sub(r"\bpo\b", "", t).strip()
+    return t in BLANK_ANSWERS or bool(re.fullmatch(r"(?:no|wala|none)(?: (?:po|i don'?t|ako|meron|akong))*", t))
+
+
+def _title(text: str) -> str:
+    words = []
+    for w in _squash(text).split(" "):
+        if not w:
+            continue
+        # Keep things like "III", "Jr.", keep inner hyphen/apostrophe casing.
+        if re.fullmatch(r"(?:i{1,3}|iv|v)", w, re.IGNORECASE):
+            words.append(w.upper())
+        else:
+            words.append("-".join(p[:1].upper() + p[1:].lower() for p in w.split("-")))
+    return " ".join(words)
+
+
+# ─── Spoken numbers ───────────────────────────────────────────────────────────
+
+UNITS = {
+    "zero": 0, "oh": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6,
+    "seven": 7, "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12,
+    "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16, "seventeen": 17,
+    "eighteen": 18, "nineteen": 19,
+}
+TENS = {"twenty": 20, "thirty": 30, "forty": 40, "fourty": 40, "fifty": 50, "sixty": 60,
+        "seventy": 70, "eighty": 80, "ninety": 90}
+SCALES = {"hundred": 100, "thousand": 1000, "k": 1000, "libo": 1000, "million": 1_000_000,
+          "milyon": 1_000_000, "billion": 1_000_000_000}
+ORDINALS = {
+    "first": 1, "second": 2, "third": 3, "fourth": 4, "fifth": 5, "sixth": 6, "seventh": 7,
+    "eighth": 8, "ninth": 9, "tenth": 10, "eleventh": 11, "twelfth": 12, "thirteenth": 13,
+    "fourteenth": 14, "fifteenth": 15, "sixteenth": 16, "seventeenth": 17, "eighteenth": 18,
+    "nineteenth": 19, "twentieth": 20, "thirtieth": 30,
+}
+
+
+def _tokenize_numbers(text: str) -> List[object]:
+    """
+    Turn text into tokens where every number word or digit run becomes a
+    number (int/float) and everything else stays a lowercase word.
+    "twenty-first" -> 21 (ordinal), "1,500" -> 1500, "250k" -> 250, "k".
+    """
+    t = text.lower().replace("₱", " ").replace("–", "-")
+    t = re.sub(r"(\d),(\d{3})", r"\1\2", t)
+    t = re.sub(r"(\d),(\d{3})", r"\1\2", t)          # 1,500,000
+    t = re.sub(r"(\d)(st|nd|rd|th)\b", r"\1", t)      # 10th -> 10
+    t = re.sub(r"(\d+(?:\.\d+)?)\s*k\b", r"\1 k", t)  # 250k -> 250 k
+    t = re.sub(r"\bika-?\s*", "", t)                  # Filipino "ika-10"
+    t = re.sub(r"(?<=[a-z])-(?=[a-z])", " ", t)       # twenty-one -> twenty one
+    raw = re.findall(r"\d+(?:\.\d+)?|[a-zñ']+|[/\-.:]", t)
+    tokens: List[object] = []
+    for w in raw:
+        if re.fullmatch(r"\d+(?:\.\d+)?", w):
+            tokens.append(float(w) if "." in w else int(w))
+        elif w in UNITS:
+            tokens.append(("num", UNITS[w], w))
+        elif w in TENS:
+            tokens.append(("num", TENS[w], w))
+        elif w in SCALES:
+            tokens.append(("scale", SCALES[w], w))
+        elif w in ORDINALS:
+            tokens.append(("ord", ORDINALS[w], w))
+        else:
+            tokens.append(w)
+    return tokens
+
+
+def _combine_numbers(tokens: List[object]) -> List[object]:
+    """
+    Merge number-word tokens into values:
+      twenty one -> 21, twenty first -> 21 (ordinal), two hundred fifty thousand -> 250000,
+      1.5 million -> 1500000, nineteen ninety five -> 1995 (year pair), nineteen oh five -> 1905.
+    Digits pass through. Words are kept as strings.
+    """
+    tokens = list(tokens)
+    for idx in range(len(tokens) - 1):
+        # "a thousand", "a hundred" -> one thousand / one hundred
+        if tokens[idx] == "a" and isinstance(tokens[idx + 1], tuple) and tokens[idx + 1][0] == "scale":
+            tokens[idx] = ("num", 1, "a")
+
+    out: List[object] = []
+    i = 0
+    n = len(tokens)
+
+    while i < n:
+        tok = tokens[i]
+        is_numeric = isinstance(tok, (int, float)) or (isinstance(tok, tuple) and tok[0] in ("num", "ord", "scale"))
+        if not is_numeric or (isinstance(tok, tuple) and tok[0] == "scale" and tok[2] == "k" and not out):
+            out.append(tok if not isinstance(tok, tuple) else tok[2])
+            i += 1
+            continue
+
+        # Year pair: 19/20 followed by 0..99 ("nineteen ninety five", "twenty ten", "nineteen oh five").
+        # Skipped when the NEXT token starts a year pair itself ("May nineteen, nineteen ninety").
+        def starts_year_pair(j):
+            return (j + 1 < n and isinstance(tokens[j], tuple) and tokens[j][0] == "num" and tokens[j][1] in (19, 20)
+                    and isinstance(tokens[j + 1], tuple) and tokens[j + 1][0] in ("num", "ord")
+                    and (tokens[j + 1][1] >= 10 or tokens[j + 1][2] == "oh"))
+
+        if isinstance(tok, tuple) and tok[0] == "num" and tok[1] in (19, 20) and i + 1 < n and not starts_year_pair(i + 1):
+            nxt = tokens[i + 1]
+            # Not a year when the second part is an ordinal ("twenty first") or a lone unit ("twenty one").
+            if isinstance(nxt, tuple) and nxt[0] == "num" and not (nxt[1] < 10 and nxt[2] != "oh"):
+                j = i + 1
+                if nxt[2] == "oh" and j + 1 < n and isinstance(tokens[j + 1], tuple) and tokens[j + 1][0] in ("num", "ord") and tokens[j + 1][1] < 10:
+                    out.append(tok[1] * 100 + tokens[j + 1][1])
+                    i = j + 2
+                    continue
+                second = nxt[1]
+                k = j + 1
+                if second >= 20 and second % 10 == 0 and k < n and isinstance(tokens[k], tuple) \
+                        and tokens[k][0] in ("num", "ord") and 1 <= tokens[k][1] <= 9:
+                    second += tokens[k][1]
+                    k += 1
+                if 0 <= second <= 99 and nxt[2] != "oh":
+                    out.append(tok[1] * 100 + second)
+                    i = k
+                    continue
+
+        # General cardinal: accumulate with scales.
+        total, current, consumed, is_ord = 0, 0, 0, False
+        j = i
+        while j < n:
+            t = tokens[j]
+            if isinstance(t, (int, float)):
+                if consumed and (current or total) and not (isinstance(tokens[j - 1], tuple) and tokens[j - 1][0] == "scale"):
+                    break
+                current += t
+            elif isinstance(t, tuple) and t[0] in ("num", "ord"):
+                if consumed and current:
+                    # "twenty one" (tens + unit), "two hundred fifty" (hundreds + rest);
+                    # anything else ("five six") starts a new number.
+                    if t[1] < 10 and current % 10 == 0 and current % 100 >= 20:
+                        current += t[1]
+                    elif t[1] < 100 and current % 100 == 0:
+                        current += t[1]
+                    else:
+                        break
+                else:
+                    current += t[1]
+                if t[0] == "ord":
+                    is_ord = True
+                    consumed += 1
+                    j += 1
+                    break
+            elif isinstance(t, tuple) and t[0] == "scale":
+                if not consumed:
+                    current = 1  # "a thousand", "hundred"
+                if t[1] == 100:
+                    current *= 100
+                else:
+                    total += current * t[1]
+                    current = 0
+            elif t == "and" and consumed:
+                j += 1
+                continue
+            else:
+                break
+            consumed += 1
+            j += 1
+        value = total + current
+        if consumed == 0:
+            out.append(tok if not isinstance(tok, tuple) else tok[2])
+            i += 1
+            continue
+        out.append(value if not is_ord else value)
+        i = j
+    return out
+
+
+def spoken_numbers(text: str) -> List[float]:
+    """All numbers in the text, spoken or written ("two hundred fifty thousand" -> 250000)."""
+    return [t for t in _combine_numbers(_tokenize_numbers(text)) if isinstance(t, (int, float))]
+
+
+def numbers_to_digits(text: str) -> str:
+    """'five feet six inches' -> '5 feet 6 inches'; '1.5 million pesos' -> '1500000 pesos'."""
+    parts = []
+    for tok in _combine_numbers(_tokenize_numbers(text)):
+        if isinstance(tok, float) and tok.is_integer():
+            parts.append(str(int(tok)))
+        else:
+            parts.append(str(tok))
+    return " ".join(parts)
+
+
+def _joined_hundreds(nums: List[float]) -> Optional[float]:
+    """'one sixty' (160 cm) / 'one thirty' pounds -> 160 / 130."""
+    if len(nums) >= 2 and nums[0] in (1, 2) and 10 <= nums[1] <= 99 and float(nums[1]).is_integer():
+        return nums[0] * 100 + nums[1]
+    return None
+
+
+# ─── Dates ────────────────────────────────────────────────────────────────────
+
+MONTH_NAMES = {
+    1: ["january", "jan", "enero"],
+    2: ["february", "feb", "febuary", "pebrero", "febrero"],
+    3: ["march", "mar", "marso", "marzo"],
+    4: ["april", "apr", "abril"],
+    5: ["may", "mayo"],
+    6: ["june", "jun", "hunyo", "junio"],
+    7: ["july", "jul", "hulyo", "julio"],
+    8: ["august", "aug", "agosto"],
+    9: ["september", "sep", "sept", "setyembre", "septiyembre", "septembre", "setiembre"],
+    10: ["october", "oct", "oktubre", "octubre"],
+    11: ["november", "nov", "nobyembre", "noviembre"],
+    12: ["december", "dec", "disyembre", "diciembre"],
+}
+MONTH_LOOKUP = {name: num for num, names in MONTH_NAMES.items() for name in names}
+MONTH_DISPLAY = ["", "January", "February", "March", "April", "May", "June", "July",
+                 "August", "September", "October", "November", "December"]
+
+
+def _expand_year(y: int, today: date) -> int:
+    if y >= 1000:
+        return y
+    if y < 100:
+        century = 2000 if (2000 + y) <= today.year else 1900
+        return century + y
+    return y
+
+
+def parse_date(text: str, today: Optional[date] = None) -> Tuple[Optional[date], Optional[str]]:
+    """
+    Understand a birth date said or typed in almost any form:
+      "May 10 1990", "10 May 1990", "May tenth nineteen ninety", "the 10th of May, 1990",
+      "ika-10 ng Mayo 1990", "05/10/1990", "5-10-90", "1990-05-10", "May 10, '90".
+    Returns (date, None) or (None, problem) where problem is "no_year", "no_month",
+    "invalid", "future" or "too_old".
+    """
+    today = today or date.today()
+    raw = _basic_clean(text).lower()
+    raw = re.sub(r"\b(?:i was born (?:on|in)?|born (?:on|in)?|my (?:birthday|birth ?date|date of birth) is|"
+                 r"birthday ko ay|ipinanganak ako (?:noong)?|noong|it'?s|the|of|ng|sa)\b", " ", raw)
+    raw = raw.replace("'", " ")
+
+    # ISO / numeric forms first (digits typed or recognized as digits).
+    iso = re.search(r"\b(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})\b", raw)
+    numeric = re.search(r"\b(\d{1,2})\s*[-/.]\s*(\d{1,2})\s*[-/.]\s*(\d{2,4})\b", raw)
+
+    tokens = _combine_numbers(_tokenize_numbers(raw))
+    month = None
+    month_pos = None
+    for idx, tok in enumerate(tokens):
+        if isinstance(tok, str):
+            word = tok.strip(".")
+            if word in MONTH_LOOKUP and not (word == "may" and month is not None):
+                # "may" is also a Filipino word ("may asawa"); accept it only as the first month word.
+                month, month_pos = MONTH_LOOKUP[word], idx
+                break
+
+    numbers = [(i, t) for i, t in enumerate(tokens) if isinstance(t, (int, float)) and float(t).is_integer()]
+    numbers = [(i, int(t)) for i, t in numbers]
+
+    y = m = d = None
+    if iso:
+        y, m, d = int(iso.group(1)), int(iso.group(2)), int(iso.group(3))
+    elif month is not None:
+        m = month
+        years = [(i, v) for i, v in numbers if v >= 1000 or (v >= 32 and v < 100)]
+        days = [(i, v) for i, v in numbers if 1 <= v <= 31]
+        if years:
+            y = _expand_year(years[-1][1], today)
+            days = [(i, v) for i, v in days if i != years[-1][0]]
+        elif len(days) >= 2:  # "May 10 90" -> 90 handled above; "May 10 05" -> 2005
+            y = _expand_year(days[-1][1], today)
+            days = days[:-1]
+        if days:
+            # Prefer the number right next to the month name.
+            d = min(days, key=lambda iv: abs(iv[0] - month_pos))[1]
+        if d is None:
+            return None, "no_day"
+        if y is None:
+            return None, "no_year"
+    elif numeric:
+        a, b, c = int(numeric.group(1)), int(numeric.group(2)), int(numeric.group(3))
+        y = _expand_year(c, today)
+        if a > 12 and b <= 12:      # 25/12/1990 -> day first
+            d, m = a, b
+        else:                        # Philippine forms use month/day/year
+            m, d = a, b
+    elif len(numbers) >= 3:
+        a, b, c = numbers[0][1], numbers[1][1], numbers[2][1]
+        if a >= 1000:
+            y, m, d = a, b, c
+        else:
+            y = _expand_year(c, today)
+            if a > 12 and b <= 12:
+                d, m = a, b
+            else:
+                m, d = a, b
+    else:
+        if numbers and any(v >= 1000 for _, v in numbers):
+            return None, "no_month"
+        return None, "invalid"
+
+    try:
+        result = date(y, m, d)
+    except (TypeError, ValueError):
+        return None, "invalid"
+    if result > today:
+        return None, "future"
+    if today.year - result.year > 120:
+        return None, "too_old"
+    return result, None
+
+
+def format_date(d: date) -> str:
+    return f"{MONTH_DISPLAY[d.month]} {d.day}, {d.year}"
+
+
+# ─── DistilBERT helpers ───────────────────────────────────────────────────────
+
+@dataclass
+class Entity:
+    label: str      # PER, LOC, ORG, MISC
+    word: str
+    score: float
+    start: int
+    end: int
+
+
+def _ner_entities(text: str) -> Optional[List[Entity]]:
+    """DistilBERT entities with character offsets, or None when the model is off/unavailable."""
+    if not settings.NER_ENABLED or not text:
+        return None
+    try:
+        ner = extraction_service.get_ner_pipeline()
+        out = []
+        for ent in ner(text):
+            word = str(ent.get("word", "")).replace(" ##", "").replace("##", "").strip()
+            if word:
+                out.append(Entity(str(ent.get("entity_group", "")), word, float(ent.get("score", 0.0)),
+                                  int(ent.get("start") or 0), int(ent.get("end") or 0)))
+        return out
+    except Exception as exc:  # model missing / no internet on first download
+        logger.warning(f"DistilBERT unavailable, using regex only: {exc}")
+        return None
+
+
+def warm_up_ner() -> None:
+    """Load DistilBERT in the background at startup so the first answer is not slow."""
+    if settings.NER_ENABLED:
+        _ner_entities("Juan Dela Cruz lives in Mambajao, Camiguin.")
+
+
+# ─── Field handlers ───────────────────────────────────────────────────────────
+
+NAME_PREFIXES = [
+    r"^(?:my\s+)?(?:sur\s?name|last\s+name|family\s+name|given\s+name|first\s+name|middle\s+name|full\s+name|name)"
+    r"(?:\s+ko)?(?:\s+(?:is|ay))?\s*:?\s*",
+    r"^(?:ang\s+)?(?:apelyido|pangalan|gitnang pangalan|middle name)(?:\s+ko)?(?:\s+ay)?\s*",
+    r"^(?:it'?s|it\s+is|i'?m|i\s+am|this\s+is|call\s+me|ako\s+(?:si|ay)|si)\s+",
+]
+NAME_ALLOWED = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿñÑ][A-Za-zÀ-ÖØ-öø-ÿñÑ .'\-]*$")
+NAME_PARTICLES = {"de", "dela", "del", "delos", "los", "la", "las", "san", "santa", "sta", "van", "von", "di", "da", "dos", "mc"}
+NOT_A_NAME = {
+    "male", "female", "single", "married", "yes", "no", "okay", "ok", "hello", "hi", "test",
+    "testing", "none", "nothing", "name", "surname", "wala",
+}
+
+
+def _spelled_letters(text: str) -> Optional[str]:
+    """'C R U Z' / 'c-r-u-z' -> 'CRUZ' when the answer is spelled letter by letter."""
+    parts = re.findall(r"[A-Za-zñÑ]+", text)
+    singles = [p for p in parts if len(p) == 1]
+    if len(singles) >= 2 and len(singles) >= len(parts) - 1:
+        return "".join(singles)
+    return None
+
+
+def _handle_name(key: str, text: str, label: str, optional: bool) -> AnswerResult:
+    if optional and _is_blank_answer(text):
+        return _ok(key, "", display="none", methods=["regex"])
+    cleaned = _strip_prefix(_basic_clean(text), NAME_PREFIXES)
+    spelled = _spelled_letters(cleaned)
+    if spelled:
+        return _ok(key, _title(spelled), methods=["regex"], confidence=0.95)
+
+    methods = ["regex"]
+    titled = _title(cleaned)
+    value = titled
+    confidence = 0.8
+    entities = _ner_entities(titled)
+    if entities is not None:
+        methods = ["distilbert", "regex"]
+        persons = [e for e in entities if e.label == "PER" and e.score >= 0.5 and e.end > e.start]
+        if persons:
+            # Keep the whole span DistilBERT marked as a person (not just the entity words,
+            # which once turned "Dela Cruz" into "Cruz"), plus surname particles before it.
+            start, end = min(e.start for e in persons), max(e.end for e in persons)
+            before = titled[:start].split()
+            while before and before[-1].lower().strip(".") in NAME_PARTICLES:
+                start = titled.rfind(before.pop(), 0, start)
+            value = titled[start:end]
+            confidence = 0.95
+
+    value = _squash(value).strip(" .,'-")
+    if not value or value.lower() in NOT_A_NAME:
+        return _fail(key, f"Please tell me your {label}.", methods=methods)
+    if re.search(r"\d", value):
+        return _fail(key, f"A name should not have numbers. Please say your {label} again.", methods=methods)
+    if not NAME_ALLOWED.match(value) or len(value) > 60 or len(value.split()) > 5:
+        return _fail(key, f"I didn't get a name from that. Please say only your {label}.", methods=methods)
+    if len(value.replace(" ", "")) < 2:
+        return _fail(key, f"That seems too short. Please say your {label} again, or spell it.", methods=methods)
+    return _ok(key, _title(value), methods=methods, confidence=confidence)
+
+
+SEX_FEMALE = {"female", "females", "woman", "women", "girl", "lady", "babae", "babaye", "f", "femail", "feemale"}
+SEX_MALE = {"male", "males", "man", "men", "boy", "guy", "lalaki", "lalake", "m", "mail", "mel", "meyl"}
+
+
+def _handle_sex(key: str, text: str) -> AnswerResult:
+    # [a-z']+ keeps "i'm" whole, so its "m" is not read as "male".
+    words = set(re.findall(r"[a-z']+", _basic_clean(text).lower()))
+    is_f = bool(words & SEX_FEMALE)
+    is_m = bool(words & SEX_MALE)
+    if is_f and not is_m:
+        return _ok(key, "Female")
+    if is_m and not is_f:
+        return _ok(key, "Male")
+    if is_f and is_m:
+        return _fail(key, "Please say only one: male or female.")
+    return _fail(key, "Sorry, please answer male or female.")
+
+
+CIVIL_RULES = [
+    ("Single", r"\b(?:not married|never married|unmarried|single|walang asawa|wala pang asawa|binata|dalaga|soltera?o?)\b"),
+    ("Widowed", r"\b(?:widow(?:ed|er)?|biyud[ao]|byud[ao]|balo|nabalo)\b"),
+    ("Separated", r"\b(?:separated|divorced?|annulled|annulment|hiwalay|hiwalay na)\b"),
+    ("Married", r"\b(?:married|kasal|may asawa|meron(?:g)? asawa|with (?:a )?(?:husband|wife))\b"),
+]
+
+
+def _handle_civil_status(key: str, text: str) -> AnswerResult:
+    t = _basic_clean(text).lower()
+    for status, pattern in CIVIL_RULES:
+        if re.search(pattern, t):
+            return _ok(key, status)
+    return _fail(key, "Please answer single, married, widowed, or separated.")
+
+
+def _handle_date(key: str, text: str) -> AnswerResult:
+    d, problem = parse_date(text)
+    if d:
+        display = format_date(d)
+        warnings = []
+        age = (date.today() - d).days // 365
+        if age < 18:
+            warnings.append(f"Applicant would be {age} years old (under 18).")
+        return _ok(key, display, display=display, normalized=d.isoformat(), warnings=warnings)
+    messages = {
+        "no_year": "I didn't hear the year. Please say your full birthday, for example May 10, 1990.",
+        "no_day": "I didn't hear the day. Please say your full birthday, for example May 10, 1990.",
+        "no_month": "I didn't hear the month. Please say your full birthday, for example May 10, 1990.",
+        "future": "That date is in the future. Please say your birthday again.",
+        "too_old": "That year seems too far back. Please say your birthday again.",
+    }
+    return _fail(key, messages.get(problem, "I couldn't understand that date. Please say it like May 10, 1990."),
+                 reason="partial" if problem in ("no_year", "no_day", "no_month") else "invalid")
+
+
+DEMONYMS = {
+    "filipino": "Filipino", "filipina": "Filipino", "pilipino": "Filipino", "pilipina": "Filipino",
+    "pinoy": "Filipino", "pinay": "Filipino", "philippines": "Filipino", "philippine": "Filipino",
+    "american": "American", "usa": "American", "america": "American",
+    "chinese": "Chinese", "china": "Chinese", "japanese": "Japanese", "japan": "Japanese",
+    "korean": "Korean", "korea": "Korean", "british": "British",
+    "australian": "Australian", "australia": "Australian", "canadian": "Canadian", "canada": "Canadian",
+    "indian": "Indian", "india": "Indian", "indonesian": "Indonesian", "indonesia": "Indonesian",
+    "malaysian": "Malaysian", "malaysia": "Malaysian", "singaporean": "Singaporean",
+    "thai": "Thai", "thailand": "Thai", "vietnamese": "Vietnamese", "vietnam": "Vietnamese",
+    "taiwanese": "Taiwanese", "taiwan": "Taiwanese", "german": "German", "germany": "German",
+    "french": "French", "france": "French", "spanish": "Spanish", "spain": "Spanish",
+    "italian": "Italian", "italy": "Italian", "dutch": "Dutch", "swiss": "Swiss",
+    "swedish": "Swedish", "norwegian": "Norwegian", "danish": "Danish", "russian": "Russian",
+    "irish": "Irish", "mexican": "Mexican", "brazilian": "Brazilian", "saudi": "Saudi",
+    "emirati": "Emirati", "israeli": "Israeli", "pakistani": "Pakistani", "bangladeshi": "Bangladeshi",
+    "nepalese": "Nepalese", "burmese": "Burmese", "cambodian": "Cambodian", "lao": "Lao",
+    "kiwi": "New Zealander", "zealander": "New Zealander", "nigerian": "Nigerian",
+    "south african": "South African", "hong konger": "Hong Konger",
+}
+
+
+def _handle_citizenship(key: str, text: str) -> AnswerResult:
+    t = _basic_clean(text).lower()
+    found: List[str] = []
+    for word, label in sorted(DEMONYMS.items(), key=lambda kv: -len(kv[0])):
+        if re.search(rf"\b{re.escape(word)}\b", t) and label not in found:
+            found.append(label)
+    if not found:
+        # Small mishearings: "filipeno", "pilipeno"
+        for word in re.findall(r"[a-z]+", t):
+            if len(word) >= 5:
+                best = process.extractOne(word, list(DEMONYMS.keys()), scorer=fuzz.ratio)
+                if best and best[1] >= 80 and DEMONYMS[best[0]] not in found:
+                    found.append(DEMONYMS[best[0]])
+    if not found:
+        return _fail(key, "Please say your citizenship, for example Filipino.")
+    value = " and ".join(found[:2])
+    return _ok(key, value)
+
+
+def _handle_icr(key: str, text: str) -> AnswerResult:
+    if _is_blank_answer(text) or re.fullmatch(r"(?:i\s+)?(?:don'?t|do not)\s+have(?: (?:one|it|an icr))?", _squash(text).lower()):
+        return _ok(key, "", display="none")
+    cleaned = _strip_prefix(_basic_clean(text), [
+        r"^(?:yes|yeah|meron|oo)\b[\s,]*", r"^(?:my\s+)?(?:icr|i\s?c\s?r)(?:\s+(?:number|no\.?))?(?:\s+is)?\s*",
+        r"^(?:it'?s|it\s+is)\s+",
+    ])
+    if not cleaned:
+        return _fail(key, "Please say your ICR number, or say none.", reason="partial")
+    # Read digit by digit so leading zeros survive: "zero one two" -> "012".
+    pieces = []
+    for word in re.findall(r"[a-z0-9]+", cleaned.lower()):
+        if word in UNITS and UNITS[word] < 10:
+            pieces.append(str(UNITS[word]))
+        elif word in ("dash", "hyphen"):
+            continue
+        else:
+            pieces.append(word)
+    value = "".join(pieces).upper()
+    if len(value) < 4 or not re.search(r"\d", value) or len(value) > 20:
+        return _fail(key, "That doesn't sound like an ICR number. Please say the number, or say none.")
+    return _ok(key, value, confidence=0.9)
+
+
+def _handle_height(key: str, text: str) -> AnswerResult:
+    t = numbers_to_digits(_basic_clean(text).lower())
+    nums = spoken_numbers(t)
+    cm: Optional[float] = None
+
+    m = re.search(r"(\d+(?:\.\d+)?)\s*(?:cm|centimet(?:er|re)s?|sentimetro|sentimeters?)\b", t)
+    if m:
+        cm = float(m.group(1))
+    if cm is None:
+        m = re.search(r"\b([12](?:\.\d{1,2})?)\s*(?:m|meters?|metres?|metro)\b", t)
+        if m:
+            cm = float(m.group(1)) * 100
+    if cm is None:
+        m = re.search(r"\b([3-7])\s*(?:'|feet|foot|ft|talampakan)\s*(?:and\s*)?(\d{1,2})?\s*(?:\"|inches|inch|in|pulgada)?", t)
+        if m:
+            cm = int(m.group(1)) * 30.48 + int(m.group(2) or 0) * 2.54
+    if cm is None:
+        m = re.search(r"\b([4-7])\.(\d{1,2})\b", t)   # "5.6" said as five-six = 5 ft 6 in
+        if m and int(m.group(2)) <= 11:
+            cm = int(m.group(1)) * 30.48 + int(m.group(2)) * 2.54
+    if cm is None and len(nums) >= 2 and 3 <= nums[0] <= 7 and 0 <= nums[1] <= 11:
+        cm = nums[0] * 30.48 + nums[1] * 2.54    # "five six" = 5 ft 6 in
+    if cm is None and _joined_hundreds(nums):
+        cm = _joined_hundreds(nums)              # "one sixty" = 160 cm
+    if cm is None and nums:
+        n = float(nums[0])
+        if 50 <= n <= 250:
+            cm = n
+        elif 1.0 <= n <= 2.5:
+            cm = n * 100
+        elif 3 <= n <= 7:
+            cm = n * 30.48
+    if cm is None:
+        return _fail(key, "Please say your height in centimeters, or in feet and inches, like 5 feet 4.")
+    cm = round(cm)
+    if not 50 <= cm <= 250:
+        return _fail(key, "That height doesn't seem right. Please say it again, for example 160 centimeters.")
+    feet, inches = divmod(round(cm / 2.54), 12)
+    return _ok(key, str(cm), display=f"{cm} centimeters ({feet} feet {inches})", normalized=str(cm))
+
+
+def _handle_weight(key: str, text: str) -> AnswerResult:
+    t = numbers_to_digits(_basic_clean(text).lower())
+    nums = spoken_numbers(t)
+    kg: Optional[float] = None
+    amount = _joined_hundreds(nums) or (float(nums[0]) if nums else None)   # "one thirty" = 130
+    if amount is not None and re.search(r"\b(?:pounds?|lbs?|libra)\b", t):
+        kg = amount * 0.453592
+    elif amount is not None:
+        kg = amount
+    if kg is None:
+        return _fail(key, "Please say your weight in kilos, for example 60 kilos.")
+    kg = round(kg, 1)
+    if not 20 <= kg <= 300:
+        return _fail(key, "That weight doesn't seem right. Please say it again in kilos.")
+    shown = f"{kg:g}"
+    return _ok(key, shown, display=f"{shown} kilos", normalized=shown)
+
+
+INCOME_NONE = re.compile(
+    r"^(?:none|no income|nothing|zero|wala|walang (?:kita|income|trabaho)|unemployed|jobless|no work|"
+    r"i don'?t have (?:any )?(?:income|work|a job)|wala po|0)$"
+)
+
+
+def _handle_income(key: str, text: str) -> AnswerResult:
+    t = _basic_clean(text).lower()
+    t = _squash(re.sub(r"\b(?:php|pesos?|piso|peso|p)\b", " ", t))
+    if INCOME_NONE.match(t):
+        return _ok(key, "0", display="no income", normalized="0")
+    nums = spoken_numbers(t)
+    if not nums:
+        return _fail(key, "Please say an amount, for example 120 thousand a year, or 10 thousand a month.")
+    amount = float(max(nums))
+    period = "year"
+    if re.search(r"\b(?:a|per|every|each|kada|isang)\s+(?:month|buwan)\b|\bmonthly\b|\bbuwan[- ]?buwan\b|\bsa isang buwan\b", t):
+        period = "month"
+    elif re.search(r"\b(?:a|per|every|each|kada)\s+(?:week|linggo)\b|\bweekly\b", t):
+        period = "week"
+    elif re.search(r"\b(?:a|per|every|each|kada)\s+(?:day|araw)\b|\bdaily\b|\bper day\b", t):
+        return _fail(key, "Please tell me your income per month or per year instead of per day.", reason="partial")
+    yearly = amount * {"year": 1, "month": 12, "week": 52}[period]
+    if yearly < 0 or yearly > 1_000_000_000:
+        return _fail(key, "That amount doesn't seem right. Please say it again.")
+    yearly = round(yearly, 2)
+    shown = f"{yearly:,.0f}" if yearly.is_integer() else f"{yearly:,.2f}"
+    display = f"{shown} pesos a year"
+    if period != "year":
+        display += f" ({amount:,.0f} a {period} times {12 if period == 'month' else 52})"
+    return _ok(key, f"{yearly:g}" if not yearly.is_integer() else str(int(yearly)), display=display,
+               normalized=str(yearly))
+
+
+ADDRESS_KEYWORDS = re.compile(
+    r"\b(?:purok|sitio|zone|street|st|road|rd|avenue|ave|barangay|brgy|bgy|village|subdivision|subd|"
+    r"phase|block|blk|lot|city|municipality|town|province|poblacion|camiguin|mambajao|house)\b"
+    r"|\bno\.?\s*\d|\b\d+[a-z]?\s+[a-z]",   # "No. 12", "123 Rizal"
+    re.IGNORECASE,
+)
+
+
+def _office_location() -> Tuple[str, str]:
+    try:
+        from app.services import settings_service
+        office = settings_service.get_settings()
+        return office.municipality, office.province
+    except Exception:
+        return settings.MUNICIPALITY, settings.PROVINCE
+
+
+def _find_barangay(text: str) -> Tuple[Optional[str], float]:
+    m = extraction_service.BARANGAY_MENTION_PATTERN.search(text)
+    if m:
+        return match_barangay(m.group(1).strip())
+    barangays = sorted(set(load_barangays()))
+    if not barangays:
+        return None, 0.0
+    best: Tuple[Optional[str], float] = (None, 0.0)
+    words = re.findall(r"[A-Za-zñÑ]+", text)
+    for size in (2, 1):
+        for i in range(len(words) - size + 1):
+            chunk = " ".join(words[i:i + size])
+            if len(chunk) < 4:
+                continue
+            res = process.extractOne(chunk, barangays, scorer=fuzz.ratio)
+            if res and res[1] > best[1]:
+                best = (res[0], float(res[1]))
+    return best if best[1] >= 85 else (None, best[1])
+
+
+def _handle_address(key: str, text: str) -> AnswerResult:
+    cleaned = _strip_prefix(_basic_clean(text), [
+        r"^(?:my\s+)?(?:complete\s+|home\s+)?address(?:\s+is)?\s*:?\s*", r"^i\s+live\s+(?:in|at)\s+",
+        r"^(?:nakatira\s+ako\s+sa|taga|sa)\s+",
+    ])
+    if not cleaned or len(re.sub(r"[^A-Za-z]", "", cleaned)) < 3:
+        return _fail(key, "Please tell me your address: your purok or street, and your barangay.")
+    methods = ["regex", "gazetteer"]
+    entities = _ner_entities(_title(cleaned))
+    locations = []
+    if entities is not None:
+        methods.insert(0, "distilbert")
+        locations = [e.word for e in entities if e.label == "LOC" and e.score >= 0.5]
+
+    barangay, score = _find_barangay(cleaned)
+    if not (barangay or locations or ADDRESS_KEYWORDS.search(cleaned) or "," in cleaned):
+        return _fail(key, "I didn't get an address from that. Please say your purok or street, and your barangay.",
+                     methods=methods)
+
+    value = _title(cleaned)
+    value = re.sub(r"\b(?:Brgy|Bgy)\.?\b", "Barangay", value)
+    if barangay:
+        if not re.search(rf"\b{re.escape(barangay)}\b", value, re.IGNORECASE):
+            heard = extraction_service.BARANGAY_MENTION_PATTERN.search(value)
+            if heard:
+                value = value.replace(heard.group(1).strip(), barangay)
+            else:
+                value = f"{value}, Barangay {barangay}"
+        municipality, province = _office_location()
+        if municipality and municipality.lower() not in value.lower():
+            value = f"{value}, {municipality}"
+        if province and province.lower() not in value.lower():
+            value = f"{value}, {province}"
+    confidence = 0.95 if barangay else (0.8 if locations else 0.6)
+    warnings = [] if barangay else ["Barangay not recognized — please check the address."]
+    return _ok(key, _squash(value).strip(" ,"), methods=methods, confidence=confidence, warnings=warnings)
+
+
+PH_PLACES = {
+    "abra", "agusan", "aklan", "albay", "antique", "apayao", "aurora", "basilan", "bataan", "batanes",
+    "batangas", "benguet", "biliran", "bohol", "bukidnon", "bulacan", "cagayan", "camarines", "camiguin",
+    "capiz", "catanduanes", "cavite", "cebu", "cotabato", "davao", "dinagat", "guimaras", "ifugao",
+    "ilocos", "iloilo", "isabela", "kalinga", "laguna", "lanao", "leyte", "maguindanao", "marinduque",
+    "masbate", "misamis", "mindoro", "mountain province", "negros", "nueva ecija", "nueva vizcaya",
+    "palawan", "pampanga", "pangasinan", "quezon", "quirino", "rizal", "romblon", "samar", "sarangani",
+    "siquijor", "sorsogon", "sultan kudarat", "sulu", "surigao", "tarlac", "tawi-tawi", "zambales",
+    "zamboanga", "manila", "metro manila", "makati", "pasig", "taguig", "caloocan", "cagayan de oro",
+    "iligan", "butuan", "gingoog", "ozamiz", "oroquieta", "tangub", "malaybalay", "valencia", "baguio",
+    "tacloban", "ormoc", "dumaguete", "bacolod", "general santos", "koronadal", "cotabato city",
+    "puerto princesa", "legazpi", "naga", "lucena", "antipolo", "marikina", "pasay", "paranaque",
+    "las pinas", "muntinlupa", "valenzuela", "malabon", "navotas", "mandaluyong", "san juan",
+    "mambajao", "catarman", "sagay", "mahinog", "guinsiliban", "balingoan", "talisayan", "medina",
+    "jasaan", "villanueva", "tagoloan", "opol", "el salvador", "lapu-lapu", "mandaue", "talisay",
+    "tagbilaran", "surallah", "kidapawan", "digos", "tagum", "mati", "pagadian", "dipolog", "dapitan",
+}
+
+
+def _known_place(text: str) -> Optional[str]:
+    t = text.lower()
+    for place in sorted(PH_PLACES, key=len, reverse=True):
+        if re.search(rf"\b{re.escape(place)}\b", t):
+            return place
+    words = re.findall(r"[a-zñ\-]+", t)
+    for w in words:
+        if len(w) >= 5:
+            res = process.extractOne(w, list(PH_PLACES), scorer=fuzz.ratio)
+            if res and res[1] >= 88:
+                return res[0]
+    return None
+
+
+def _handle_place_of_birth(key: str, text: str) -> AnswerResult:
+    cleaned = _strip_prefix(_basic_clean(text), [
+        r"^(?:i\s+was\s+)?born\s+(?:in|at)\s+", r"^(?:my\s+)?place\s+of\s+birth(?:\s+is)?\s*",
+        r"^(?:ipinanganak\s+ako\s+sa|pinanganak\s+ako\s+sa|sa)\s+", r"^(?:in|at)\s+",
+    ])
+    if not cleaned or len(re.sub(r"[^A-Za-z]", "", cleaned)) < 3:
+        return _fail(key, "Please tell me the town or city where you were born.")
+    if re.fullmatch(r"[\d\s.,/-]+", cleaned):
+        return _fail(key, "Please say the name of the town or city where you were born.")
+    methods = ["regex", "gazetteer"]
+    entities = _ner_entities(_title(cleaned))
+    locations = []
+    if entities is not None:
+        methods.insert(0, "distilbert")
+        locations = [e.word for e in entities if e.label == "LOC" and e.score >= 0.5]
+    barangay, _ = _find_barangay(cleaned)
+    known = _known_place(cleaned)
+    value = _title(cleaned)
+    if locations or barangay or known:
+        return _ok(key, value, methods=methods, confidence=0.9)
+    # Plausible but not recognized as a place: keep it, but ask the applicant to confirm.
+    return _ok(key, value, methods=methods, confidence=0.5, needs_confirmation=True,
+               message=f"I heard {value}. Is that the place where you were born?")
+
+
+OCCUPATION_ALIASES = {
+    "Unemployed": r"^(?:wala|none|nothing|no)$|\b(?:unemployed|no work|no job|jobless|wala(?:ng)? trabaho|walang work)\b",
+    "Housewife": r"\b(?:house ?wife|homemaker|home maker|plain housewife|maybahay|ina ng tahanan)\b",
+    "Student": r"\b(?:student|estudyante|studying|nag-?aaral)\b",
+    "Retired": r"\b(?:retired|retiree|pensioner|pensiyonado)\b",
+    "Self-employed": r"\b(?:self[- ]?employed|own business|negosyo|businessman|businesswoman|entrepreneur)\b",
+}
+COMMON_OCCUPATIONS = [
+    "farmer", "fisherman", "fisher", "teacher", "driver", "tricycle driver", "jeepney driver",
+    "habal-habal driver", "motorcycle driver", "delivery rider", "vendor", "fish vendor", "market vendor",
+    "store owner", "sari-sari store owner", "carpenter", "mason", "laborer", "construction worker",
+    "nurse", "midwife", "doctor", "engineer", "ofw", "seaman", "seafarer", "security guard", "police officer",
+    "soldier", "barangay tanod", "barangay official", "barangay health worker", "government employee",
+    "clerk", "office clerk", "cashier", "saleslady", "salesman", "sales clerk", "call center agent",
+    "programmer", "accountant", "lawyer", "mechanic", "electrician", "plumber", "welder", "tailor",
+    "dressmaker", "beautician", "barber", "cook", "chef", "waiter", "waitress", "housekeeper",
+    "domestic helper", "kasambahay", "caregiver", "janitor", "utility worker", "baker", "butcher",
+    "painter", "musician", "pastor", "priest", "tour guide", "resort staff", "hotel staff", "receptionist",
+    "pharmacist", "dentist", "social worker", "encoder", "secretary", "manager", "supervisor",
+    "contractor", "foreman", "coconut farmer", "copra maker", "harvester", "laundry woman", "labandera",
+    "tindera", "tindero", "magsasaka", "mangingisda", "guro", "drayber", "karpintero", "panadero",
+    "manicurist", "massage therapist", "boatman", "porter", "bookkeeper", "librarian", "technician",
+    "employee", "worker", "staff", "helper", "agent", "officer", "assistant", "operator", "attendant",
+]
+
+
+def _handle_occupation(key: str, text: str) -> AnswerResult:
+    cleaned = _strip_prefix(_basic_clean(text), [
+        r"^(?:my\s+)?(?:occupation|job|work|trabaho)(?:\s+ko)?(?:\s+(?:is|ay))?\s*",
+        r"^(?:i\s+work\s+as|i'?m|i\s+am|working\s+as|nagtatrabaho\s+(?:ako\s+)?(?:bilang|as)|ako\s+ay)\s+",
+        r"^(?:a|an|isang)\s+",
+    ])
+    t = cleaned.lower()
+    for label, pattern in OCCUPATION_ALIASES.items():
+        if re.search(pattern, t):
+            return _ok(key, label)
+    if not cleaned or len(re.sub(r"[^A-Za-z]", "", cleaned)) < 2:
+        return _fail(key, "Please tell me your work or occupation. If you have none, say unemployed.")
+    if re.fullmatch(r"[\d\s.,]+", cleaned) or len(cleaned) > 60:
+        return _fail(key, "Please say your occupation, for example farmer or teacher.")
+    value = _title(cleaned)
+    known = any(re.search(rf"\b{re.escape(o)}\b", t) for o in COMMON_OCCUPATIONS)
+    if not known:
+        best = process.extractOne(t, COMMON_OCCUPATIONS, scorer=fuzz.WRatio)
+        known = bool(best and best[1] >= 90)
+    if known:
+        return _ok(key, value, confidence=0.9)
+    return _ok(key, value, confidence=0.5, needs_confirmation=True,
+               message=f"I heard {value}. Is that your occupation?")
+
+
+# ─── Dispatcher ───────────────────────────────────────────────────────────────
+
+FIELD_LABELS = {
+    "surname": "surname", "given_name": "given name", "middle_name": "middle name",
+    "address": "address", "date": "date of birth", "sex": "sex", "civil_status": "civil status",
+    "citizenship": "citizenship", "icr_no": "ICR number", "place_of_birth": "place of birth",
+    "height": "height", "weight": "weight", "occupation": "occupation",
+    "gross_annual_income": "gross annual income",
+}
+OPTIONAL_FIELDS = {"middle_name", "icr_no"}
+
+HANDLERS: Dict[str, Callable[[str, str], AnswerResult]] = {
+    "surname": lambda k, t: _handle_name(k, t, "surname", optional=False),
+    "given_name": lambda k, t: _handle_name(k, t, "given name", optional=False),
+    "middle_name": lambda k, t: _handle_name(k, t, "middle name", optional=True),
+    "address": _handle_address,
+    "date": _handle_date,
+    "sex": _handle_sex,
+    "civil_status": _handle_civil_status,
+    "citizenship": _handle_citizenship,
+    "icr_no": _handle_icr,
+    "place_of_birth": _handle_place_of_birth,
+    "height": _handle_height,
+    "weight": _handle_weight,
+    "occupation": _handle_occupation,
+    "gross_annual_income": _handle_income,
+}
+
+
+def understand_answer(field_key: str, transcript: str) -> AnswerResult:
+    """Interpret one interview answer for one field (see module docstring)."""
+    handler = HANDLERS.get(field_key)
+    if handler is None:
+        raise KeyError(field_key)
+    text = _squash(transcript)
+    label = FIELD_LABELS[field_key]
+    if not text:
+        if field_key in OPTIONAL_FIELDS:
+            return _ok(field_key, "", display="none")
+        return _fail(field_key, f"I didn't hear an answer. Please tell me your {label}.", reason="empty")
+    if _is_unclear(text):
+        return _fail(field_key, "No problem, let me ask again.", reason="unclear")
+    try:
+        return handler(field_key, text)
+    except Exception as exc:  # never break the interview on a parsing bug
+        logger.exception(f"Answer parsing failed for {field_key}: {exc}")
+        return _fail(field_key, f"Sorry, I couldn't understand that. Please say your {label} again.")
+
+
+def understand_answers(answers: Dict[str, str]) -> Dict[str, AnswerResult]:
+    """Check every field at once (used before issuing, after manual edits)."""
+    return {key: understand_answer(key, answers.get(key) or "") for key in HANDLERS}

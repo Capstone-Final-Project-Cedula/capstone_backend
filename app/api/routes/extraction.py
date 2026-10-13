@@ -2,11 +2,17 @@
 app/api/routes/extraction.py
 NLP field extraction endpoints.
 POST /api/extraction/fields   — extract BIR Form 0016 fields from transcript
+POST /api/extraction/answer   — understand one interview answer (live interview)
+POST /api/extraction/answers  — check every interview answer before issuing
 POST /api/extraction/tax      — compute community tax from income
 """
+from typing import Dict, List, Literal, Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
 
 from app.core.security import get_current_user
+from app.services.answer_service import understand_answer, understand_answers
 from app.services.extraction_service import extract_fields
 from app.services.tax_service import compute_tax
 from app.schemas.schemas import (
@@ -16,6 +22,57 @@ from app.schemas.schemas import (
 from app.models.applicant import TaxClassificationEnum
 
 router = APIRouter()
+
+InterviewField = Literal[
+    "surname", "given_name", "middle_name", "address", "date", "sex", "civil_status",
+    "citizenship", "icr_no", "place_of_birth", "height", "weight", "occupation", "gross_annual_income",
+]
+
+
+class AnswerRequest(BaseModel):
+    field_key: InterviewField
+    transcript: str = Field("", max_length=500)
+
+
+class AnswerResponse(BaseModel):
+    field_key: str
+    ok: bool
+    value: Optional[str] = None
+    display: Optional[str] = None
+    normalized: Optional[str] = None
+    message: Optional[str] = None
+    reason: Optional[str] = None
+    needs_confirmation: bool = False
+    methods: List[str] = []
+    confidence: float = 0.0
+    warnings: List[str] = []
+
+
+class AnswersRequest(BaseModel):
+    answers: Dict[str, Optional[str]]
+
+
+class AnswersResponse(BaseModel):
+    ok: bool
+    results: Dict[str, AnswerResponse]
+
+
+@router.post("/answer", response_model=AnswerResponse)
+def understand_interview_answer(payload: AnswerRequest, current_user=Depends(get_current_user)):
+    """
+    Understand ONE answer of the live interview (DistilBERT NER for names and
+    places, regex for dates, numbers, units and choices). Returns the
+    normalized value, or ok=false with a short message to say before asking
+    again — e.g. "nails" for sex is rejected instead of saved.
+    """
+    return AnswerResponse(**understand_answer(payload.field_key, payload.transcript).as_dict())
+
+
+@router.post("/answers", response_model=AnswersResponse)
+def check_interview_answers(payload: AnswersRequest, current_user=Depends(get_current_user)):
+    """Re-check every answer (including manual edits on the review page) before issuing."""
+    results = {k: AnswerResponse(**r.as_dict()) for k, r in understand_answers(payload.answers).items()}
+    return AnswersResponse(ok=all(r.ok for r in results.values()), results=results)
 
 
 @router.post("/fields", response_model=ExtractionResponse)
