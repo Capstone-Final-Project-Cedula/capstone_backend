@@ -42,8 +42,13 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
 
-    # Whisper ASR
-    WHISPER_MODEL: str = "small"                   # was "base" — too weak for short answers/names
+    # Whisper ASR — speech-to-text for the live interview.
+    # Tuned for short one-answer clips on an ordinary CPU server: "base" with
+    # greedy decoding (~0.75 s per answer measured on an i5-11400H), versus
+    # "small" + beam search at ~4 s. Use "small" on a GPU or a fast server.
+    WHISPER_MODEL: str = "base"
+    WHISPER_BEAM_SIZE: int = 1                     # 1 = greedy (fast); 5 = thorough but ~2x slower
+    WHISPER_PRELOAD: bool = True                   # load at startup so the first applicant doesn't wait
     WHISPER_NO_SPEECH_THRESHOLD: float = 0.35
     WHISPER_LOGPROB_THRESHOLD: float = -1.5
 
@@ -60,9 +65,9 @@ class Settings(BaseSettings):
     WATERMARK_PATH: str = "assets/barangay_seal.png"
 
     # Barangay metadata
-    BARANGAY_NAME: str = "Barangay San Roque"
-    MUNICIPALITY: str = "Mambajao"
-    PROVINCE: str = "Camiguin"
+    BARANGAY_NAME: str = "Barangay Imbatug"
+    MUNICIPALITY: str = "Baungon"
+    PROVINCE: str = "Bukidnon"
 
     class Config:
         env_file = ".env"

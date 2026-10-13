@@ -47,9 +47,12 @@ async def lifespan(app: FastAPI):
     # Seed a default admin user if the database is empty
     _seed_default_admin()
 
-    # Load DistilBERT in the background so the first interview answer is not slow.
+    # Load Whisper and DistilBERT in the background so the first interview answer is not slow.
+    import threading
+    if settings.WHISPER_PRELOAD:
+        from app.services.speech_service import SpeechService
+        threading.Thread(target=SpeechService.warm_up, name="whisper-warmup", daemon=True).start()
     if settings.NER_ENABLED:
-        import threading
         from app.services.answer_service import warm_up_ner
         threading.Thread(target=warm_up_ner, name="ner-warmup", daemon=True).start()
 

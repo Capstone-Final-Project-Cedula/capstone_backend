@@ -27,7 +27,7 @@ from rapidfuzz import fuzz, process
 
 from app.core.config import settings
 from app.services import extraction_service
-from app.services.barangay_gazetteer import load_barangays, match_barangay
+from app.services.barangay_gazetteer import load_aliases, load_barangays, match_barangay
 
 logger = logging.getLogger(__name__)
 
@@ -459,7 +459,7 @@ def _ner_entities(text: str) -> Optional[List[Entity]]:
 def warm_up_ner() -> None:
     """Load DistilBERT in the background at startup so the first answer is not slow."""
     if settings.NER_ENABLED:
-        _ner_entities("Juan Dela Cruz lives in Mambajao, Camiguin.")
+        _ner_entities("Juan Dela Cruz lives in Imbatug, Baungon, Bukidnon.")
 
 
 # ─── Field handlers ───────────────────────────────────────────────────────────
@@ -471,6 +471,7 @@ NAME_PREFIXES = [
     r"^(?:it'?s|it\s+is|i'?m|i\s+am|this\s+is|call\s+me|ako\s+(?:si|ay)|si)\s+",
 ]
 NAME_ALLOWED = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿñÑ][A-Za-zÀ-ÖØ-öø-ÿñÑ .'\-]*$")
+NAME_SOUND_ALIKES = {"1": "Juan", "one": "Juan", "won": "Juan", "wan": "Juan", "hwan": "Juan", "1 1": "Juan"}
 NAME_PARTICLES = {"de", "dela", "del", "delos", "los", "la", "las", "san", "santa", "sta", "van", "von", "di", "da", "dos", "mc"}
 NOT_A_NAME = {
     "male", "female", "single", "married", "yes", "no", "okay", "ok", "hello", "hi", "test",
@@ -491,6 +492,9 @@ def _handle_name(key: str, text: str, label: str, optional: bool) -> AnswerResul
     if optional and _is_blank_answer(text):
         return _ok(key, "", display="none", methods=["regex"])
     cleaned = _strip_prefix(_basic_clean(text), NAME_PREFIXES)
+    # "Juan" said as "hwan" is often written as the number one by speech engines.
+    if cleaned.lower().strip(" .") in NAME_SOUND_ALIKES:
+        return _ok(key, NAME_SOUND_ALIKES[cleaned.lower().strip(" .")], methods=["regex"], confidence=0.7)
     spelled = _spelled_letters(cleaned)
     if spelled:
         return _ok(key, _title(spelled), methods=["regex"], confidence=0.95)
@@ -739,7 +743,7 @@ def _handle_income(key: str, text: str) -> AnswerResult:
 
 ADDRESS_KEYWORDS = re.compile(
     r"\b(?:purok|sitio|zone|street|st|road|rd|avenue|ave|barangay|brgy|bgy|village|subdivision|subd|"
-    r"phase|block|blk|lot|city|municipality|town|province|poblacion|camiguin|mambajao|house)\b"
+    r"phase|block|blk|lot|city|municipality|town|province|poblacion|bukidnon|baungon|house)\b"
     r"|\bno\.?\s*\d|\b\d+[a-z]?\s+[a-z]",   # "No. 12", "123 Rizal"
     re.IGNORECASE,
 )
@@ -754,24 +758,96 @@ def _office_location() -> Tuple[str, str]:
         return settings.MUNICIPALITY, settings.PROVINCE
 
 
-def _find_barangay(text: str) -> Tuple[Optional[str], float]:
+# How Whisper/Google tend to mishear the address words people say first.
+ADDRESS_SOUND_ALIKES = [
+    (r"\b(?:purok|purak|purek|purik|puric|puruk|peeric|perok|porok|poroc|purock|pure ok)\b", "Purok"),
+    (r"\b(?:barangay|baranggay|barangai|baranay|baranai|baranati|barangey|barrangay|barongay|barana|baranga|"
+     r"brgy|bgy)\b\.?", "Barangay"),
+    (r"\b(?:sitio|sityo|setio|sicio|seetio)\b", "Sitio"),
+]
+PUROK_NUMBERS = {"one": 1, "won": 1, "two": 2, "too": 2, "to": 2, "three": 3, "tree": 3, "four": 4, "for": 4,
+                 "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
+                 "i": 1, "ii": 2, "iii": 3, "iv": 4, "v": 5, "vi": 6, "vii": 7, "viii": 8, "ix": 9, "x": 10}
+ADDRESS_FILLER_WORDS = {"purok", "sitio", "barangay", "zone", "street", "baungon", "bukidnon", "the", "and",
+                        "in", "at", "sa", "of", "city", "municipality"}
+
+
+def _normalize_address_words(text: str) -> str:
+    for pattern, word in ADDRESS_SOUND_ALIKES:
+        text = re.sub(pattern, word, text, flags=re.IGNORECASE)
+    # Whisper's sentence punctuation inside an address: "Purok, too. Barangay ..." -> "Purok too, Barangay ..."
+    text = re.sub(r"\bPurok\s*[,.]\s*", "Purok ", text)
+    text = re.sub(r"(?<!\bNo)\.\s+", ", ", text).rstrip(".")
+    # "Purok too" / "Purok V" -> "Purok 2" / "Purok 5"
+    text = re.sub(r"\b(Purok|Sitio|Zone)\s+([A-Za-z]+)\b",
+                  lambda m: f"{m.group(1)} {PUROK_NUMBERS[m.group(2).lower()]}"
+                  if m.group(2).lower() in PUROK_NUMBERS else m.group(0), text, flags=re.IGNORECASE)
+    return text
+
+
+def phonetic_key(word: str) -> str:
+    """
+    Sound-based key for matching local place names that speech engines spell
+    differently: vowels dropped, similar consonants merged (m/n, t/d, b/p, k/g/c,
+    f/v, s/z). "Imbatug", "Inbaedig" -> "NPTK"; "Salimbalan", "Isolim Balan" -> "SLNPLN".
+    """
+    w = re.sub(r"[^a-z]", "", word.lower())
+    w = re.sub(r"c(?=[eiy])", "s", w).replace("ph", "f").replace("ng", "n")
+    groups = {"m": "N", "n": "N", "t": "T", "d": "T", "b": "P", "p": "P", "k": "K", "g": "K", "c": "K", "q": "K",
+              "f": "F", "v": "F", "s": "S", "z": "S", "x": "S", "l": "L", "r": "R", "j": "J"}
+    key = []
+    for ch in w:
+        code = groups.get(ch)            # vowels, h, w, y are dropped
+        if code and (not key or key[-1] != code):
+            key.append(code)
+    return "".join(key)
+
+
+def _find_barangay(text: str) -> Tuple[Optional[str], float, Optional[str]]:
+    """
+    Closest barangay of the municipality: (name, score, the words that matched).
+    Spelling-based fuzzy matching first, then sound-based (phonetic) matching for
+    names a speech engine wrote differently ("in Baedig" -> Imbatug).
+    """
     m = extraction_service.BARANGAY_MENTION_PATTERN.search(text)
     if m:
-        return match_barangay(m.group(1).strip())
-    barangays = sorted(set(load_barangays()))
-    if not barangays:
-        return None, 0.0
-    best: Tuple[Optional[str], float] = (None, 0.0)
+        found, score = match_barangay(m.group(1).strip())
+        if found:
+            return found, score, m.group(1).strip()
+    barangays = load_barangays()
+    aliases = load_aliases()
+    names = barangays + list(aliases)
+    if not names:
+        return None, 0.0, None
+    keys = {}
+    for name in names:
+        keys.setdefault(phonetic_key(name), aliases.get(name, name))
+
+    best: Tuple[Optional[str], float, Optional[str]] = (None, 0.0, None)
     words = re.findall(r"[A-Za-zñÑ]+", text)
-    for size in (2, 1):
+    for size in (3, 2, 1):
         for i in range(len(words) - size + 1):
-            chunk = " ".join(words[i:i + size])
-            if len(chunk) < 4:
+            part = words[i:i + size]
+            if part[0].lower() in ADDRESS_FILLER_WORDS and size > 1:
+                part = part[1:]          # "in Baedig" -> "Baedig" is tried too
+            if not part or any(w.lower() in ADDRESS_FILLER_WORDS for w in part[1:]):
                 continue
-            res = process.extractOne(chunk, barangays, scorer=fuzz.ratio)
-            if res and res[1] > best[1]:
-                best = (res[0], float(res[1]))
-    return best if best[1] >= 85 else (None, best[1])
+            full = " ".join(words[i:i + size])
+            matched = " ".join(part)
+            # (text to compare, the words it came from)
+            for chunk, span in ((matched, matched), (matched.replace(" ", ""), matched),
+                                (full.replace(" ", ""), full)):
+                if len(chunk) < 4:
+                    continue
+                res = process.extractOne(chunk, names, scorer=fuzz.ratio)
+                if res and res[1] > best[1]:
+                    best = (aliases.get(res[0], res[0]), float(res[1]), span)
+                key = phonetic_key(chunk)
+                if len(key) >= 3 and key in keys and best[1] < 85:
+                    best = (keys[key], 85.0, span)
+    # Longer names tolerate more mishearing ("Imbatog", "Lingatin").
+    needed = 80 if best[0] and len(best[0]) >= 6 else 88
+    return best if best[1] >= needed else (None, best[1], None)
 
 
 def _handle_address(key: str, text: str) -> AnswerResult:
@@ -781,6 +857,7 @@ def _handle_address(key: str, text: str) -> AnswerResult:
     ])
     if not cleaned or len(re.sub(r"[^A-Za-z]", "", cleaned)) < 3:
         return _fail(key, "Please tell me your address: your purok or street, and your barangay.")
+    cleaned = _normalize_address_words(cleaned)
     methods = ["regex", "gazetteer"]
     entities = _ner_entities(_title(cleaned))
     locations = []
@@ -788,7 +865,7 @@ def _handle_address(key: str, text: str) -> AnswerResult:
         methods.insert(0, "distilbert")
         locations = [e.word for e in entities if e.label == "LOC" and e.score >= 0.5]
 
-    barangay, score = _find_barangay(cleaned)
+    barangay, score, heard_span = _find_barangay(cleaned)
     if not (barangay or locations or ADDRESS_KEYWORDS.search(cleaned) or "," in cleaned):
         return _fail(key, "I didn't get an address from that. Please say your purok or street, and your barangay.",
                      methods=methods)
@@ -797,9 +874,12 @@ def _handle_address(key: str, text: str) -> AnswerResult:
     value = re.sub(r"\b(?:Brgy|Bgy)\.?\b", "Barangay", value)
     if barangay:
         if not re.search(rf"\b{re.escape(barangay)}\b", value, re.IGNORECASE):
-            heard = extraction_service.BARANGAY_MENTION_PATTERN.search(value)
-            if heard:
-                value = value.replace(heard.group(1).strip(), barangay)
+            # Replace the misheard words ("In Baedig") with the real barangay name,
+            # together with a "Barangay"/"in"/"sa" said just before them.
+            span = _title(heard_span) if heard_span else None
+            pattern = rf"(?:\bBarangay\s+)?(?:\b(?:In|At|Sa)\s+)?{re.escape(span)}" if span else None
+            if pattern and re.search(pattern, value):
+                value = re.sub(pattern, f"Barangay {barangay}", value, count=1)
             else:
                 value = f"{value}, Barangay {barangay}"
         municipality, province = _office_location()
@@ -807,9 +887,13 @@ def _handle_address(key: str, text: str) -> AnswerResult:
             value = f"{value}, {municipality}"
         if province and province.lower() not in value.lower():
             value = f"{value}, {province}"
-    confidence = 0.95 if barangay else (0.8 if locations else 0.6)
-    warnings = [] if barangay else ["Barangay not recognized — please check the address."]
-    return _ok(key, _squash(value).strip(" ,"), methods=methods, confidence=confidence, warnings=warnings)
+    value = _squash(value).strip(" ,")
+    if barangay:
+        return _ok(key, value, methods=methods, confidence=0.95)
+    # No barangay of the municipality recognized: likely misheard, so ask instead of saving it as heard.
+    return _ok(key, value, methods=methods, confidence=0.8 if locations else 0.6, needs_confirmation=True,
+               message=f"I heard {value}. Is that your complete address?",
+               warnings=["Barangay not recognized — please check the address."])
 
 
 PH_PLACES = {
@@ -828,6 +912,14 @@ PH_PLACES = {
     "mambajao", "catarman", "sagay", "mahinog", "guinsiliban", "balingoan", "talisayan", "medina",
     "jasaan", "villanueva", "tagoloan", "opol", "el salvador", "lapu-lapu", "mandaue", "talisay",
     "tagbilaran", "surallah", "kidapawan", "digos", "tagum", "mati", "pagadian", "dipolog", "dapitan",
+    # Bukidnon (2 cities, 20 municipalities)
+    "baungon", "cabanglasan", "damulog", "dangcagan", "don carlos", "impasugong", "impasug-ong",
+    "kadingilan", "kalilangan", "kibawe", "kitaotao", "lantapan", "libona", "malitbog", "manolo fortich",
+    "maramag", "pangantucan", "san fernando", "sumilao", "talakag",
+    # Misamis Oriental, next door
+    "misamis oriental", "alubijid", "balingasag", "binuangan", "claveria", "gitagum", "initao",
+    "kinoguitan", "lagonglong", "laguindingan", "libertad", "lugait", "magsaysay", "manticao",
+    "naawan", "salay", "sugbongcogon", "el salvador city",
 }
 
 
@@ -860,7 +952,7 @@ def _handle_place_of_birth(key: str, text: str) -> AnswerResult:
     if entities is not None:
         methods.insert(0, "distilbert")
         locations = [e.word for e in entities if e.label == "LOC" and e.score >= 0.5]
-    barangay, _ = _find_barangay(cleaned)
+    barangay = _find_barangay(cleaned)[0]
     known = _known_place(cleaned)
     value = _title(cleaned)
     if locations or barangay or known:

@@ -23,6 +23,10 @@ os.environ["SECRET_KEY"] = "test-secret-key-32chars-minimum-xx"
 os.environ["SUPABASE_URL"] = ""
 os.environ["SUPABASE_SECRET_KEY"] = ""
 os.environ["NER_ENABLED"] = "false"   # don't load DistilBERT in unit tests
+os.environ["WHISPER_PRELOAD"] = "false"
+os.environ["BARANGAY_NAME"] = "Barangay Imbatug"
+os.environ["MUNICIPALITY"] = "Baungon"
+os.environ["PROVINCE"] = "Bukidnon"
 
 from app.main import app
 from app.core.database import Base, get_db
@@ -288,11 +292,11 @@ class TestExtraction:
     def test_full_extraction_pipeline(self, client, staff_token):
         """Integration test: extract fields from a sample transcript."""
         transcript = (
-            "My name is Juan dela Cruz. I was born on March 10 1985 in Mambajao Camiguin. "
+            "My name is Juan dela Cruz. I was born on March 10 1985 in Baungon Bukidnon. "
             "I am male and single. I am a Filipino citizen. "
             "I am currently working as a teacher. "
             "My gross annual income is 240000 pesos. "
-            "I live at Barangay San Roque, Mambajao, Camiguin. "
+            "I live at Barangay Imbatug, Baungon, Bukidnon. "
             "My height is 165 centimeters and my weight is 60 kilograms."
         )
         resp = client.post(
@@ -318,12 +322,12 @@ class TestQRCode:
         "given_name": "Juan",
         "middle_name": "Santos",
         "date_of_birth": "1990-01-15",
-        "address": "Barangay San Roque, Mambajao, Camiguin",
+        "address": "Barangay Imbatug, Baungon, Bukidnon",
         "sex": "Male",
         "civil_status": "Single",
         "citizenship": "Filipino",
         "icr_number": None,
-        "place_of_birth": "Mambajao",
+        "place_of_birth": "Baungon",
         "height_cm": 165.0,
         "weight_kg": 60.0,
         "occupation": "Teacher",
@@ -390,12 +394,12 @@ class TestIssuance:
         "given_name": "Maria",
         "middle_name": "Santos",
         "date_of_birth": "1995-06-20",
-        "address": "Barangay Poblacion, Mambajao, Camiguin",
+        "address": "Barangay Imbatug, Baungon, Bukidnon",
         "sex": "Female",
         "civil_status": "Single",
         "citizenship": "Filipino",
         "icr_number": None,
-        "place_of_birth": "Camiguin",
+        "place_of_birth": "Bukidnon",
         "height_cm": 158.0,
         "weight_kg": 52.0,
         "occupation": "Government Employee",
@@ -551,6 +555,42 @@ class TestInterviewAnswers:
         assert not result.ok
         assert result.message
 
+    @pytest.mark.parametrize("spoken,value", [
+        ("Purok 2 Imbatug", "Purok 2 Imbatug, Baungon, Bukidnon"),
+        ("Purik 2, Baranay Imbatog", "Purok 2, Barangay Imbatug, Baungon, Bukidnon"),   # misheard by speech engine
+        ("sa Salim Balan", "Barangay Salimbalan, Baungon, Bukidnon"),
+        ("Poblacion, Baungon", "Barangay Imbatug, Baungon, Bukidnon"),                   # old name of Imbatug
+        ("Purok 5, Lingatin", "Purok 5, Barangay Lingating, Baungon, Bukidnon"),
+        # Real Whisper (base) outputs for the Windows voice saying these addresses:
+        ("Purok, too. Barangay in Baedig.", "Purok 2, Barangay Imbatug, Baungon, Bukidnon"),
+        ("Barana Isolim Balan.", "Barangay Salimbalan, Baungon, Bukidnon"),
+        ("PURIC 2. Baranati imbedig.", "Purok 2, Barangay Imbatug, Baungon, Bukidnon"),
+        ("Purok V, Lingating.", "Purok 5, Lingating, Baungon, Bukidnon"),
+    ])
+    def test_address_uses_baungon_gazetteer(self, spoken, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("address", spoken)
+        assert result.ok and not result.needs_confirmation, result
+        assert result.value == value
+
+    def test_unknown_barangay_asks_for_confirmation(self):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("address", "Purok 3, Morana Ibalbegon")
+        assert result.ok and result.needs_confirmation
+
+    def test_phonetic_keys_match_sound_alikes(self):
+        from app.services.answer_service import phonetic_key, understand_answer
+        assert phonetic_key("Imbatug") == phonetic_key("in Baedig")
+        assert phonetic_key("Salimbalan") == phonetic_key("Isolim Balan")
+        assert understand_answer("given_name", "1.").value == "Juan"   # "Juan" heard as "one"
+
+    def test_whisper_drops_silence_hallucinations(self):
+        from app.services.speech_service import _clean_transcript, _decode_options
+        assert _clean_transcript(" Thank you. ") == ""
+        assert _clean_transcript("Thanks for watching.") == ""
+        assert _clean_transcript("Female.") == "Female."
+        assert "beam_size" not in _decode_options(None)   # greedy by default (WHISPER_BEAM_SIZE=1)
+
     def test_unrecognized_place_or_job_asks_for_confirmation(self):
         from app.services.answer_service import understand_answer
         assert understand_answer("place_of_birth", "nails").needs_confirmation
@@ -570,9 +610,9 @@ class TestInterviewAnswers:
     def test_answers_endpoint_checks_everything(self, client, staff_token):
         headers = {"Authorization": f"Bearer {staff_token}"}
         answers = {
-            "surname": "Santos", "given_name": "Maria", "middle_name": "", "address": "Purok 2, Barangay Agoho",
+            "surname": "Santos", "given_name": "Maria", "middle_name": "", "address": "Purok 2, Barangay Imbatug",
             "date": "May 10, 1990", "sex": "Female", "civil_status": "Single", "citizenship": "Filipino",
-            "icr_no": "", "place_of_birth": "Mambajao", "height": "160", "weight": "55",
+            "icr_no": "", "place_of_birth": "Baungon", "height": "160", "weight": "55",
             "occupation": "Teacher", "gross_annual_income": "240000",
         }
         r = client.post("/api/extraction/answers", headers=headers, json={"answers": answers})
