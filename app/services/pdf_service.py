@@ -50,13 +50,11 @@ SEAL_BLUE  = colors.HexColor("#B32035")
 SEAL_GOLD  = colors.HexColor("#B32035")
 STAMP_RED  = colors.HexColor("#B32035")
 
-# Card dimensions (drawing units). The card is drawn scaled up to fill a landscape
-# letter page (short bond paper), so it prints full size on any office printer.
+# Card dimensions. The PDF page IS the card, so it prints at the Cedula's own size
+# (print at "Actual size" / 100%, not "Fit to page").
 CARD_W = 8.27 * inch
-CARD_H = 5.2  * inch     # tall enough for every caption + value row (was 4.5 in: values hit the lines)
+CARD_H = 4.5  * inch
 MARGIN = 0.20 * inch
-PAGE_SIZE = (LETTER[1], LETTER[0])   # 11 x 8.5 in, landscape
-PAGE_MARGIN = 0.35 * inch
 BIR_LOGO_PATH = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "assets", "bir_logo.png")
 )
@@ -138,11 +136,11 @@ CAP_HEIGHT = 0.72   # Helvetica capitals are about 0.72 of the font size tall
 
 
 def _cell(c, x, y, w, h, caption, value, cap_size=5.0, val_size=8.2,
-          val_bold=False, pad_x=3, pad_y=3):
+          val_bold=False, pad_x=3, pad_y=2):
     """Caption pinned to the top of the cell, value on the bottom. The value always
     stays INSIDE the cell: on a short cell it is drawn smaller, never moved down
     across the cell's bottom line."""
-    cap_y = y + h - cap_size - pad_y
+    cap_y = y + h - cap_size - 1.6
     val_y = y + pad_y
     room = (cap_y - 1.5) - val_y                # space between the value baseline and the caption
     size = max(5.0, min(val_size, room / CAP_HEIGHT))
@@ -370,15 +368,10 @@ def generate_cedula_pdf(
     taxable_amt = gross_biz + salaries + real_prop
     in_words    = _amount_in_words(total_paid)
 
-    # Canvas: a landscape letter page with the card scaled up to fill its width and
-    # centred, so it prints full size (the card alone printed small at the page top).
-    c = pdfcanvas.Canvas(output_path, pagesize=PAGE_SIZE)
+    # Canvas: the page is exactly the card.
+    c = pdfcanvas.Canvas(output_path, pagesize=(CARD_W, CARD_H))
     c.setTitle(f"Community Tax Certificate - {ctc_number}")
     c.setAuthor(office.barangay_name)
-    page_w, page_h = PAGE_SIZE
-    scale = min((page_w - 2 * PAGE_MARGIN) / CARD_W, (page_h - 2 * PAGE_MARGIN) / CARD_H)
-    c.translate((page_w - CARD_W * scale) / 2, (page_h - CARD_H * scale) / 2)
-    c.scale(scale, scale)
 
     L  = MARGIN
     R  = CARD_W - MARGIN
@@ -422,7 +415,7 @@ def generate_cedula_pdf(
     # ── VERTICAL ZONES ───────────────────────────────────────────────────
     WORK_TOP = hdr_bot
     FOOT_H   = 27
-    TAX_H    = 86     # five rows; two of them carry two-line descriptions
+    TAX_H    = 73
     SIG_H    = 36
     WORK_BOT = B + FOOT_H + TAX_H + SIG_H
     WORK_H   = WORK_TOP - WORK_BOT
@@ -499,7 +492,7 @@ def generate_cedula_pdf(
 
     c.setFont("Helvetica-Bold", 6.3)
     c.setFillColor(BLACK)
-    c.drawCentredString(RIGHT_X + RIGHT_W / 2, copy_y + copy_band_h / 2 - 3, "TAXPAYER'S COPY")
+    c.drawCentredString(RIGHT_X + RIGHT_W / 2, copy_y + (copy_band_h - 6.3 * CAP_HEIGHT) / 2, "TAXPAYER'S COPY")
 
     _label(c, RIGHT_X + 3, sex_y + sex_band_h - 6, "SEX:", size=4.8)
     sx = RIGHT_X + 20
@@ -579,14 +572,15 @@ def generate_cedula_pdf(
             or (key != "widow" and key in civil_status)
         )
         box_x = col_x + 4
-        box_y = r4b + 6.5            # leaves room for a two-line label inside the row
+        box_y = r4b + 2.6            # below the caption, above the row's bottom line
         _checkbox(c, box_x, box_y, size=6.2, checked=checked, number=num)
-        c.setFont("Helvetica", 5.2)
         c.setFillColor(BLACK)
-        if len(lines) > 1:
-            c.drawString(box_x + 9, box_y + 3.4, lines[0])
-            c.drawString(box_x + 9, box_y - 2.8, lines[1])
+        if len(lines) > 1:           # two short lines that both stay inside the row
+            c.setFont("Helvetica", 4.6)
+            c.drawString(box_x + 9, box_y + 3.6, lines[0])
+            c.drawString(box_x + 9, box_y - 1.0, lines[1])
         else:
+            c.setFont("Helvetica", 5.2)
             c.drawString(box_x + 9, box_y + 1, lines[0])
 
     _cell(c, RIGHT_X, r4b, RIGHT_W, r4t - r4b, "TAXABLE AMOUNT",
