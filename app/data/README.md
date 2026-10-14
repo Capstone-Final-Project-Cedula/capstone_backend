@@ -65,9 +65,11 @@ any listed name is kept as heard, and the applicant still confirms every name
 on screen. Add the surnames common in Imbatug (one per line) to improve it;
 restart the backend after editing.
 
-## mambajao_fictional_residents_1000.csv
+## resident_names.csv (optional, not included)
 
-1,000 made-up residents from the earlier Mambajao setup. Only the whole-sentence
-extractor (`/api/extraction/fields`) uses it; the live interview never corrects
-names against it, because a real name must never be "corrected" into a fictional
-one. Replace it only with a real, consented list of common local surnames.
+The earlier made-up Mambajao resident list was removed: a real name must never be
+"corrected" into a fictional one. The old whole-sentence extractor
+(`/api/extraction/fields`) can still match names against a list if you add
+`resident_names.csv` here (columns `surname`, `name`, `middle_name`), but only use a
+real, consented list. Without it, that matching is simply off. The live interview
+does not use this file; it uses `common_surnames_ph.csv` and this barangay's own records.

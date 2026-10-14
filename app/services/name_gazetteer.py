@@ -21,8 +21,10 @@ from rapidfuzz import process, fuzz
 
 logger = logging.getLogger(__name__)
 
-# Path to the CSV. Put mambajao_fictional_residents_1000.csv at app/data/
-NAME_GAZETTEER_CSV_PATH = Path(__file__).parent.parent / "data" / "mambajao_fictional_residents_1000.csv"
+# Path to an OPTIONAL resident-name list (columns: surname, name, middle_name). There is no
+# such file by default: the earlier made-up Mambajao list was removed because a real name
+# must never be "corrected" into a fictional one. Without the file, name matching is off.
+NAME_GAZETTEER_CSV_PATH = Path(__file__).parent.parent / "data" / "resident_names.csv"
 
 # Below this fuzzy-match score (0-100), we don't trust the correction.
 MATCH_THRESHOLD = 80  # Higher than barangay's 70 — names are shorter and
@@ -50,8 +52,7 @@ def _load_name_lists(csv_path: Optional[str] = None) -> dict:
                 if row.get("middle_name", "").strip():
                     middle_names.add(row["middle_name"].strip())
     except FileNotFoundError:
-        logger.error(f"Name gazetteer CSV not found at {path}. "
-                     f"Name fuzzy-matching will be disabled.")
+        logger.info(f"No resident-name list at {path}: name fuzzy-matching is off (this is the default).")
 
     return {
         "surnames": sorted(surnames),
