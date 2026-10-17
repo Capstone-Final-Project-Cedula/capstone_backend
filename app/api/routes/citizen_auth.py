@@ -22,6 +22,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr, Field, validator
 
+from app.core.config import settings
 from app.core.database import get_db
 from fastapi.security import OAuth2PasswordBearer
 
@@ -228,7 +229,8 @@ def register(
 ):
     """
     Register a new citizen account.
-    Sends an email verification token on success.
+    With CITIZEN_EMAIL_VERIFICATION on, the account starts unverified and a
+    verification email is sent; otherwise the citizen can sign in right away.
     """
     username = payload.username.lower().strip()
     if db.query(CitizenUser).filter(CitizenUser.username == username).first():
@@ -263,13 +265,21 @@ def register(
         username=username,
         hashed_password=hash_password(payload.password),
         verification_token=verification_token,
-        is_verified=True,
+        is_verified=not settings.CITIZEN_EMAIL_VERIFICATION,
     )
     db.add(user)
     db.flush()  # assigns user.id, used in the storage path
     user.profile_picture = _store_profile_picture(user, payload.profile_picture)
     db.commit()
     db.refresh(user)
+
+    if settings.CITIZEN_EMAIL_VERIFICATION:
+        background_tasks.add_task(_send_verification_email, user.email, verification_token, user.full_name)
+        return {
+            "message": "Account created. Check your email for the verification link before signing in.",
+            "username": user.username,
+            "requires_verification": True,
+        }
 
     return {
         "message": "Account created successfully. You can now sign in.",

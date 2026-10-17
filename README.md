@@ -63,8 +63,11 @@ cedula_system/
 
 ### 1. Clone and set up environment
 
+**Use Python 3.12.** It is pinned in `.python-version` (read by uv, pyenv, Render, Railway)
+and `runtime.txt` (Heroku-style hosts). Python 3.13+ will not install: the pinned `numpy==1.26.4` and `scipy==1.13.0` have no 3.13 builds.
+
 ```bash
-# Create virtual environment
+# Create virtual environment (Python 3.12, e.g. `py -3.12 -m venv venv` or `uv venv --python 3.12 venv`)
 python -m venv venv
 source venv/bin/activate          # Windows: venv\Scripts\activate
 
@@ -224,7 +227,9 @@ SUPABASE_SECRET_KEY=sb_secret_...
 
 ### Environment Variables (production)
 ```env
-DEBUG=False
+DEBUG=False                          # also the default when unset
+CORS_ORIGINS=https://<deployed web app address>
+CITIZEN_EMAIL_VERIFICATION=False     # REQUIRED: default is True, but no emails are sent yet
 SECRET_KEY=<random 64-char string>
 JWT_SECRET_KEY=<random 64-char string>
 BARANGAY_NAME=<your barangay name>
@@ -232,10 +237,17 @@ MUNICIPALITY=<your municipality>
 PROVINCE=<your province>
 ```
 
-### Run with Gunicorn (production)
+### Run on a server (production)
+Use **one** worker: each worker loads Whisper `base` + `tiny` and DistilBERT into memory
+(plan for about 2 GB RAM). The host must serve the API over **https** (the web app's mic and
+QR camera only work on https pages, and an https page cannot call an http API).
+On a Linux host, install the **CPU-only** PyTorch first. The default PyPI build adds several GB
+of CUDA (GPU) packages that a CPU server never uses and that can exceed build limits:
 ```bash
-gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu && pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1
 ```
+Step-by-step hosting checklist: `capstone_docs/DEPLOY.md` in the CeduSync workspace.
 
 ---
 

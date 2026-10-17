@@ -732,6 +732,50 @@ class TestSusSurvey:
         assert client.post("/api/sus/resync", headers={"Authorization": f"Bearer {admin_token}"}).status_code == 503
 
 
+# ─── Citizen sign-up and email verification switch ────────────────────────────
+
+def _citizen_payload(username: str) -> dict:
+    return {
+        "first_name": "Juana",
+        "last_name": "Testcase",
+        "username": username,
+        "password": "Testpass1!",
+        "confirm_password": "Testpass1!",
+        "profile_picture": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==",
+    }
+
+
+def _citizen_login(client, username: str):
+    return client.post("/api/citizen/login", json={"username": username, "password": "Testpass1!"})
+
+
+class TestCitizenSignup:
+    def test_verification_off_register_then_login_succeeds(self, client):
+        from app.core.config import settings
+        with patch.object(settings, "CITIZEN_EMAIL_VERIFICATION", False):
+            resp = client.post("/api/citizen/register", json=_citizen_payload("citizen_noverify"))
+            assert resp.status_code == 201
+            assert resp.json()["requires_verification"] is False
+            login = _citizen_login(client, "citizen_noverify")
+        assert login.status_code == 200
+        assert login.json()["access_token"]
+
+    def test_verification_on_register_then_login_refused(self, client):
+        from app.core.config import settings
+        with patch.object(settings, "CITIZEN_EMAIL_VERIFICATION", True):
+            resp = client.post("/api/citizen/register", json=_citizen_payload("citizen_mustverify"))
+            assert resp.status_code == 201
+            assert resp.json()["requires_verification"] is True
+            login = _citizen_login(client, "citizen_mustverify")
+        assert login.status_code == 403
+        assert "verify your email" in login.json()["detail"]
+
+    def test_safe_defaults(self):
+        from app.core.config import Settings
+        assert Settings.model_fields["CITIZEN_EMAIL_VERIFICATION"].default is True
+        assert Settings.model_fields["DEBUG"].default is False
+
+
 # ─── Health Check ──────────────────────────────────────────────────────────────
 
 class TestHealth:
