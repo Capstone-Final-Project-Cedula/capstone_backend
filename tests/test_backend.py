@@ -427,28 +427,28 @@ class TestIssuance:
         self.__class__.last_ctc = data["ctc_number"]
         self.__class__.last_id = data["id"]
 
-    def test_get_record(self, client, staff_token):
+    def test_get_record(self, client, admin_token):
         resp = client.get(
             f"/api/forms/records/{self.__class__.last_id}",
-            headers={"Authorization": f"Bearer {staff_token}"},
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert resp.status_code == 200
         data = resp.json()
         assert data["ctc_number"] == self.__class__.last_ctc
 
-    def test_list_records(self, client, staff_token):
+    def test_list_records(self, client, admin_token):
         resp = client.get(
             "/api/forms/records",
-            headers={"Authorization": f"Bearer {staff_token}"},
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert resp.status_code == 200
         assert isinstance(resp.json(), list)
         assert len(resp.json()) >= 1
 
-    def test_search_records(self, client, staff_token):
+    def test_search_records(self, client, admin_token):
         resp = client.get(
             "/api/forms/records?search=Reyes",
-            headers={"Authorization": f"Bearer {staff_token}"},
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert resp.status_code == 200
         records = resp.json()
@@ -473,6 +473,226 @@ class TestIssuance:
         assert resp.status_code == 403
 
 
+# ─── Plan 001.3: required fields, admin-only Records, audit log, COPY mark ─────
+
+def _auth(token):
+    return {"Authorization": f"Bearer {token}"}
+
+
+def _issue(client, token, pdf_mocked=True, **changes):
+    """POST /api/forms/issue with SAMPLE_APPLICANT plus `changes` (fake data only)."""
+    applicant = {**TestIssuance.SAMPLE_APPLICANT, **changes}
+    body = {"applicant_data": applicant, "input_method": "voice"}
+    if not pdf_mocked:
+        return client.post("/api/forms/issue", json=body, headers=_auth(token))
+    with patch("app.api.routes.forms.generate_cedula_pdf", return_value="pdfs/test.pdf"), \
+         patch("app.api.routes.forms.generate_receipt_pdf", return_value="pdfs/test_receipt.pdf"):
+        return client.post("/api/forms/issue", json=body, headers=_auth(token))
+
+
+def _row_counts():
+    from app.models import ApplicantRecord, CTCIssuance
+    session = TestingSessionLocal()
+    try:
+        return session.query(ApplicantRecord).count(), session.query(CTCIssuance).count()
+    finally:
+        session.close()
+
+
+def _pdf_text(content: bytes) -> str:
+    """Text drawn on a ReportLab PDF (its streams are ASCII85 + Flate encoded)."""
+    import base64
+    import re
+    import zlib
+    parts = []
+    for match in re.finditer(rb"stream\r?\n(.*?)endstream", content, re.S):
+        raw = match.group(1).strip()
+        raw = raw[:-2] if raw.endswith(b"~>") else raw
+        try:
+            parts.append(zlib.decompress(base64.a85decode(raw)).decode("latin-1"))
+        except Exception:
+            continue
+    return "\n".join(parts)
+
+
+def _access_log(client, admin_token, limit=100):
+    resp = client.get(f"/api/forms/access-log?limit={limit}", headers=_auth(admin_token))
+    assert resp.status_code == 200
+    return resp.json()
+
+
+class TestIssueRequiredFields:
+    @pytest.mark.parametrize("field,value", [
+        ("surname", ""),
+        ("given_name", "   "),
+        ("address", ""),
+        ("sex", None),
+        ("sex", "unknown"),
+        ("civil_status", ""),
+        ("date_of_birth", None),
+        ("date_of_birth", "not a date"),
+    ])
+    def test_blank_required_field_is_422_and_writes_nothing(self, client, staff_token, field, value):
+        before = _row_counts()
+        with patch("app.api.routes.forms.generate_cedula_pdf") as make_pdf, \
+             patch("app.api.routes.forms.generate_receipt_pdf") as make_receipt:
+            resp = client.post(
+                "/api/forms/issue",
+                json={"applicant_data": {**TestIssuance.SAMPLE_APPLICANT, field: value}, "input_method": "voice"},
+                headers=_auth(staff_token),
+            )
+        assert resp.status_code == 422
+        assert field in [item["loc"][-1] for item in resp.json()["detail"]]
+        assert _row_counts() == before
+        make_pdf.assert_not_called()
+        make_receipt.assert_not_called()
+
+    def test_several_missing_fields_are_all_listed(self, client, staff_token):
+        resp = _issue(client, staff_token, surname="", address="", civil_status="")
+        assert resp.status_code == 422
+        assert {item["loc"][-1] for item in resp.json()["detail"]} == {"surname", "address", "civil_status"}
+
+    def test_blank_height_and_weight_still_issue(self, client, staff_token):
+        # The web sends 0 for a blank height/weight; that must keep working.
+        resp = _issue(client, staff_token, height_cm=0, weight_kg=0)
+        assert resp.status_code == 201
+        assert resp.json()["applicant"]["height_cm"] is None
+
+    def test_complete_application_is_201(self, client, staff_token):
+        assert _issue(client, staff_token).status_code == 201
+
+
+class TestRecordsAdminOnly:
+    def test_staff_gets_403_on_list_view_download(self, client, staff_token, admin_token):
+        record = _issue(client, staff_token).json()
+        assert client.get("/api/forms/records", headers=_auth(staff_token)).status_code == 403
+        assert client.get(f"/api/forms/records/{record['id']}", headers=_auth(staff_token)).status_code == 403
+        assert client.get(f"/api/forms/download/{record['ctc_number']}",
+                          headers=_auth(staff_token)).status_code == 403
+        # Admin can list and view (download is covered with a real PDF below).
+        assert client.get("/api/forms/records", headers=_auth(admin_token)).status_code == 200
+        assert client.get(f"/api/forms/records/{record['id']}", headers=_auth(admin_token)).status_code == 200
+
+    def test_staff_gets_403_on_access_log(self, client, staff_token):
+        assert client.get("/api/forms/access-log", headers=_auth(staff_token)).status_code == 403
+
+
+class TestRecordsNameSearch:
+    @pytest.fixture(scope="class")
+    def people(self, client, staff_token):
+        juan = _issue(client, staff_token, surname="Dela Cruz", given_name="Juan", middle_name="Bautista").json()
+        pedro = _issue(client, staff_token, surname="Dela Cruz", given_name="Pedro", middle_name="Lim").json()
+        concepcion = _issue(client, staff_token, surname="Dela Cruz-Villanueva",
+                            given_name="Ma. Concepcion", middle_name=None).json()
+        return {"juan": juan["id"], "pedro": pedro["id"], "concepcion": concepcion["id"]}
+
+    def _found(self, client, admin_token, search):
+        resp = client.get("/api/forms/records", params={"search": search, "limit": 100},
+                          headers=_auth(admin_token))
+        assert resp.status_code == 200
+        return {row["id"] for row in resp.json()}
+
+    @pytest.mark.parametrize("search", ["Juan Dela Cruz", "Dela Cruz Juan", "juan", "  JUAN   dela  ", "Bautista Juan"])
+    def test_word_search_finds_juan(self, client, admin_token, people, search):
+        assert people["juan"] in self._found(client, admin_token, search)
+
+    def test_other_given_name_does_not_match(self, client, admin_token, people):
+        found = self._found(client, admin_token, "Juan Dela Cruz")
+        assert people["pedro"] not in found
+        assert people["juan"] not in self._found(client, admin_token, "Pedro Dela Cruz")
+
+    def test_long_name_found_by_two_words(self, client, admin_token, people):
+        assert people["concepcion"] in self._found(client, admin_token, "Concepcion Villanueva")
+
+    def test_ctc_number_search_still_works(self, client, admin_token, people):
+        record = client.get(f"/api/forms/records/{people['pedro']}", headers=_auth(admin_token)).json()
+        assert self._found(client, admin_token, record["ctc_number"]) == {people["pedro"]}
+
+    def test_like_wildcards_are_literal(self, client, admin_token, people):
+        assert self._found(client, admin_token, "%") == set()
+        assert self._found(client, admin_token, "J_an") == set()
+
+
+class TestRecordsAccessLogAndCopies:
+    def test_view_and_list_are_logged(self, client, staff_token, admin_token):
+        record = _issue(client, staff_token).json()
+        client.get(f"/api/forms/records/{record['id']}", headers=_auth(admin_token))
+        client.get("/api/forms/records", params={"search": "Reyes Maria"}, headers=_auth(admin_token))
+        rows = _access_log(client, admin_token)
+        assert any(r["action"] == "view" and r["issuance_id"] == record["id"]
+                   and r["ctc_number"] == record["ctc_number"] and r["staff_username"] == "test_admin"
+                   for r in rows)
+        assert any(r["action"] == "list" and r["search_text"] == "Reyes Maria" for r in rows)
+
+    def test_list_without_search_is_not_logged(self, client, admin_token):
+        before = len(_access_log(client, admin_token))
+        client.get("/api/forms/records?skip=10", headers=_auth(admin_token))
+        client.get("/api/forms/records?search=%20%20", headers=_auth(admin_token))
+        assert len(_access_log(client, admin_token)) == before
+
+    def test_first_print_is_original_then_copies(self, client, staff_token, admin_token, tmp_path, monkeypatch):
+        from app.core.config import settings
+        from app.models import CTCIssuance
+        monkeypatch.setattr(settings, "PDF_OUTPUT_DIR", str(tmp_path))
+
+        record = _issue(client, staff_token, pdf_mocked=False).json()
+        ctc = record["ctc_number"]
+        stored = open(record["pdf_path"], "rb").read()
+
+        first = client.get(f"/api/forms/download/{ctc}", headers=_auth(admin_token))
+        assert first.status_code == 200
+        assert first.content == stored
+        assert "COPY / RE-PRINT" not in _pdf_text(first.content)
+        assert "_COPY" not in first.headers["content-disposition"]
+
+        second = client.get(f"/api/forms/download/{ctc}?purpose=print", headers=_auth(admin_token))
+        assert second.status_code == 200
+        assert "COPY / RE-PRINT" in _pdf_text(second.content)
+        assert f"{ctc}_COPY.pdf" in second.headers["content-disposition"]
+
+        third = client.get(f"/api/forms/download/{ctc}", headers=_auth(admin_token))
+        assert "COPY / RE-PRINT" in _pdf_text(third.content)
+
+        # The stored original is never changed, and no temporary re-print is left behind.
+        assert open(record["pdf_path"], "rb").read() == stored
+        assert not [name for name in os.listdir(tmp_path) if "_copy_" in name]
+
+        session = TestingSessionLocal()
+        try:
+            assert session.query(CTCIssuance).filter_by(ctc_number=ctc).one().print_count == 3
+        finally:
+            session.close()
+
+        mine = [r for r in _access_log(client, admin_token) if r["ctc_number"] == ctc]
+        assert sorted((r["action"], r["is_copy"]) for r in mine) == [
+            ("download", False), ("download", True), ("print", True),
+        ]
+
+    def test_failed_download_does_not_use_up_the_original(self, client, staff_token, admin_token):
+        from app.models import CTCIssuance
+        record = _issue(client, staff_token).json()   # mocked PDF path: the file does not exist
+        resp = client.get(f"/api/forms/download/{record['ctc_number']}", headers=_auth(admin_token))
+        assert resp.status_code == 404
+        session = TestingSessionLocal()
+        try:
+            assert session.query(CTCIssuance).filter_by(id=record["id"]).one().print_count == 0
+        finally:
+            session.close()
+
+    def test_download_works_when_the_log_write_fails(self, client, staff_token, admin_token, tmp_path, monkeypatch):
+        from app.core.config import settings
+        monkeypatch.setattr(settings, "PDF_OUTPUT_DIR", str(tmp_path))
+        record = _issue(client, staff_token, pdf_mocked=False).json()
+        with patch("app.api.routes.forms.RecordAccessLog", side_effect=RuntimeError("log table missing")):
+            resp = client.get(f"/api/forms/download/{record['ctc_number']}", headers=_auth(admin_token))
+        assert resp.status_code == 200
+        assert resp.content.startswith(b"%PDF")
+
+    def test_unknown_purpose_is_rejected(self, client, admin_token):
+        assert client.get("/api/forms/download/CTC-X?purpose=email",
+                          headers=_auth(admin_token)).status_code == 422
+
+
 # ─── Permission / Token Tests ──────────────────────────────────────────────────
 
 class TestPermissions:
@@ -495,7 +715,7 @@ class TestPermissions:
         db.commit()
         token = create_access_token(data={"sub": viewer.username, "type": "staff"})
         headers = {"Authorization": f"Bearer {token}"}
-        assert client.get("/api/forms/records", headers=headers).status_code == 200
+        assert client.get("/api/forms/records", headers=headers).status_code == 403  # Records is admin only
         resp = client.post("/api/forms/issue", headers=headers,
                            json={"applicant_data": TestIssuance.SAMPLE_APPLICANT, "input_method": "manual"})
         assert resp.status_code == 403
