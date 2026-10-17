@@ -25,14 +25,30 @@ _ner_pipeline = None
 
 
 def get_ner_pipeline():
-    """Load DistilBERT NER pipeline once and cache it."""
+    """Load DistilBERT NER pipeline once and cache it (quantized for low RAM footprint)."""
     global _ner_pipeline
     if _ner_pipeline is None:
-        from transformers import pipeline
+        import torch
+        from transformers import AutoModelForTokenClassification, AutoTokenizer, pipeline
+
         logger.info("Loading DistilBERT NER pipeline...")
+        model_name = "dslim/distilbert-NER"
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForTokenClassification.from_pretrained(model_name)
+
+        # Dynamic INT8 quantization on Linear layers: reduces RAM from ~260MB to ~65MB
+        try:
+            model = torch.quantization.quantize_dynamic(
+                model, {torch.nn.Linear}, dtype=torch.qint8
+            )
+            logger.info("DistilBERT dynamically quantized to INT8.")
+        except Exception as q_err:
+            logger.warning(f"DistilBERT quantization skipped, using full precision: {q_err}")
+
         _ner_pipeline = pipeline(
             "ner",
-            model="dslim/distilbert-NER",
+            model=model,
+            tokenizer=tokenizer,
             aggregation_strategy="simple",
         )
         logger.info("DistilBERT NER pipeline loaded.")

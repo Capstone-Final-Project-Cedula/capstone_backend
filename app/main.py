@@ -34,6 +34,17 @@ async def lifespan(app: FastAPI):
     """
     logger.info("=== Cedula System Starting Up ===")
 
+    # Configure PyTorch for low-memory container inference:
+    # 1 thread prevents OpenMP from allocating thread pools for 64 host cores.
+    # Disabling gradients stops PyTorch from tracking autograd graphs.
+    try:
+        import torch
+        torch.set_num_threads(1)
+        torch.set_grad_enabled(False)
+        logger.info("PyTorch configured: 1 thread, gradients disabled.")
+    except Exception as exc:
+        logger.warning(f"PyTorch thread constraint skipped: {exc}")
+
     # Create DB tables (includes citizen_users now)
     create_tables()
     logger.info("Database tables verified/created.")
