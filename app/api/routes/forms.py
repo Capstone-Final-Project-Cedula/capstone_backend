@@ -3,19 +3,20 @@ app/api/routes/forms.py
 CTC issuance and PDF generation endpoints.
 """
 import os
+import uuid
 from datetime import datetime, date, timedelta, timezone
-from fastapi import APIRouter, Depends, HTTPException, Response, status
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
-from sqlalchemy import func, text
-from typing import Optional, List
+from sqlalchemy import func, or_, text
+from typing import Literal, Optional, List
 from collections import Counter
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.security import get_current_user, require_admin, require_staff
+from app.core.security import require_admin, require_staff
 from app.models.applicant import ApplicantRecord
 from app.models.issuance import CTCIssuance, InputMethodEnum
+from app.models.record_access_log import RecordAccessLog
 from app.models.staff_user import StaffUser
 from app.services import name_lexicon, storage_service
 from app.services.pdf_service import generate_cedula_pdf, generate_receipt_pdf
@@ -25,6 +26,7 @@ from app.schemas.schemas import (
     IssuanceResponse,
     DashboardStats,
     ApplicantResponse,
+    RecordAccessLogResponse,
 )
 import logging
 
@@ -144,6 +146,85 @@ def extract_barangay(address: Optional[str]) -> str:
     return parts[0] if parts else "Unspecified"
 
 
+def missing_required_fields(applicant_data: dict) -> List[dict]:
+    """
+    The fields a CTC cannot be issued without — the same set the web checks in
+    validateFormData. Returns FastAPI-style error items ({loc, msg, type}) so the
+    web's getApiErrorMessage shows them; an empty list means all are present.
+    """
+    errors = []
+
+    def add(field: str, msg: str):
+        errors.append({"loc": ["body", "applicant_data", field], "msg": msg, "type": "missing"})
+
+    for field, label in (("surname", "Surname"), ("given_name", "Given name"), ("address", "Address")):
+        if not str(applicant_data.get(field) or "").strip():
+            add(field, f"{label} is required.")
+    if get_sex_value(applicant_data.get("sex")) not in ("Male", "Female"):
+        add("sex", "Sex must be Male or Female.")
+    if get_civil_status_value(applicant_data.get("civil_status")) not in (
+        "Single", "Married", "Widowed", "Separated",
+    ):
+        add("civil_status", "Civil status must be Single, Married, Widowed, or Separated.")
+    if parse_date(applicant_data.get("date_of_birth")) is None:
+        add("date_of_birth", "Date of birth is missing or could not be read.")
+    return errors
+
+
+def applicant_pdf_data(applicant: ApplicantRecord) -> dict:
+    """Applicant fields in the shape generate_cedula_pdf expects."""
+    return {
+        "surname": applicant.surname,
+        "given_name": applicant.given_name,
+        "middle_name": applicant.middle_name,
+        "address": applicant.address,
+        "sex": applicant.sex or "",
+        "civil_status": applicant.civil_status or "",
+        "citizenship": applicant.citizenship,
+        "icr_number": applicant.icr_number,
+        "place_of_birth": applicant.place_of_birth,
+        "height_cm": applicant.height_cm,
+        "weight_kg": applicant.weight_kg,
+        "occupation": applicant.occupation,
+        "gross_annual_income": applicant.gross_annual_income,
+        "tax_classification": applicant.tax_classification,
+        "date_of_birth": applicant.date_of_birth.isoformat() if applicant.date_of_birth else None,
+    }
+
+
+def log_record_access(
+    db: Session,
+    user: StaffUser,
+    action: str,
+    issuance: Optional[CTCIssuance] = None,
+    search_text: Optional[str] = None,
+    is_copy: Optional[bool] = None,
+) -> None:
+    """
+    Write one record_access_log row. A failure is logged and swallowed: the
+    admin still gets the records or the PDF they asked for.
+    """
+    try:
+        db.add(RecordAccessLog(
+            staff_user_id=user.id,
+            action=action,
+            issuance_id=issuance.id if issuance else None,
+            ctc_number=issuance.ctc_number if issuance else None,
+            is_copy=is_copy,
+            search_text=(search_text or None) and search_text[:200],
+        ))
+        db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("Could not write the record access log (%s by user %s)", action, user.id)
+
+
+def _like_pattern(word: str) -> str:
+    """%word% for ILIKE, with the LIKE wildcards in the word itself escaped."""
+    escaped = word.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{escaped}%"
+
+
 @router.post("/issue", response_model=IssuanceResponse, status_code=201)
 def issue_ctc(
     payload: IssuanceCreate,
@@ -153,13 +234,18 @@ def issue_ctc(
     """
     Full CTC issuance workflow.
     """
+    if isinstance(payload.applicant_data, dict):
+        applicant_data = payload.applicant_data
+    else:
+        applicant_data = payload.applicant_data.model_dump()
+
+    # Checked before anything is written: on 422 no row and no PDF exist.
+    # (Outside the try below, which would turn the 422 into a 500.)
+    missing = missing_required_fields(applicant_data)
+    if missing:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=missing)
+
     try:
-        # ── 1. Extract Applicant Data ──────────────────────────────────────
-        if isinstance(payload.applicant_data, dict):
-            applicant_data = payload.applicant_data
-        else:
-            applicant_data = payload.applicant_data.model_dump()
-        
         logger.info(f"Processing CTC for: {applicant_data.get('surname')}, {applicant_data.get('given_name')}")
 
         # ── 2. Create Applicant ──────────────────────────────────────────────
@@ -202,23 +288,7 @@ def issue_ctc(
         ctc_number = generate_ctc_number(db)
 
         # ── 5. Generate PDF ──────────────────────────────────────────────────
-        applicant_dict = {
-            "surname": applicant.surname,
-            "given_name": applicant.given_name,
-            "middle_name": applicant.middle_name,
-            "address": applicant.address,
-            "sex": applicant.sex or "",
-            "civil_status": applicant.civil_status or "",
-            "citizenship": applicant.citizenship,
-            "icr_number": applicant.icr_number,
-            "place_of_birth": applicant.place_of_birth,
-            "height_cm": applicant.height_cm,
-            "weight_kg": applicant.weight_kg,
-            "occupation": applicant.occupation,
-            "gross_annual_income": applicant.gross_annual_income,
-            "tax_classification": applicant.tax_classification,
-            "date_of_birth": applicant.date_of_birth.isoformat() if applicant.date_of_birth else None,
-        }
+        applicant_dict = applicant_pdf_data(applicant)
 
         tax_dict = {
             "basic_community_tax": basic_tax,
@@ -322,13 +392,68 @@ def issue_ctc(
         )
 
 
+def _read_stored_pdf(issuance: CTCIssuance) -> bytes:
+    """The PDF saved at issue time (Supabase Storage, or a local file on older records)."""
+    if storage_service.is_storage_ref(issuance.pdf_path):
+        try:
+            content, _ = storage_service.download_bytes(issuance.pdf_path)
+        except FileNotFoundError:
+            raise HTTPException(status_code=404, detail="PDF file not found.")
+        except Exception as e:
+            logger.error(f"PDF download for {issuance.ctc_number} failed: {e}")
+            raise HTTPException(status_code=502, detail="Could not fetch the PDF from storage.")
+        return content
+
+    if not issuance.pdf_path or not os.path.exists(issuance.pdf_path):
+        raise HTTPException(status_code=404, detail="PDF file not found.")
+    with open(issuance.pdf_path, "rb") as f:
+        return f.read()
+
+
+def _build_copy_pdf(issuance: CTCIssuance) -> bytes:
+    """
+    Rebuild the CTC from the saved record with the COPY / RE-PRINT mark and
+    today's date. Uses a throwaway file; the stored original is never touched.
+    """
+    tax_dict = {
+        "basic_community_tax": issuance.basic_community_tax,
+        "additional_community_tax": issuance.additional_community_tax,
+        "total_tax": issuance.total_tax,
+        "interest": issuance.interest,
+        "total_amount_paid": issuance.total_amount_paid,
+    }
+    safe = issuance.ctc_number.replace("-", "_").replace(" ", "_")
+    path = generate_cedula_pdf(
+        issuance.ctc_number,
+        applicant_pdf_data(issuance.applicant),
+        tax_dict,
+        output_filename=f"{safe}_copy_{uuid.uuid4().hex}.pdf",
+        issued_at=issuance.issued_at,
+        reprint_date=datetime.now(LOCAL_TZ),
+    )
+    try:
+        with open(path, "rb") as f:
+            return f.read()
+    finally:
+        try:
+            os.remove(path)
+        except OSError:
+            logger.warning("Could not remove the temporary re-print %s", path)
+
+
 @router.get("/download/{ctc_number}")
 def download_cedula(
     ctc_number: str,
+    purpose: Literal["download", "print"] = "download",
     db: Session = Depends(get_db),
-    current_user: StaffUser = Depends(get_current_user),
+    current_user: StaffUser = Depends(require_admin),
 ):
-    """Download the generated PDF for a specific CTC number."""
+    """
+    Download the PDF for a CTC (admin only, from Records). The first download or
+    print is the stored original; every later one is rebuilt with a
+    "COPY / RE-PRINT" mark. Each one is written to record_access_log.
+    `purpose` only labels the log row ("print" = the Records Print button).
+    """
     issuance = db.query(CTCIssuance).filter(
         CTCIssuance.ctc_number == ctc_number
     ).first()
@@ -336,30 +461,34 @@ def download_cedula(
     if not issuance:
         raise HTTPException(status_code=404, detail=f"CTC '{ctc_number}' not found.")
 
-    if storage_service.is_storage_ref(issuance.pdf_path):
-        try:
-            content, _ = storage_service.download_bytes(issuance.pdf_path)
-        except FileNotFoundError:
-            raise HTTPException(status_code=404, detail="PDF file not found.")
-        except Exception as e:
-            logger.error(f"PDF download for {ctc_number} failed: {e}")
-            raise HTTPException(status_code=502, detail="Could not fetch the PDF from storage.")
-        return Response(
-            content=content,
-            media_type="application/pdf",
-            headers={"Content-Disposition": f'attachment; filename="{ctc_number}.pdf"'},
+    # Only the request that moves print_count from 0 to 1 gets the original, so
+    # two admins printing at the same moment cannot both get an unmarked copy.
+    got_original = db.query(CTCIssuance).filter(
+        CTCIssuance.id == issuance.id, CTCIssuance.print_count == 0,
+    ).update({CTCIssuance.print_count: 1}, synchronize_session=False) == 1
+    if not got_original:
+        db.query(CTCIssuance).filter(CTCIssuance.id == issuance.id).update(
+            {CTCIssuance.print_count: CTCIssuance.print_count + 1}, synchronize_session=False,
         )
 
-    if not issuance.pdf_path or not os.path.exists(issuance.pdf_path):
-        raise HTTPException(
-            status_code=404,
-            detail="PDF file not found.",
-        )
+    try:
+        content = _read_stored_pdf(issuance) if got_original else _build_copy_pdf(issuance)
+    except HTTPException:
+        db.rollback()   # nothing was handed out, so the count stays as it was
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Re-print of {ctc_number} failed: {e}")
+        raise HTTPException(status_code=500, detail="Could not build the re-print PDF.")
+    db.commit()
 
-    return FileResponse(
-        issuance.pdf_path,
+    log_record_access(db, current_user, purpose, issuance=issuance, is_copy=not got_original)
+
+    filename = f"{ctc_number}.pdf" if got_original else f"{ctc_number}_COPY.pdf"
+    return Response(
+        content=content,
         media_type="application/pdf",
-        filename=f"{ctc_number}.pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 
@@ -371,18 +500,23 @@ def list_records(
     input_method: Optional[InputMethodEnum] = None,
     response: Response = None,
     db: Session = Depends(get_db),
-    current_user: StaffUser = Depends(get_current_user),
+    current_user: StaffUser = Depends(require_admin),
 ):
-    """List all CTC issuance records."""
+    """
+    List CTC issuance records (admin only — the counter). The search is split
+    into words and every word must match the surname, given name, middle name or
+    CTC number, so "Juan Dela Cruz" and "Dela Cruz Juan" find the same person.
+    """
     query = db.query(CTCIssuance).join(ApplicantRecord)
 
-    if search:
-        search_term = f"%{search}%"
-        query = query.filter(
-            ApplicantRecord.surname.ilike(search_term) |
-            ApplicantRecord.given_name.ilike(search_term) |
-            CTCIssuance.ctc_number.ilike(search_term)
-        )
+    for word in (search or "").split():
+        pattern = _like_pattern(word)
+        query = query.filter(or_(
+            ApplicantRecord.surname.ilike(pattern, escape="\\"),
+            ApplicantRecord.given_name.ilike(pattern, escape="\\"),
+            ApplicantRecord.middle_name.ilike(pattern, escape="\\"),
+            CTCIssuance.ctc_number.ilike(pattern, escape="\\"),
+        ))
 
     if input_method:
         query = query.filter(CTCIssuance.input_method == input_method)
@@ -437,7 +571,11 @@ def list_records(
             pdf_path=issuance.pdf_path,
             applicant=applicant_response,
         ))
-    
+
+    # Only searches are logged: that is when someone's record is looked up. Paging
+    # through the list or changing the filter would only add noise to the log.
+    if (search or "").strip():
+        log_record_access(db, current_user, "list", search_text=search.strip())
     return result
 
 
@@ -472,13 +610,14 @@ def delete_record(
 def get_record(
     issuance_id: int,
     db: Session = Depends(get_db),
-    current_user: StaffUser = Depends(get_current_user),
+    current_user: StaffUser = Depends(require_admin),
 ):
-    """Get a single CTC issuance by ID."""
+    """Get a single CTC issuance by ID (admin only; logged)."""
     issuance = db.query(CTCIssuance).filter(CTCIssuance.id == issuance_id).first()
     if not issuance:
         raise HTTPException(status_code=404, detail="Issuance record not found.")
-    
+    log_record_access(db, current_user, "view", issuance=issuance)
+
     applicant = issuance.applicant
     applicant_response = ApplicantResponse(
         id=applicant.id,
@@ -514,6 +653,40 @@ def get_record(
         pdf_path=issuance.pdf_path,
         applicant=applicant_response,
     )
+
+
+@router.get("/access-log", response_model=List[RecordAccessLogResponse])
+def list_access_log(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    response: Response = None,
+    db: Session = Depends(get_db),
+    current_user: StaffUser = Depends(require_admin),
+):
+    """Who listed, viewed, downloaded or printed CTC records, newest first (admin only)."""
+    query = db.query(RecordAccessLog)
+    response.headers["X-Total-Count"] = str(query.count())
+    rows = (
+        query
+        .order_by(RecordAccessLog.created_at.desc(), RecordAccessLog.id.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    return [
+        RecordAccessLogResponse(
+            id=row.id,
+            created_at=row.created_at,
+            action=row.action,
+            staff_username=row.staff.username if row.staff else None,
+            staff_full_name=row.staff.full_name if row.staff else None,
+            issuance_id=row.issuance_id,
+            ctc_number=row.ctc_number,
+            is_copy=row.is_copy,
+            search_text=row.search_text,
+        )
+        for row in rows
+    ]
 
 
 @router.get("/dashboard/stats", response_model=DashboardStats)

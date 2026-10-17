@@ -38,6 +38,9 @@ class CTCIssuance(Base):
     raw_transcript = Column(Text, nullable=True)  # Whisper output, if voice
     issued_at = Column(DateTime(timezone=True), server_default=func.now())
     pdf_path = Column(String(255), nullable=True)  # Path to generated PDF
+    # Times the PDF was downloaded or printed from Records. 0 = the next print is
+    # the original; after that every print is rebuilt with a COPY / RE-PRINT mark.
+    print_count = Column(Integer, nullable=False, default=0, server_default="0")
 
     # ── Foreign Keys ─────────────────────────────────────────────────────────
     applicant_id = Column(Integer, ForeignKey("applicant_records.id"), nullable=False)
