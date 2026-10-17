@@ -13,7 +13,9 @@ class Settings(BaseSettings):
     # App
     APP_NAME: str = "CedulaSystem"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = True
+    # True logs every SQL statement (with citizen data), lets any website call the API
+    # and opens /docs. Off unless .env turns it on, so a deploy that forgets it stays safe.
+    DEBUG: bool = False
 
     # Database — Supabase Postgres session pooler URL, set in .env (required)
     DATABASE_URL: str
@@ -58,6 +60,11 @@ class Settings(BaseSettings):
     # DistilBERT NER used to understand interview answers (names, places).
     # False skips the model (regex/gazetteer only), e.g. in the test suite.
     NER_ENABLED: bool = True
+
+    # Citizen sign-up: True = new accounts must verify their email before they can log in.
+    # Verification emails are only logged today (no email sending yet), so every backend
+    # must set CITIZEN_EMAIL_VERIFICATION=False in .env / on the host, or new citizens can never log in.
+    CITIZEN_EMAIL_VERIFICATION: bool = True
 
     # QR Code
     QR_EXPIRY_MINUTES: int = 60
