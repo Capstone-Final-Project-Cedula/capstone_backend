@@ -647,7 +647,7 @@ class TestRecordsAccessLogAndCopies:
         ctc = record["ctc_number"]
         stored = open(record["pdf_path"], "rb").read()
 
-        first =client.get(f"/api/forms/download/{ctc}?purpose=print", headers=_auth(admin_token))
+        first = client.get(f"/api/forms/download/{ctc}?purpose=print", headers=_auth(admin_token))
         assert first.status_code == 200
         assert first.content == stored
         assert "COPY / RE-PRINT" not in _pdf_text(first.content)
