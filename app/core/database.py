@@ -7,7 +7,7 @@ The app runs on Supabase Postgres (DATABASE_URL = session pooler string).
 The schema is managed by Supabase migrations; create_all() at startup only
 creates tables that are missing (e.g. in the test suite's throwaway database).
 """
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, inspect
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
@@ -55,6 +55,30 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+DATABASE_KIND = "Supabase Postgres" if IS_POSTGRES else "SQLite (test only)"
+
+MISSING_RECORDS_AUDIT_MIGRATION = (
+    "Database is missing migration 20261018090000_records_audit.sql. Apply it in the "
+    "Supabase SQL editor (see capstone_docs/TESTING-LAPTOP.md)."
+)
+
+
+def missing_migration_message(bind=None):
+    """
+    The start-up message when an existing database lacks a migration the code
+    needs, or None when the schema is fine. Must run BEFORE create_tables():
+    create_all() would make record_access_log without its RLS and never adds the
+    print_count column. An empty database (tests) has no ctc_issuance yet: fine.
+    """
+    inspector = inspect(bind if bind is not None else engine)
+    if not inspector.has_table("ctc_issuance"):
+        return None
+    columns = {column["name"] for column in inspector.get_columns("ctc_issuance")}
+    if "print_count" not in columns or not inspector.has_table("record_access_log"):
+        return MISSING_RECORDS_AUDIT_MIGRATION
+    return None
 
 
 def create_tables():
