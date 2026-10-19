@@ -60,5 +60,5 @@ def get_db():
 def create_tables():
     """Create any missing tables defined in models. Called on startup."""
     from app.models import applicant, issuance, mobile_submission, staff_user  # noqa: F401
-    from app.models import citizen_user, app_settings, sus_response  # noqa: F401
+    from app.models import citizen_user, app_settings, sus_response, record_access_log  # noqa: F401
     Base.metadata.create_all(bind=engine)
