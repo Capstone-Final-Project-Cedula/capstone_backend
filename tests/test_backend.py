@@ -515,6 +515,15 @@ def _pdf_text(content: bytes) -> str:
     return "\n".join(parts)
 
 
+def _print_count(ctc_number: str) -> int:
+    from app.models import CTCIssuance
+    session = TestingSessionLocal()
+    try:
+        return session.query(CTCIssuance).filter_by(ctc_number=ctc_number).one().print_count
+    finally:
+        session.close()
+
+
 def _access_log(client, admin_token, limit=100):
     resp = client.get(f"/api/forms/access-log?limit={limit}", headers=_auth(admin_token))
     assert resp.status_code == 200
@@ -632,14 +641,13 @@ class TestRecordsAccessLogAndCopies:
 
     def test_first_print_is_original_then_copies(self, client, staff_token, admin_token, tmp_path, monkeypatch):
         from app.core.config import settings
-        from app.models import CTCIssuance
         monkeypatch.setattr(settings, "PDF_OUTPUT_DIR", str(tmp_path))
 
         record = _issue(client, staff_token, pdf_mocked=False).json()
         ctc = record["ctc_number"]
         stored = open(record["pdf_path"], "rb").read()
 
-        first = client.get(f"/api/forms/download/{ctc}", headers=_auth(admin_token))
+        first = client.get(f"/api/forms/download/{ctc}?purpose=print", headers=_auth(admin_token))
         assert first.status_code == 200
         assert first.content == stored
         assert "COPY / RE-PRINT" not in _pdf_text(first.content)
@@ -650,28 +658,50 @@ class TestRecordsAccessLogAndCopies:
         assert "COPY / RE-PRINT" in _pdf_text(second.content)
         assert f"{ctc}_COPY.pdf" in second.headers["content-disposition"]
 
-        third = client.get(f"/api/forms/download/{ctc}", headers=_auth(admin_token))
-        assert "COPY / RE-PRINT" in _pdf_text(third.content)
-
         # The stored original is never changed, and no temporary re-print is left behind.
         assert open(record["pdf_path"], "rb").read() == stored
         assert not [name for name in os.listdir(tmp_path) if "_copy_" in name]
+        assert _print_count(ctc) == 2
 
-        session = TestingSessionLocal()
-        try:
-            assert session.query(CTCIssuance).filter_by(ctc_number=ctc).one().print_count == 3
-        finally:
-            session.close()
+        mine = [r for r in _access_log(client, admin_token) if r["ctc_number"] == ctc]
+        assert sorted((r["action"], r["is_copy"]) for r in mine) == [("print", False), ("print", True)]
+
+    def test_download_is_always_a_copy_and_never_uses_up_the_original(
+        self, client, staff_token, admin_token, tmp_path, monkeypatch,
+    ):
+        from app.core.config import settings
+        monkeypatch.setattr(settings, "PDF_OUTPUT_DIR", str(tmp_path))
+
+        record = _issue(client, staff_token, pdf_mocked=False).json()
+        ctc = record["ctc_number"]
+        stored = open(record["pdf_path"], "rb").read()
+
+        for _ in range(2):
+            download = client.get(f"/api/forms/download/{ctc}?purpose=download", headers=_auth(admin_token))
+            assert download.status_code == 200
+            assert "COPY / RE-PRINT" in _pdf_text(download.content)
+            assert f"{ctc}_COPY.pdf" in download.headers["content-disposition"]
+        # The default purpose is a download too.
+        assert "COPY / RE-PRINT" in _pdf_text(
+            client.get(f"/api/forms/download/{ctc}", headers=_auth(admin_token)).content)
+        assert _print_count(ctc) == 0
+
+        # The first Print after any number of Downloads is still the original.
+        printed = client.get(f"/api/forms/download/{ctc}?purpose=print", headers=_auth(admin_token))
+        assert printed.content == stored
+        assert "_COPY" not in printed.headers["content-disposition"]
+        assert _print_count(ctc) == 1
 
         mine = [r for r in _access_log(client, admin_token) if r["ctc_number"] == ctc]
         assert sorted((r["action"], r["is_copy"]) for r in mine) == [
-            ("download", False), ("download", True), ("print", True),
+            ("download", True), ("download", True), ("download", True), ("print", False),
         ]
 
     def test_failed_download_does_not_use_up_the_original(self, client, staff_token, admin_token):
         from app.models import CTCIssuance
         record = _issue(client, staff_token).json()   # mocked PDF path: the file does not exist
-        resp = client.get(f"/api/forms/download/{record['ctc_number']}", headers=_auth(admin_token))
+        resp = client.get(f"/api/forms/download/{record['ctc_number']}?purpose=print",
+                          headers=_auth(admin_token))
         assert resp.status_code == 404
         session = TestingSessionLocal()
         try:
@@ -691,6 +721,98 @@ class TestRecordsAccessLogAndCopies:
     def test_unknown_purpose_is_rejected(self, client, admin_token):
         assert client.get("/api/forms/download/CTC-X?purpose=email",
                           headers=_auth(admin_token)).status_code == 422
+
+
+# ─── Plan 001.4: start-up migration check, QR with a blank birth date ─────────
+
+class TestStartupMigrationCheck:
+    @staticmethod
+    def _engine(tmp_path, *statements):
+        from sqlalchemy import text
+        throwaway = create_engine(f"sqlite:///{tmp_path / 'schema.db'}")
+        with throwaway.begin() as conn:
+            for statement in statements:
+                conn.execute(text(statement))
+        return throwaway
+
+    def test_empty_database_passes(self, tmp_path):
+        from app.core.database import missing_migration_message
+        throwaway = self._engine(tmp_path)
+        assert missing_migration_message(throwaway) is None
+        throwaway.dispose()
+
+    def test_migrated_database_passes(self):
+        # The test database is built from the models, which include the migration.
+        from app.core.database import missing_migration_message
+        assert missing_migration_message(engine) is None
+
+    @pytest.mark.parametrize("statements", [
+        # Before the migration: no print_count, no record_access_log.
+        ["CREATE TABLE ctc_issuance (id INTEGER PRIMARY KEY)"],
+        # Half-applied: the column is there but the table is not.
+        ["CREATE TABLE ctc_issuance (id INTEGER PRIMARY KEY, print_count INTEGER)"],
+        # The table is there (e.g. made by create_all) but the column is not.
+        ["CREATE TABLE ctc_issuance (id INTEGER PRIMARY KEY)",
+         "CREATE TABLE record_access_log (id INTEGER PRIMARY KEY)"],
+    ])
+    def test_unmigrated_database_is_named(self, tmp_path, statements):
+        from app.core.database import missing_migration_message
+        throwaway = self._engine(tmp_path, *statements)
+        message = missing_migration_message(throwaway)
+        throwaway.dispose()
+        assert message and "20261018090000_records_audit.sql" in message
+
+    def test_backend_refuses_to_start_without_the_migration(self, tmp_path, caplog):
+        import app.main as main_module
+        caplog.set_level("INFO")
+        throwaway = self._engine(tmp_path, "CREATE TABLE ctc_issuance (id INTEGER PRIMARY KEY)")
+        with patch("app.core.database.engine", throwaway), \
+             patch.object(main_module, "create_tables") as make_tables, \
+             patch.object(main_module, "_seed_default_admin") as seed:
+            with pytest.raises(RuntimeError, match="20261018090000_records_audit.sql"):
+                with TestClient(app):
+                    pass
+        throwaway.dispose()
+        # It stopped before create_all could make record_access_log without RLS.
+        make_tables.assert_not_called()
+        seed.assert_not_called()
+        errors = [r for r in caplog.records if r.levelname == "ERROR" and "records_audit" in r.getMessage()]
+        assert len(errors) == 1
+        assert any(r.getMessage() == "Database: SQLite (test only)" for r in caplog.records)
+
+    def test_backend_starts_with_the_migration(self, caplog):
+        import app.main as main_module
+        caplog.set_level("INFO")
+        with patch.object(main_module, "_seed_default_admin"):
+            with TestClient(app) as started:
+                assert started.get("/api/health").status_code == 200
+        assert not [r for r in caplog.records if r.levelname == "ERROR"]
+        # The URL (and its password) is never logged.
+        assert not [r for r in caplog.records if "sqlite:///" in r.getMessage()]
+
+
+class TestQRBlankBirthDate:
+    def test_scan_then_issue_without_birth_date(self, client, staff_token):
+        form = {**TestQRCode.SAMPLE_FORM, "date_of_birth": None}
+        token = client.post("/api/qr/generate", json={"form_data": form}).json()["qr_token"]
+
+        scanned = client.post("/api/qr/scan", json={"qr_token": token}, headers=_auth(staff_token))
+        assert scanned.status_code == 200
+        assert scanned.json()["form_data"]["date_of_birth"] is None
+
+        before = _row_counts()
+        with patch("app.api.routes.forms.generate_cedula_pdf") as make_pdf, \
+             patch("app.api.routes.forms.generate_receipt_pdf") as make_receipt:
+            resp = client.post(
+                "/api/forms/issue",
+                json={"applicant_data": scanned.json()["form_data"], "input_method": "qr"},
+                headers=_auth(staff_token),
+            )
+        assert resp.status_code == 422
+        assert [item["loc"][-1] for item in resp.json()["detail"]] == ["date_of_birth"]
+        assert _row_counts() == before
+        make_pdf.assert_not_called()
+        make_receipt.assert_not_called()
 
 
 # ─── Permission / Token Tests ──────────────────────────────────────────────────

@@ -449,10 +449,11 @@ def download_cedula(
     current_user: StaffUser = Depends(require_admin),
 ):
     """
-    Download the PDF for a CTC (admin only, from Records). The first download or
-    print is the stored original; every later one is rebuilt with a
-    "COPY / RE-PRINT" mark. Each one is written to record_access_log.
-    `purpose` only labels the log row ("print" = the Records Print button).
+    Download or print the PDF for a CTC (admin only, from Records). Only Print
+    counts: the first print is the stored original and every later print is
+    rebuilt with a "COPY / RE-PRINT" mark. A download (`purpose=download`) is
+    always a COPY and never changes print_count, so it cannot use up the
+    original. Each one is written to record_access_log.
     """
     issuance = db.query(CTCIssuance).filter(
         CTCIssuance.ctc_number == ctc_number
@@ -461,15 +462,17 @@ def download_cedula(
     if not issuance:
         raise HTTPException(status_code=404, detail=f"CTC '{ctc_number}' not found.")
 
-    # Only the request that moves print_count from 0 to 1 gets the original, so
-    # two admins printing at the same moment cannot both get an unmarked copy.
-    got_original = db.query(CTCIssuance).filter(
-        CTCIssuance.id == issuance.id, CTCIssuance.print_count == 0,
-    ).update({CTCIssuance.print_count: 1}, synchronize_session=False) == 1
-    if not got_original:
-        db.query(CTCIssuance).filter(CTCIssuance.id == issuance.id).update(
-            {CTCIssuance.print_count: CTCIssuance.print_count + 1}, synchronize_session=False,
-        )
+    got_original = False
+    if purpose == "print":
+        # Only the request that moves print_count from 0 to 1 gets the original, so
+        # two admins printing at the same moment cannot both get an unmarked copy.
+        got_original = db.query(CTCIssuance).filter(
+            CTCIssuance.id == issuance.id, CTCIssuance.print_count == 0,
+        ).update({CTCIssuance.print_count: 1}, synchronize_session=False) == 1
+        if not got_original:
+            db.query(CTCIssuance).filter(CTCIssuance.id == issuance.id).update(
+                {CTCIssuance.print_count: CTCIssuance.print_count + 1}, synchronize_session=False,
+            )
 
     try:
         content = _read_stored_pdf(issuance) if got_original else _build_copy_pdf(issuance)
