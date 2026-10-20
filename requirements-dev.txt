@@ -1,0 +1,5 @@
+# Development tools only (tests and lint), not needed to run the backend.
+# Install after requirements.txt:  pip install -r requirements-dev.txt
+# Pinned to the versions in the Python 3.12 venv (plan 001, 2026-10-20).
+pytest==9.1.1
+ruff==0.17.1
