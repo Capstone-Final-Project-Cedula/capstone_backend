@@ -204,16 +204,6 @@ def _tokens(text: str) -> List[Tuple[str, int, int]]:
     return [(_norm(m.group(0)), m.start(), m.end()) for m in _TOKEN.finditer(text or "")]
 
 
-def town_by_psgc(psgc: str) -> Optional[Place]:
-    """The city or municipality with this PSGC code."""
-    by_name, _ = _load()
-    for places in by_name.values():
-        for p in places:
-            if p.psgc == psgc:
-                return p
-    return None
-
-
 def find_town(text: str, exclude: frozenset = frozenset(), home_province: str = "",
               prefer_region: str = REGION_X) -> Optional[dict]:
     """
@@ -288,8 +278,9 @@ def find_town(text: str, exclude: frozenset = frozenset(), home_province: str = 
             for n in range(min(3, end - after), 0, -1):
                 s = end - n
                 part = words[s:end]
-                gram = " ".join(part)
                 # "the" for "de" inside a name is fine ("Cagayan the Oro"); a name never starts or ends with one.
+                gram = " ".join("de" if w == "the" and 0 < i < len(part) - 1 else w
+                                for i, w in enumerate(part))
                 if (inside_province(s, end) or part[0] in STOP or part[-1] in STOP or gram in skip
                         or not fits(s, end)):
                     continue

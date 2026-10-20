@@ -1046,6 +1046,22 @@ class TestSpeechAccuracy:
         assert result.ok, result.message
         assert result.value == value
 
+    @pytest.mark.parametrize("heard,cleaned,value", [
+        ("Jose at Rizal", "Jose Rizal", "Jose Rizal"),
+        ("Jose Rizal", "Jose Rizal", "Jose Rizal"),
+        ("My name is Maria", "Maria", "Maria"),
+        ("Called Jose Rizal", "Called Jose Rizal", "Rizal"),
+    ])
+    def test_given_name_keeps_known_words_before_ner_span(self, heard, cleaned, value):
+        from app.services import answer_service, name_lexicon
+        from app.services.answer_service import Entity, understand_answer
+        last = cleaned.split()[-1]
+        start = cleaned.rfind(last)
+        with patch.object(answer_service, "_ner_entities", return_value=[Entity("PER", last, 0.9, start, len(cleaned))]), \
+                patch.object(name_lexicon, "_record_names", return_value={"given_name": {"Jose", "Maria"}}):
+            result = understand_answer("given_name", heard, spoken=True)
+        assert result.ok and result.value == value
+
     def test_yes_no_hint_has_no_navigation_words(self):
         from app.services.speech_service import FIELD_PROMPTS
         assert "back" not in FIELD_PROMPTS["confirm"].lower()
@@ -1065,6 +1081,7 @@ class TestSpeechAccuracy:
 
     @pytest.mark.parametrize("heard,town_psgc", [
         ("Cagayan de Oro", "1030500000"), ("Kagayan de oro city", "1030500000"), ("CDO", "1030500000"),
+        ("Kagayan the Oro", "1030500000"),
         ("I live in Baungon", "1001301000"), ("Cabanglasan", "1001322000"), ("Valencia", "1001321000"),
     ])
     def test_address_town(self, heard, town_psgc):
@@ -1086,6 +1103,12 @@ class TestSpeechAccuracy:
 
     @pytest.mark.parametrize("heard,town,value", [
         ("Imbatog", "1001301000", "Imbatug"),            # Baungon's Imbatug
+        ("in Baedig", "1001301000", "Imbatug"),
+        ("Barangay in Baedig", "1001301000", "Imbatug"),
+        ("sa Lingating", "1001301000", "Lingating"),
+        ("in Carmen", "1030500000", "Carmen"),
+        ("in ten", "1030500000", "Barangay 10"),
+        ("sa two", "1030500000", "Barangay 2"),
         ("Poblacion", "1001301000", "Imbatug"),          # its old name
         ("Imbatug", "1001322000", "Imbatug"),            # Cabanglasan's Imbatug: matched inside Cabanglasan
         ("Barangay Lapasan", "1030500000", "Lapasan"),   # a Cagayan de Oro barangay
@@ -1110,6 +1133,15 @@ class TestSpeechAccuracy:
         result = understand_answer("address_barangay", "Poblacion", spoken=True, town="0304926000")
         assert result.ok and result.needs_confirmation and result.value == "Poblacion"
 
+    def test_barangay_with_unknown_town_is_taken_as_said(self):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("address_barangay", "Poblacion", spoken=True, town="0")
+        assert result.ok and result.needs_confirmation and result.value == "Poblacion"
+
+    def test_unknown_town_barangay_hint_has_no_office_barangays(self):
+        from app.services.speech_service import SpeechService
+        assert SpeechService._build_prompt("address_barangay", "0") == "The name of the barangay."
+
     @pytest.mark.parametrize("heard,value", [
         ("Purok too", "Purok 2"), ("two", "Purok 2"), ("2", "Purok 2"), ("My purok is 5", "Purok 5"),
         ("Zone 1", "Zone 1"), ("123 Rizal Street", "123 Rizal Street"), ("none", ""), ("wala po", ""),
@@ -1121,6 +1153,9 @@ class TestSpeechAccuracy:
 
     @pytest.mark.parametrize("spoken,value", [
         ("Purok 4, Barangay Bulua, Cagayan de Oro City", "Purok 4, Barangay Bulua, Cagayan de Oro City, Misamis Oriental"),
+        ("Zone 1 Carmen, Kagayan the Oro", "Zone 1, Barangay Carmen, Cagayan de Oro City, Misamis Oriental"),
+        ("Purok 2 Lingating Baungon", "Purok 2, Barangay Lingating, Baungon, Bukidnon"),
+        ("Purok 2 Imbatug", "Purok 2 Imbatug, Baungon, Bukidnon"),
         ("I live in Zone 3, Carmen, CDO", "Zone 3, Barangay Carmen, Cagayan de Oro City, Misamis Oriental"),
         ("Purok 1, Imbatug, Cabanglasan, Bukidnon", "Purok 1, Barangay Imbatug, Cabanglasan, Bukidnon"),
         ("Barangay seventeen, Cagayan de Oro", "Barangay 17, Cagayan de Oro City, Misamis Oriental"),

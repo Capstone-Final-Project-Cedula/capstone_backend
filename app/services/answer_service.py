@@ -566,6 +566,10 @@ def _handle_name(key: str, text: str, label: str, optional: bool, spoken: bool =
             while end < len(titled) and (titled[end].isalpha() or titled[end] in "'-"):
                 end += 1
             before = titled[:start].split()
+            if key == "given_name" and before and all(name_lexicon.is_known(w, "given_name") for w in before):
+                # NER may tag only the last given name: keep known names it skipped.
+                start = 0
+                before = []
             while before and before[-1].lower().strip(".") in NAME_PARTICLES:
                 start = titled.rfind(before.pop(), 0, start)
             value = titled[start:end]
@@ -972,10 +976,9 @@ def _handle_address(key: str, text: str) -> AnswerResult:
         methods.insert(0, "distilbert")
         locations = [e.word for e in entities if e.label == "LOC" and e.score >= 0.5]
 
-    # The town first (plan 001.6): an address in another town is matched against that town's barangays and
-    # written with that town's province, never with the office's.
+    # The town first (plan 001.6): any explicitly named town supplies its own barangays and province.
     town = _find_address_town(cleaned)
-    if town and not _is_office_town(town["place"]):
+    if town:
         return _address_in_town(key, cleaned, town, methods)
 
     barangay, score, heard_span = _find_barangay(cleaned)
@@ -1016,11 +1019,6 @@ def _office_town() -> Optional[place_gazetteer.Place]:
     municipality, province = _office_location()
     found = place_gazetteer.find_town(f"{municipality}, {province}", home_province=province)
     return found["place"] if found else None
-
-
-def _is_office_town(place: place_gazetteer.Place) -> bool:
-    office = _office_town()
-    return bool(office) and place.psgc == office.psgc
 
 
 def _office_barangay_words() -> frozenset:
@@ -1087,7 +1085,7 @@ def split_address(text: str) -> dict:
 
 
 def _address_in_town(key: str, cleaned: str, town: dict, methods: List[str]) -> AnswerResult:
-    """A one-sentence address in a town other than the office's."""
+    """A one-sentence address with an explicitly named town."""
     parts = _parse_address(cleaned, town)
     place = parts["place"]
     town_value = place.name if parts["ambiguous"] else _town_value(place)
@@ -1136,22 +1134,26 @@ def _handle_address_barangay(key: str, text: str, town: Optional[str] = None) ->
     """"What is your barangay?" Matched only against the barangays of `town` (a PSGC code; default: office)."""
     cleaned = _strip_prefix(_basic_clean(text), [
         r"^my\s+barangay(?:\s+(?:is|ay))?\s*:?\s*", r"^barangay\s+ko\s+(?:ay\s+)?",
-        r"^i\s+live\s+(?:in|at)\s+", r"^(?:nakatira\s+ako\s+sa|taga|sa|in|at)\s+",
+        r"^i\s+live\s+(?:in|at)\s+", r"^(?:nakatira\s+ako\s+sa|taga)\s+",
     ])
     if not re.search(r"[A-Za-z0-9]", cleaned or ""):
         return _fail(key, "Please tell me your barangay.")
     cleaned = _normalize_address_words(cleaned)
-    if spoken_numbers(cleaned) and not re.search(r"[A-Za-z]{3,}", re.sub(NUMBER_WORD, " ", cleaned, flags=re.I)):
-        cleaned = f"Barangay {cleaned}"          # "Ten" for "Barangay 10"
+    stripped = re.sub(r"^(?:in|at|sa)\s+", "", cleaned, flags=re.IGNORECASE)
+    if spoken_numbers(stripped) and not re.search(r"[A-Za-z]{3,}", re.sub(NUMBER_WORD, " ", stripped, flags=re.I)):
+        stripped = f"Barangay {stripped}"          # "Ten" for "Barangay 10"
     methods = ["regex", "gazetteer"]
     office = _office_town()
     psgc = town or (office.psgc if office else "")
     names, aliases = town_barangays(psgc)
     if names:
+        # Keep "in" for sound-alike matching ("in Baedig" -> Imbatug) before trying it as a prefix.
         found, _, _ = _find_barangay(cleaned, names, aliases)
+        if not found:
+            found, _, _ = _find_barangay(stripped, names, aliases)
         if found:
             return _ok(key, found, display=_barangay_label(found), methods=methods, confidence=0.95)
-    heard = re.sub(r"^(?:barangay|brgy|bgy)\.?\s+", "", _title(cleaned), flags=re.IGNORECASE).strip(" ,.")
+    heard = re.sub(r"^(?:barangay|brgy|bgy)\.?\s+", "", _title(stripped), flags=re.IGNORECASE).strip(" ,.")
     if not heard or heard.lower() == "barangay":
         return _fail(key, "Please tell me the name of your barangay.")
     label = _barangay_label(heard)
