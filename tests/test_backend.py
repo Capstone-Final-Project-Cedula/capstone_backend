@@ -1016,6 +1016,223 @@ class TestInterviewAnswers:
         assert r.json()["ok"] is False and r.json()["results"]["sex"]["ok"] is False
 
 
+# ─── Plan 001.6: the problems from the 10-20 interview, town + barangay matching ──
+
+class TestSpeechAccuracy:
+    @pytest.mark.parametrize("heard", [
+        "no", "No.", "none", "No, none.", "No none po", "None, none.", "wala", "Wala po.", "Wala, wala po.", "nothing",
+    ])
+    def test_income_none_answers(self, heard):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("gross_annual_income", heard, spoken=True)
+        assert result.ok, result.message
+        assert result.value == "0" and result.display == "no income"
+
+    def test_income_amount_still_read_after_a_no(self):
+        from app.services.answer_service import understand_answer
+        assert understand_answer("gross_annual_income", "No, 20 thousand a month").value == "240000"
+
+    @pytest.mark.parametrize("heard,value", [
+        ("Maria and Clara.", "Maria Clara"),
+        ("My first name is Gerlie and Mae.", "Gerlie Mae"),
+        ("Jose at Rizal", "Jose Rizal"),
+        ("Andrea", "Andrea"),                       # "and" inside a name stays
+        ("Atanacio", "Atanacio"),
+        ("Andy Mae", "Andy Mae"),
+    ])
+    def test_given_name_joining_word_is_dropped(self, heard, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("given_name", heard, spoken=True)
+        assert result.ok, result.message
+        assert result.value == value
+
+    @pytest.mark.parametrize("heard,cleaned,value", [
+        ("Jose at Rizal", "Jose Rizal", "Jose Rizal"),
+        ("Jose Rizal", "Jose Rizal", "Jose Rizal"),
+        ("My name is Maria", "Maria", "Maria"),
+        ("Called Jose Rizal", "Called Jose Rizal", "Rizal"),
+    ])
+    def test_given_name_keeps_known_words_before_ner_span(self, heard, cleaned, value):
+        from app.services import answer_service, name_lexicon
+        from app.services.answer_service import Entity, understand_answer
+        last = cleaned.split()[-1]
+        start = cleaned.rfind(last)
+        with patch.object(answer_service, "_ner_entities", return_value=[Entity("PER", last, 0.9, start, len(cleaned))]), \
+                patch.object(name_lexicon, "_record_names", return_value={"given_name": {"Jose", "Maria"}}):
+            result = understand_answer("given_name", heard, spoken=True)
+        assert result.ok and result.value == value
+
+    def test_yes_no_hint_has_no_navigation_words(self):
+        from app.services.speech_service import FIELD_PROMPTS
+        assert "back" not in FIELD_PROMPTS["confirm"].lower()
+
+    # Fake addresses (no real residents): PSGC place names only.
+    def test_region10_barangay_csv_counts(self):
+        import csv
+        from collections import Counter
+        from app.services.barangay_gazetteer import REGION_CSV_PATH
+        with open(REGION_CSV_PATH, newline="", encoding="utf-8") as f:
+            rows = list(csv.DictReader(f))
+        per_town = Counter(r["town_psgc"] for r in rows)
+        assert len(rows) == 2022 and per_town["1030500000"] == 80 and per_town["1001301000"] == 16
+        imbatugs = {(r["town"], r["psgc_code"]) for r in rows if r["barangay"] == "Imbatug"}
+        assert imbatugs == {("Baungon", "1001301012"), ("Cabanglasan", "1001322004")}
+        assert {r["province"] for r in rows if r["town_psgc"] == "1030500000"} == {"Misamis Oriental"}
+
+    @pytest.mark.parametrize("heard,town_psgc", [
+        ("Cagayan de Oro", "1030500000"), ("Kagayan de oro city", "1030500000"), ("CDO", "1030500000"),
+        ("Kagayan the Oro", "1030500000"),
+        ("I live in Baungon", "1001301000"), ("Cabanglasan", "1001322000"), ("Valencia", "1001321000"),
+    ])
+    def test_address_town(self, heard, town_psgc):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("address_town", heard, spoken=True)
+        assert result.ok and not result.needs_confirmation, result
+        assert result.normalized == town_psgc
+
+    def test_unknown_town_offers_the_office_town(self):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("address_town", "nails", spoken=True)
+        assert result.ok and result.needs_confirmation
+        assert result.value == "Baungon, Bukidnon" and result.normalized == "1001301000"
+        assert "Baungon" in result.message
+
+    def test_cdo_town_is_written_with_misamis_oriental(self):
+        from app.services.answer_service import understand_answer
+        assert understand_answer("address_town", "Cagayan de Oro").value == "Cagayan de Oro City, Misamis Oriental"
+
+    @pytest.mark.parametrize("heard,town,value", [
+        ("Imbatog", "1001301000", "Imbatug"),            # Baungon's Imbatug
+        ("in Baedig", "1001301000", "Imbatug"),
+        ("Barangay in Baedig", "1001301000", "Imbatug"),
+        ("sa Lingating", "1001301000", "Lingating"),
+        ("in Carmen", "1030500000", "Carmen"),
+        ("in ten", "1030500000", "Barangay 10"),
+        ("sa two", "1030500000", "Barangay 2"),
+        ("Poblacion", "1001301000", "Imbatug"),          # its old name
+        ("Imbatug", "1001322000", "Imbatug"),            # Cabanglasan's Imbatug: matched inside Cabanglasan
+        ("Barangay Lapasan", "1030500000", "Lapasan"),   # a Cagayan de Oro barangay
+        ("Bulua po", "1030500000", "Bulua"),
+        ("Barangay ten", "1030500000", "Barangay 10"),   # numbered barangays of Cagayan de Oro
+        ("Salim Balan", None, "Salimbalan"),             # no town: the office town's barangays
+    ])
+    def test_barangay_matched_inside_the_town(self, heard, town, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("address_barangay", heard, spoken=True, town=town)
+        assert result.ok and not result.needs_confirmation, result
+        assert result.value == value
+
+    def test_barangay_of_another_town_is_not_matched(self):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("address_barangay", "Imbatug", spoken=True, town="1030500000")
+        assert result.ok and result.needs_confirmation    # Imbatug is not in Cagayan de Oro: confirm as said
+        assert result.display == "Barangay Imbatug"
+
+    def test_barangay_outside_region_x_is_taken_as_said(self):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("address_barangay", "Poblacion", spoken=True, town="0304926000")
+        assert result.ok and result.needs_confirmation and result.value == "Poblacion"
+
+    def test_barangay_with_unknown_town_is_taken_as_said(self):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("address_barangay", "Poblacion", spoken=True, town="0")
+        assert result.ok and result.needs_confirmation and result.value == "Poblacion"
+
+    def test_unknown_town_barangay_hint_has_no_office_barangays(self):
+        from app.services.speech_service import SpeechService
+        assert SpeechService._build_prompt("address_barangay", "0") == "The name of the barangay."
+
+    @pytest.mark.parametrize("heard,value", [
+        ("Purok too", "Purok 2"), ("two", "Purok 2"), ("2", "Purok 2"), ("My purok is 5", "Purok 5"),
+        ("Zone 1", "Zone 1"), ("123 Rizal Street", "123 Rizal Street"), ("none", ""), ("wala po", ""),
+    ])
+    def test_address_purok(self, heard, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("address_purok", heard, spoken=True)
+        assert result.ok and result.value == value
+
+    @pytest.mark.parametrize("spoken,value", [
+        ("Purok 4, Barangay Bulua, Cagayan de Oro City", "Purok 4, Barangay Bulua, Cagayan de Oro City, Misamis Oriental"),
+        ("Zone 1 Carmen, Kagayan the Oro", "Zone 1, Barangay Carmen, Cagayan de Oro City, Misamis Oriental"),
+        ("Purok 2 Lingating Baungon", "Purok 2, Barangay Lingating, Baungon, Bukidnon"),
+        ("Purok 2 Imbatug", "Purok 2 Imbatug, Baungon, Bukidnon"),
+        ("I live in Zone 3, Carmen, CDO", "Zone 3, Barangay Carmen, Cagayan de Oro City, Misamis Oriental"),
+        ("Purok 1, Imbatug, Cabanglasan, Bukidnon", "Purok 1, Barangay Imbatug, Cabanglasan, Bukidnon"),
+        ("Barangay seventeen, Cagayan de Oro", "Barangay 17, Cagayan de Oro City, Misamis Oriental"),
+        # A joined 3-question answer is read back unchanged when checked again before issuing.
+        ("Purok 2, Barangay Carmen, Cagayan de Oro City, Misamis Oriental",
+         "Purok 2, Barangay Carmen, Cagayan de Oro City, Misamis Oriental"),
+        ("Purok 2, Barangay Imbatug, Baungon, Bukidnon", "Purok 2, Barangay Imbatug, Baungon, Bukidnon"),
+    ])
+    def test_one_sentence_address_finds_the_town_first(self, spoken, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("address", spoken)
+        assert result.ok and not result.needs_confirmation, result
+        assert result.value == value
+
+    def test_office_province_never_added_to_another_town(self):
+        from app.services.answer_service import understand_answer
+        value = understand_answer("address", "Purok 5, Lapasan, Cagayan de Oro City").value
+        assert "Baungon" not in value and "Bukidnon" not in value
+        result = understand_answer("address", "Purok 1, Barangay Poblacion, San Jose, Batangas")
+        assert result.needs_confirmation and "Baungon" not in result.value     # outside Region X: confirm as said
+
+    @pytest.mark.parametrize("spoken", ["Purok 3, San Vicente", "Purok 2, Rizal Street, Imbatug", "Kalilangan"])
+    def test_office_barangay_named_like_a_town_stays_in_the_office_town(self, spoken):
+        from app.services.answer_service import understand_answer
+        assert understand_answer("address", spoken).value.endswith("Baungon, Bukidnon")
+
+    @pytest.mark.parametrize("heard,display", [
+        ("Purok 3 Lapasan, Cagayan del Oro", "Cagayan de Oro City"),   # "Cagayan" (a province) inside a misheard name
+        ("Cagayan the Oro City", "Cagayan de Oro City"),
+        ("Purok 2, Carmen, Bohol", "Carmen"),                          # a town after a purok number
+        ("Tuguegarao, Cagayan", "Tuguegarao City"),
+    ])
+    def test_find_town_misheard_and_province_names(self, heard, display):
+        from app.services.place_gazetteer import find_town
+        assert find_town(heard, home_province="Bukidnon")["place"].display == display
+
+    def test_find_town_skips_a_barangay_name(self):
+        from app.services.place_gazetteer import find_town
+        assert find_town("Barangay Carmen", home_province="Bukidnon") is None   # Carmen is also a town elsewhere
+
+    def test_split_address(self):
+        from app.services.answer_service import split_address
+        assert split_address("Purok 4, Bulua, Cagayan de Oro City") == {
+            "town_psgc": "1030500000", "town": "Cagayan de Oro City", "town_said": True, "barangay": "Bulua",
+            "rest": "Purok 4"}
+        no_town = split_address("Purok 2 Imbatug")
+        assert no_town["town_psgc"] == "1001301000" and not no_town["town_said"]   # the office town, assumed
+
+    def test_barangay_hint_lists_the_town_said(self):
+        from app.services.speech_service import SpeechService
+        cdo = SpeechService._build_prompt("address_barangay", "1030500000")
+        assert "Lapasan" in cdo and "Salimbalan" not in cdo
+        assert "Salimbalan" in SpeechService._build_prompt("address_barangay", None)
+        outside = SpeechService._build_prompt("address_barangay", "0304926000")
+        assert "Salimbalan" not in outside
+
+    def test_transcribe_sends_the_town_to_the_hint(self, client, staff_token):
+        from app.services.speech_service import SpeechService
+        with patch.object(SpeechService, "transcribe_bytes", return_value={
+                "transcript": "Lapasan", "language": "en", "confidence": 0.9, "segments": [],
+                "processing_time_seconds": 0.1}) as fake:
+            r = client.post("/api/speech/transcribe", headers={"Authorization": f"Bearer {staff_token}"},
+                            files={"audio_file": ("a.wav", b"RIFF0000", "audio/wav")},
+                            data={"field_key": "address_barangay", "town": "1030500000"})
+        assert r.status_code == 200
+        assert fake.call_args.kwargs["town"] == "1030500000"
+
+    def test_answer_endpoint_address_parts(self, client, staff_token):
+        headers = {"Authorization": f"Bearer {staff_token}"}
+        r = client.post("/api/extraction/answer", headers=headers, json={
+            "field_key": "address_barangay", "transcript": "Lapasan", "spoken": True, "town": "1030500000"})
+        assert r.status_code == 200 and r.json()["value"] == "Lapasan" and r.json()["display"] == "Barangay Lapasan"
+        r = client.post("/api/extraction/answer", headers=headers, json={
+            "field_key": "address_barangay", "transcript": "x", "town": "not-a-code"})
+        assert r.status_code == 422
+
+
 # ─── SUS Survey ────────────────────────────────────────────────────────────────
 
 class TestSusSurvey:
