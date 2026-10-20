@@ -1073,14 +1073,17 @@ def _parse_address(cleaned: str, town: Optional[dict]) -> dict:
 
 def split_address(text: str) -> dict:
     """
-    An address's parts, for scoring (eval/run_eval.py) and checks: {"town_psgc", "town", "barangay", "rest"}.
-    Uses the same town + barangay matching as the interview.
+    An address's parts, for scoring (eval/run_eval.py) and checks:
+    {"town_psgc", "town", "town_said", "barangay", "rest"}. town_said is False when no town was named and the
+    office town was assumed. Uses the same town + barangay matching as the interview.
     """
     cleaned = _normalize_address_words(_basic_clean(text))
-    parts = _parse_address(cleaned, _find_address_town(cleaned))
+    town = _find_address_town(cleaned)
+    parts = _parse_address(cleaned, town)
     place = parts["place"]
     return {"town_psgc": place.psgc if place and not parts["ambiguous"] else "",
-            "town": place.display if place else "", "barangay": parts["barangay"] or "", "rest": parts["rest"]}
+            "town": place.display if place else "", "town_said": town is not None,
+            "barangay": parts["barangay"] or "", "rest": parts["rest"]}
 
 
 def _address_in_town(key: str, cleaned: str, town: dict, methods: List[str]) -> AnswerResult:

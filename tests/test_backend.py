@@ -1150,8 +1150,10 @@ class TestSpeechAccuracy:
     def test_split_address(self):
         from app.services.answer_service import split_address
         assert split_address("Purok 4, Bulua, Cagayan de Oro City") == {
-            "town_psgc": "1030500000", "town": "Cagayan de Oro City", "barangay": "Bulua", "rest": "Purok 4"}
-        assert split_address("Purok 2 Imbatug")["town_psgc"] == "1001301000"   # no town said: the office town
+            "town_psgc": "1030500000", "town": "Cagayan de Oro City", "town_said": True, "barangay": "Bulua",
+            "rest": "Purok 4"}
+        no_town = split_address("Purok 2 Imbatug")
+        assert no_town["town_psgc"] == "1001301000" and not no_town["town_said"]   # the office town, assumed
 
     def test_barangay_hint_lists_the_town_said(self):
         from app.services.speech_service import SpeechService
