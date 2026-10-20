@@ -540,6 +540,10 @@ def _handle_name(key: str, text: str, label: str, optional: bool, spoken: bool =
         lambda m: m.group(0) if m.group(2) == "." and m.group(1).lower() in NAME_ABBREVIATIONS else m.group(1) + " ",
         cleaned,
     ))
+    if key == "given_name":
+        # Two given names said with a joining word ("Maria and Clara", Filipino "at"): only the
+        # separate word goes, never letters inside a name (Andrea, Atanacio).
+        cleaned = re.sub(r"(?<=[^\W\d_])\s+(?:and|at|&)\s+(?=[^\W\d_])", " ", cleaned, flags=re.IGNORECASE)
 
     methods = ["regex"]
     titled = _title(cleaned)
@@ -787,12 +791,21 @@ INCOME_NONE = re.compile(
     r"^(?:none|no income|nothing|zero|wala|walang (?:kita|income|trabaho)|unemployed|jobless|no work|"
     r"i don'?t have (?:any )?(?:income|work|a job)|wala po|0)$"
 )
+# "No, none.", "None, none po", "Wala, wala": only these words, said once or a few times (plan 001.6).
+INCOME_NONE_WORDS = {"no", "none", "nope", "nothing", "zero", "wala", "walay", "0"}
+
+
+def _is_no_income(t: str) -> bool:
+    if INCOME_NONE.match(t):
+        return True
+    words = re.sub(r"[^\w\s']", " ", t).split()
+    return bool(words) and all(w in INCOME_NONE_WORDS for w in words)
 
 
 def _handle_income(key: str, text: str) -> AnswerResult:
     t = _basic_clean(text).lower()
     t = _squash(re.sub(r"\b(?:php|pesos?|piso|peso|p)\b", " ", t))
-    if INCOME_NONE.match(t):
+    if _is_no_income(t):
         return _ok(key, "0", display="no income", normalized="0")
     nums = spoken_numbers(t)
     if not nums:

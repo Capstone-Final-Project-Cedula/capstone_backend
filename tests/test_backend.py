@@ -1016,6 +1016,41 @@ class TestInterviewAnswers:
         assert r.json()["ok"] is False and r.json()["results"]["sex"]["ok"] is False
 
 
+# ─── Plan 001.6: the problems from the 10-20 interview, town + barangay matching ──
+
+class TestSpeechAccuracy:
+    @pytest.mark.parametrize("heard", [
+        "no", "No.", "none", "No, none.", "No none po", "None, none.", "wala", "Wala po.", "Wala, wala po.", "nothing",
+    ])
+    def test_income_none_answers(self, heard):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("gross_annual_income", heard, spoken=True)
+        assert result.ok, result.message
+        assert result.value == "0" and result.display == "no income"
+
+    def test_income_amount_still_read_after_a_no(self):
+        from app.services.answer_service import understand_answer
+        assert understand_answer("gross_annual_income", "No, 20 thousand a month").value == "240000"
+
+    @pytest.mark.parametrize("heard,value", [
+        ("Maria and Clara.", "Maria Clara"),
+        ("My first name is Gerlie and Mae.", "Gerlie Mae"),
+        ("Jose at Rizal", "Jose Rizal"),
+        ("Andrea", "Andrea"),                       # "and" inside a name stays
+        ("Atanacio", "Atanacio"),
+        ("Andy Mae", "Andy Mae"),
+    ])
+    def test_given_name_joining_word_is_dropped(self, heard, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("given_name", heard, spoken=True)
+        assert result.ok, result.message
+        assert result.value == value
+
+    def test_yes_no_hint_has_no_navigation_words(self):
+        from app.services.speech_service import FIELD_PROMPTS
+        assert "back" not in FIELD_PROMPTS["confirm"].lower()
+
+
 # ─── SUS Survey ────────────────────────────────────────────────────────────────
 
 class TestSusSurvey:

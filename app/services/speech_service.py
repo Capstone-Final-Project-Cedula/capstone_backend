@@ -91,7 +91,8 @@ FIELD_PROMPTS = {
     "occupation": "An occupation. Examples: farmer, teacher, driver, vendor, housewife, student, laborer.",
     "gross_annual_income": "An amount in pesos, for example 20,000 a month or 240,000 a year, or none.",
     "spelling": "Letters spelled one by one, for example: D, E, L, A, space, C, R, U, Z, done.",
-    "confirm": "Yes or no. Opo, oo, hindi. Go back.",
+    # No "Go back." here (plan 001.6): the tiny model copied it into replies, so a yes went back a question.
+    "confirm": "Yes or no. Opo, oo, hindi.",
     "review": "Yes, or a correction such as: change surname to Cruz.",
     "missing_choice": "Type it, or say it again. Type. Say it again.",
 }
