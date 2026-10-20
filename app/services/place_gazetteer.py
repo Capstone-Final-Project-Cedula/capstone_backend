@@ -36,12 +36,17 @@ STOP = {
 }
 
 
-@dataclass
+REGION_X = "Region X (Northern Mindanao)"
+
+
+@dataclass(frozen=True)
 class Place:
     name: str        # "Polomolok", "General Santos"
     display: str     # "Polomolok", "General Santos City"
     type: str        # province | city | municipality
     province: str    # "" for a highly urbanized city
+    region: str = ""
+    psgc: str = ""   # PSGC code ("1001301000" = Baungon)
 
 
 def _norm(text: str) -> str:
@@ -56,7 +61,7 @@ def _load() -> Tuple[Dict[str, List[Place]], Dict[str, List[Place]]]:
     provinces: Dict[str, List[Place]] = {}
     with open(DATA_FILE, newline="", encoding="utf-8") as f:
         for r in csv.DictReader(f):
-            p = Place(r["name"], r["display"], r["type"], r["province"])
+            p = Place(r["name"], r["display"], r["type"], r["province"], r["region"], r["psgc_id"])
             key = _norm(p.name)
             target = provinces if p.type == "province" else by_name
             target.setdefault(key, []).append(p)
@@ -179,3 +184,128 @@ def find_place(text: str, home_province: str = "") -> Optional[dict]:
     if province:
         return {"value": province, "place": "", "province": province}
     return None
+
+
+# ─── The town of an address (plan 001.6) ─────────────────────────────────────
+
+_TOKEN = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿñÑ]+")
+STREET_WORDS = {"street", "st", "road", "rd", "avenue", "ave", "drive", "dr", "extension", "ext", "highway",
+                "boulevard", "blvd", "lane", "subdivision", "subd", "village", "homes", "heights"}
+
+
+def normalise(text: str) -> str:
+    """Lower case, no accents on n, punctuation and hyphens to spaces (how names are compared here)."""
+    return _norm(text)
+
+
+def _tokens(text: str) -> List[Tuple[str, int, int]]:
+    """Words of the original text with their character spans, normalised like _norm ("Camaman-an" -> 2 words)."""
+    return [(_norm(m.group(0)), m.start(), m.end()) for m in _TOKEN.finditer(text or "")]
+
+
+def town_by_psgc(psgc: str) -> Optional[Place]:
+    """The city or municipality with this PSGC code."""
+    by_name, _ = _load()
+    for places in by_name.values():
+        for p in places:
+            if p.psgc == psgc:
+                return p
+    return None
+
+
+def find_town(text: str, exclude: frozenset = frozenset(), home_province: str = "",
+              prefer_region: str = REGION_X) -> Optional[dict]:
+    """
+    The city or municipality named in an address, scanning from the END: addresses go from small to big
+    ("Purok 2, Kalilangan, Baungon, Bukidnon" -> Baungon), so the last town said is the town.
+
+    exclude: normalised names that are barangays of the office town ("kalilangan", "san vicente" are also
+    towns elsewhere); they are skipped unless a province other than home_province is said.
+    A name found in several provinces is decided by the province said, then by prefer_region (Region X is
+    tried first), then by home_province.
+
+    Returns {"place", "span": (start, end) in text, "province_said", "ambiguous"} or None.
+    """
+    by_name, provinces = _load()
+    toks = _tokens(text)
+    words = [ALIASES.get(t[0], t[0]) for t in toks]
+    if not words:
+        return None
+
+    def towns(places):
+        return [p for p in places if p.type != "province"]
+
+    def exact(index, start, end):
+        gram = " ".join(words[start:end])
+        if all(w in STOP for w in words[start:end]):
+            return []
+        return index.get(_norm(gram)) or index.get(gram.replace(" ", "")) or []
+
+    spans = [(s, s + n) for n in range(min(4, len(words)), 0, -1) for s in range(len(words) - n + 1)]
+    town_hits = [(s, e, towns(exact(by_name, s, e))) for s, e in spans]
+    town_hits = [h for h in town_hits if h[2]]
+    prov_hits = [(s, e, exact(provinces, s, e)) for s, e in spans]
+    prov_hits = [h for h in prov_hits if h[2]]
+    # "Cagayan" (a province) inside "Cagayan de Oro" (a city): the longer name wins.
+    prov_hits = [p for p in prov_hits if not any(t[0] <= p[0] and p[1] <= t[1] and t[1] - t[0] > p[1] - p[0]
+                                                 for t in town_hits)]
+    province_said = max(prov_hits, key=lambda p: p[1])[2][0].name if prov_hits else ""
+    # Another province said ("San Vicente, Palawan") lifts exclude; a name that is also a town ("Rizal") does not.
+    town_spans = {(t[0], t[1]) for t in town_hits}
+    other_province = any((p[0], p[1]) not in town_spans and p[2][0].name.lower() != home_province.lower()
+                         for p in prov_hits)
+    skip = frozenset() if other_province else exclude
+    town_hits = [t for t in town_hits if " ".join(words[t[0]:t[1]]) not in skip]
+    # "Quezon" is a town and a province: when another town is named, it is the province.
+    prov_spans = {(p[0], p[1]) for p in prov_hits}
+    if any((t[0], t[1]) not in prov_spans for t in town_hits):
+        town_hits = [t for t in town_hits if (t[0], t[1]) not in prov_spans]
+    used = {j for p in prov_hits for j in range(p[0], p[1])}
+
+    def fits(start, end):
+        """Not a street ("Rizal Street") and not followed by an office barangay ("..., Rizal, Imbatug")."""
+        if end < len(words) and words[end] in STREET_WORDS:
+            return False
+        tail = f" {' '.join(words[end:])} "
+        return not any(f" {name} " in tail for name in skip)
+
+    town_hits = [t for t in town_hits if fits(t[0], t[1])]
+    found = max(town_hits, key=lambda t: (t[1], t[1] - t[0])) if town_hits else None
+    if not found:
+        # Same sound, different spelling ("Baongon", "Kagayan de Oro"), then close spelling; last one said wins.
+        sounds = _sound_index(id(by_name), by_name)
+        keys = list(by_name)
+        for end in range(len(words), 0, -1):
+            for n in range(min(3, end), 0, -1):
+                s = end - n
+                part = words[s:end]
+                gram = " ".join(part)
+                if (any(j in used for j in range(s, end)) or any(w in STOP for w in part) or gram in skip
+                        or not fits(s, end)):
+                    continue
+                key = sound_key(gram)
+                if len(key) >= 4 and towns(sounds.get(key, [])):
+                    found = (s, end, towns(sounds[key]))
+                    break
+                squashed = gram.replace(" ", "")
+                if len(squashed) >= 6:
+                    res = process.extractOne(squashed, keys, scorer=fuzz.ratio, score_cutoff=88)
+                    if res and towns(by_name[res[0]]):
+                        found = (s, end, towns(by_name[res[0]]))
+                        break
+            if found:
+                break
+    if not found:
+        return None
+
+    start, end, places = found
+    for narrow in (
+        lambda p: bool(province_said) and p.province.lower() == province_said.lower(),
+        lambda p: bool(prefer_region) and p.region == prefer_region,
+        lambda p: bool(home_province) and p.province.lower() == home_province.lower(),
+    ):
+        if len(places) > 1:
+            places = [p for p in places if narrow(p)] or places
+    unique = {p.psgc for p in places}
+    return {"place": places[0], "span": (toks[start][1], toks[end - 1][2]), "province_said": province_said,
+            "ambiguous": len(unique) > 1}
