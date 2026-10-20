@@ -93,6 +93,7 @@ FIELD_PROMPTS = {
     "spelling": "Letters spelled one by one, for example: D, E, L, A, space, C, R, U, Z, done.",
     "confirm": "Yes or no. Opo, oo, hindi. Go back.",
     "review": "Yes, or a correction such as: change surname to Cruz.",
+    "missing_choice": "Type it, or say it again. Type. Say it again.",
 }
 
 # Text Whisper tends to invent on silence or noise; never treat it as an answer.

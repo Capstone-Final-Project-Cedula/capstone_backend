@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.core.database import create_tables
+from app.core.database import DATABASE_KIND, create_tables, missing_migration_message
 from app.api.routes import auth, speech, extraction, qr, forms, citizen_auth
 from app.api.routes import settings as settings_routes
 from app.api.routes import sus
@@ -44,6 +44,16 @@ async def lifespan(app: FastAPI):
         logger.info("PyTorch configured: 1 thread, gradients disabled.")
     except Exception as exc:
         logger.warning(f"PyTorch thread constraint skipped: {exc}")
+
+    # Which database this is (never the URL: it holds the password).
+    logger.info(f"Database: {DATABASE_KIND}")
+
+    # Stop here if the database lacks a migration: otherwise every save at the
+    # interview station would fail mid-interview (plan 001.4).
+    problem = missing_migration_message()
+    if problem:
+        logger.error(problem)
+        raise RuntimeError(problem)
 
     # Create DB tables (includes citizen_users now)
     create_tables()
@@ -130,8 +140,9 @@ def create_app() -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-        # Let the browser read the total needed for the Records page buttons.
-        expose_headers=["X-Total-Count"],
+        # Let the browser read the total needed for the Records page buttons, and
+        # the file name (CTC-..._COPY.pdf for a re-print) of a Records download.
+        expose_headers=["X-Total-Count", "Content-Disposition"],
     )
 
     # ── Routers ───────────────────────────────────────────────────────────────

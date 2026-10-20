@@ -7,9 +7,12 @@ OpenAI Whisper (`base`; `tiny` for yes/no), DistilBERT NER, ReportLab (PDF), qrc
 
 ## Commands (Windows, from this folder)
 - Activate: `venv\Scripts\activate`
-- Run: `uvicorn app.main:app --reload --port 8000` (docs at /docs only when `DEBUG=True`)
+- Run: `uvicorn app.main:app --reload --host 0.0.0.0 --port 8000` (or `python -m app.main`; not `python app/main.py`,
+  which fails with "No module named 'app'"; `--host 0.0.0.0` lets
+  other devices on the Wi-Fi reach it; docs at /docs only when `DEBUG=True`). Testing laptop: `../capstone_docs/TESTING-LAPTOP.md`
 - Test: `pytest tests/ -v` — uses a throwaway SQLite DB, NER and Whisper preload off; never touches Supabase
-- Lint: `ruff check app tests` (installed by the setup handoff)
+  (install the test tools once: `pip install -r requirements-dev.txt`)
+- Lint: `ruff check app tests` (ruff 0.17's default rules: 451 findings at the plan 001 baseline; `--select F`: 22)
 
 ## Map
 - `app/main.py` app factory + routers · `app/core/` config, database, security

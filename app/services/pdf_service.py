@@ -305,12 +305,48 @@ def _draw_text_on_arc(c, text, cx, cy, radius, start_deg, end_deg, size=3.5, fli
         c.restoreState()
 
 
+COPY_MARK_TEXT = "COPY / RE-PRINT"
+
+
+def _draw_copy_mark(c, left, right, bottom, top, reprint_date: datetime):
+    """Large see-through diagonal COPY / RE-PRINT stamp plus a dated line under the card."""
+    cx = (left + right) / 2
+    cy = (bottom + top) / 2
+    c.saveState()
+    # Dark gray, not red: a red stamp disappears into the red BIR seal behind it.
+    c.setFillColor(DARK_GRAY)
+    c.setStrokeColor(DARK_GRAY)
+    c.setFillAlpha(0.30)
+    c.setStrokeAlpha(0.30)
+    c.translate(cx, cy)
+    c.rotate(18)
+    c.setFont("Helvetica-Bold", 46)
+    c.drawCentredString(0, -16, COPY_MARK_TEXT)
+    c.restoreState()
+
+    c.saveState()
+    c.setFillColor(STAMP_RED)
+    c.setFont("Helvetica-Bold", 6.5)
+    c.drawRightString(
+        right, bottom - 10,
+        f"{COPY_MARK_TEXT} - re-printed {reprint_date.strftime('%m/%d/%Y')}",
+    )
+    c.restoreState()
+
+
 def generate_cedula_pdf(
     ctc_number: str,
     applicant_data: dict,
     tax_data: dict,
     output_filename: Optional[str] = None,
+    issued_at: Optional[datetime] = None,
+    reprint_date: Optional[datetime] = None,
 ) -> str:
+    """
+    Draw the CTC card. A re-print passes the original `issued_at` (so the DATE
+    ISSUED and DOP stay the same) and `reprint_date`, which adds a visible
+    "COPY / RE-PRINT" mark with that date.
+    """
     _ensure_output_dir()
 
     if not output_filename:
@@ -320,7 +356,13 @@ def generate_cedula_pdf(
 
     a = applicant_data
     t = tax_data
-    now = _local_now()
+    local_tz = timezone(timedelta(hours=settings.LOCAL_UTC_OFFSET_HOURS))
+    if issued_at is not None:
+        # issued_at comes back naive (UTC) from SQLite and aware from Postgres.
+        aware = issued_at if issued_at.tzinfo else issued_at.replace(tzinfo=timezone.utc)
+        now = aware.astimezone(local_tz)
+    else:
+        now = _local_now()
     office = settings_service.get_settings()
 
     # Parse CTC number -> CCI header parts
@@ -714,6 +756,9 @@ def generate_cedula_pdf(
     c.setFillColor(MID_GRAY)
     c.drawString(L, B - 10, f"DOP: {dop_date}")
     c.setFillColor(BLACK)
+
+    if reprint_date is not None:
+        _draw_copy_mark(c, L, R, B, WORK_TOP, reprint_date)
 
     c.save()
     logger.info(f"Cedula PDF generated: {output_path}")

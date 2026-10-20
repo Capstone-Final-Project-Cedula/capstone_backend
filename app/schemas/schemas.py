@@ -221,6 +221,18 @@ class IssuanceResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class RecordAccessLogResponse(BaseModel):
+    id: int
+    created_at: datetime
+    action: str
+    staff_username: Optional[str] = None
+    staff_full_name: Optional[str] = None
+    issuance_id: Optional[int] = None
+    ctc_number: Optional[str] = None
+    is_copy: Optional[bool] = None
+    search_text: Optional[str] = None
+
+
 class DashboardStats(BaseModel):
     total_issued: int
     today_issued: int
