@@ -189,6 +189,7 @@ def find_place(text: str, home_province: str = "") -> Optional[dict]:
 # ─── The town of an address (plan 001.6) ─────────────────────────────────────
 
 _TOKEN = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿñÑ]+")
+PART_WORDS = {"barangay", "brgy", "bgy", "purok", "sitio", "zone", "prk"}   # what comes before a part's name
 STREET_WORDS = {"street", "st", "road", "rd", "avenue", "ave", "drive", "dr", "extension", "ext", "highway",
                 "boulevard", "blvd", "lane", "subdivision", "subd", "village", "homes", "heights"}
 
@@ -260,45 +261,59 @@ def find_town(text: str, exclude: frozenset = frozenset(), home_province: str = 
     prov_spans = {(p[0], p[1]) for p in prov_hits}
     if any((t[0], t[1]) not in prov_spans for t in town_hits):
         town_hits = [t for t in town_hits if (t[0], t[1]) not in prov_spans]
-    used = {j for p in prov_hits for j in range(p[0], p[1])}
+
+    def inside_province(start, end):
+        return any(p[0] <= start and end <= p[1] for p in prov_hits)
 
     def fits(start, end):
-        """Not a street ("Rizal Street") and not followed by an office barangay ("..., Rizal, Imbatug")."""
+        """Not a street ("Rizal Street"), not a barangay or purok name ("Barangay Carmen"), and not followed by
+        an office barangay ("..., Rizal, Imbatug")."""
         if end < len(words) and words[end] in STREET_WORDS:
             return False
+        if start > 0 and words[start - 1] in PART_WORDS and not re.search(r"\d", text[toks[start - 1][2]:toks[start][1]]):
+            return False          # "Barangay Carmen", but not "Purok 2, Carmen"
         tail = f" {' '.join(words[end:])} "
         return not any(f" {name} " in tail for name in skip)
 
     town_hits = [t for t in town_hits if fits(t[0], t[1])]
     found = max(town_hits, key=lambda t: (t[1], t[1] - t[0])) if town_hits else None
-    if not found:
+    after = found[1] if found else 0
+    if after < len(words):
         # Same sound, different spelling ("Baongon", "Kagayan de Oro"), then close spelling; last one said wins.
+        # A misheard name may contain a province ("Cagayan the Oro"): only a name wholly inside one is skipped.
         sounds = _sound_index(id(by_name), by_name)
         keys = list(by_name)
-        for end in range(len(words), 0, -1):
-            for n in range(min(3, end), 0, -1):
+        heard = None
+        for end in range(len(words), after, -1):
+            for n in range(min(3, end - after), 0, -1):
                 s = end - n
                 part = words[s:end]
                 gram = " ".join(part)
-                if (any(j in used for j in range(s, end)) or any(w in STOP for w in part) or gram in skip
+                # "the" for "de" inside a name is fine ("Cagayan the Oro"); a name never starts or ends with one.
+                if (inside_province(s, end) or part[0] in STOP or part[-1] in STOP or gram in skip
                         or not fits(s, end)):
                     continue
                 key = sound_key(gram)
                 if len(key) >= 4 and towns(sounds.get(key, [])):
-                    found = (s, end, towns(sounds[key]))
+                    heard = (s, end, towns(sounds[key]))
                     break
                 squashed = gram.replace(" ", "")
                 if len(squashed) >= 6:
                     res = process.extractOne(squashed, keys, scorer=fuzz.ratio, score_cutoff=88)
                     if res and towns(by_name[res[0]]):
-                        found = (s, end, towns(by_name[res[0]]))
+                        heard = (s, end, towns(by_name[res[0]]))
                         break
-            if found:
+            if heard:
                 break
+        # A town said after the exact one, but misheard ("Zone 1 Carmen, Kagayan the Oro"), is the town.
+        found = heard or found
     if not found:
         return None
 
     start, end, places = found
+    # "Cagayan" heard inside "Cagayan the Oro" was part of the town, not a province said.
+    rest = [p for p in prov_hits if p[1] <= start or p[0] >= end]
+    province_said = max(rest, key=lambda p: p[1])[2][0].name if rest else ""
     for narrow in (
         lambda p: bool(province_said) and p.province.lower() == province_said.lower(),
         lambda p: bool(prefer_region) and p.region == prefer_region,

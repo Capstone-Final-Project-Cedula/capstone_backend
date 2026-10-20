@@ -1147,6 +1147,20 @@ class TestSpeechAccuracy:
         from app.services.answer_service import understand_answer
         assert understand_answer("address", spoken).value.endswith("Baungon, Bukidnon")
 
+    @pytest.mark.parametrize("heard,display", [
+        ("Purok 3 Lapasan, Cagayan del Oro", "Cagayan de Oro City"),   # "Cagayan" (a province) inside a misheard name
+        ("Cagayan the Oro City", "Cagayan de Oro City"),
+        ("Purok 2, Carmen, Bohol", "Carmen"),                          # a town after a purok number
+        ("Tuguegarao, Cagayan", "Tuguegarao City"),
+    ])
+    def test_find_town_misheard_and_province_names(self, heard, display):
+        from app.services.place_gazetteer import find_town
+        assert find_town(heard, home_province="Bukidnon")["place"].display == display
+
+    def test_find_town_skips_a_barangay_name(self):
+        from app.services.place_gazetteer import find_town
+        assert find_town("Barangay Carmen", home_province="Bukidnon") is None   # Carmen is also a town elsewhere
+
     def test_split_address(self):
         from app.services.answer_service import split_address
         assert split_address("Purok 4, Bulua, Cagayan de Oro City") == {
