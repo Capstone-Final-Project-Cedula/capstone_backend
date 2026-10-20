@@ -26,6 +26,7 @@ router = APIRouter()
 InterviewField = Literal[
     "surname", "given_name", "middle_name", "address", "date", "sex", "civil_status",
     "citizenship", "icr_no", "place_of_birth", "height", "weight", "occupation", "gross_annual_income",
+    "address_town", "address_barangay", "address_purok",   # the address in 3 questions (plan 001.6)
 ]
 
 
@@ -33,6 +34,7 @@ class AnswerRequest(BaseModel):
     field_key: InterviewField
     transcript: str = Field("", max_length=500)
     spoken: bool = False   # True: Whisper's transcript in the voice interview (names may be respelled)
+    town: Optional[str] = Field(None, pattern=r"^\d{0,10}$")   # PSGC code of the town, for "address_barangay"
 
 
 class AnswerResponse(BaseModel):
@@ -66,7 +68,8 @@ def understand_interview_answer(payload: AnswerRequest, current_user=Depends(get
     normalized value, or ok=false with a short message to say before asking
     again — e.g. "nails" for sex is rejected instead of saved.
     """
-    return AnswerResponse(**understand_answer(payload.field_key, payload.transcript, spoken=payload.spoken).as_dict())
+    result = understand_answer(payload.field_key, payload.transcript, spoken=payload.spoken, town=payload.town or None)
+    return AnswerResponse(**result.as_dict())
 
 
 @router.post("/answers", response_model=AnswersResponse)

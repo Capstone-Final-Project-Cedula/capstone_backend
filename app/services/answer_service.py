@@ -27,7 +27,9 @@ from rapidfuzz import fuzz, process
 
 from app.core.config import settings
 from app.services import extraction_service, name_lexicon, place_gazetteer
-from app.services.barangay_gazetteer import load_aliases, load_barangays, match_barangay
+from app.services.barangay_gazetteer import (
+    load_aliases, load_barangays, match_barangay, region_town, town_barangays,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -540,6 +542,10 @@ def _handle_name(key: str, text: str, label: str, optional: bool, spoken: bool =
         lambda m: m.group(0) if m.group(2) == "." and m.group(1).lower() in NAME_ABBREVIATIONS else m.group(1) + " ",
         cleaned,
     ))
+    if key == "given_name":
+        # Two given names said with a joining word ("Maria and Clara", Filipino "at"): only the
+        # separate word goes, never letters inside a name (Andrea, Atanacio).
+        cleaned = re.sub(r"(?<=[^\W\d_])\s+(?:and|at|&)\s+(?=[^\W\d_])", " ", cleaned, flags=re.IGNORECASE)
 
     methods = ["regex"]
     titled = _title(cleaned)
@@ -560,6 +566,10 @@ def _handle_name(key: str, text: str, label: str, optional: bool, spoken: bool =
             while end < len(titled) and (titled[end].isalpha() or titled[end] in "'-"):
                 end += 1
             before = titled[:start].split()
+            if key == "given_name" and before and all(name_lexicon.is_known(w, "given_name") for w in before):
+                # NER may tag only the last given name: keep known names it skipped.
+                start = 0
+                before = []
             while before and before[-1].lower().strip(".") in NAME_PARTICLES:
                 start = titled.rfind(before.pop(), 0, start)
             value = titled[start:end]
@@ -787,12 +797,21 @@ INCOME_NONE = re.compile(
     r"^(?:none|no income|nothing|zero|wala|walang (?:kita|income|trabaho)|unemployed|jobless|no work|"
     r"i don'?t have (?:any )?(?:income|work|a job)|wala po|0)$"
 )
+# "No, none.", "None, none po", "Wala, wala": only these words, said once or a few times (plan 001.6).
+INCOME_NONE_WORDS = {"no", "none", "nope", "nothing", "zero", "wala", "walay", "0"}
+
+
+def _is_no_income(t: str) -> bool:
+    if INCOME_NONE.match(t):
+        return True
+    words = re.sub(r"[^\w\s']", " ", t).split()
+    return bool(words) and all(w in INCOME_NONE_WORDS for w in words)
 
 
 def _handle_income(key: str, text: str) -> AnswerResult:
     t = _basic_clean(text).lower()
     t = _squash(re.sub(r"\b(?:php|pesos?|piso|peso|p)\b", " ", t))
-    if INCOME_NONE.match(t):
+    if _is_no_income(t):
         return _ok(key, "0", display="no income", normalized="0")
     nums = spoken_numbers(t)
     if not nums:
@@ -879,19 +898,35 @@ def phonetic_key(word: str) -> str:
     return "".join(key)
 
 
-def _find_barangay(text: str) -> Tuple[Optional[str], float, Optional[str]]:
+NUMBER_WORD = r"(?:\d+|" + "|".join(sorted({*UNITS, *TENS}, key=len, reverse=True)) + r")"
+NUMBERED_BARANGAY = re.compile(rf"\bbarangay\s+({NUMBER_WORD}(?:[\s-]+{NUMBER_WORD})?)\b", re.IGNORECASE)
+
+
+def _find_barangay(text: str, barangays: Optional[List[str]] = None,
+                   aliases: Optional[Dict[str, str]] = None) -> Tuple[Optional[str], float, Optional[str]]:
     """
-    Closest barangay of the municipality: (name, score, the words that matched).
+    Closest barangay: (name, score, the words that matched). Without a list: the office
+    municipality's barangays; with one (plan 001.6): only that town's ("Imbatug" of
+    Cabanglasan is never taken for Imbatug of Baungon).
     Spelling-based fuzzy matching first, then sound-based (phonetic) matching for
     names a speech engine wrote differently ("in Baedig" -> Imbatug).
     """
+    if barangays is None:
+        barangays, aliases = load_barangays(), load_aliases()
+    aliases = aliases or {}
+    # Numbered barangays (Cagayan de Oro's "Barangay 10"): the number said after "Barangay".
+    numbered = {b.lower(): b for b in barangays if re.fullmatch(r"barangay\s+\d+", b, re.IGNORECASE)}
+    said = NUMBERED_BARANGAY.search(text) if numbered else None
+    if said:
+        nums = spoken_numbers(said.group(1))
+        name = f"barangay {int(nums[0])}" if nums else ""
+        if name in numbered:
+            return numbered[name], 100.0, said.group(0)
     m = extraction_service.BARANGAY_MENTION_PATTERN.search(text)
     if m:
-        found, score = match_barangay(m.group(1).strip())
+        found, score = match_barangay(m.group(1).strip(), names=barangays, aliases=aliases)
         if found:
             return found, score, m.group(1).strip()
-    barangays = load_barangays()
-    aliases = load_aliases()
     names = barangays + list(aliases)
     if not names:
         return None, 0.0, None
@@ -941,6 +976,11 @@ def _handle_address(key: str, text: str) -> AnswerResult:
         methods.insert(0, "distilbert")
         locations = [e.word for e in entities if e.label == "LOC" and e.score >= 0.5]
 
+    # The town first (plan 001.6): any explicitly named town supplies its own barangays and province.
+    town = _find_address_town(cleaned)
+    if town:
+        return _address_in_town(key, cleaned, town, methods)
+
     barangay, score, heard_span = _find_barangay(cleaned)
     if not (barangay or locations or ADDRESS_KEYWORDS.search(cleaned) or "," in cleaned):
         return _fail(key, "I didn't get an address from that. Please say your purok or street, and your barangay.",
@@ -970,6 +1010,178 @@ def _handle_address(key: str, text: str) -> AnswerResult:
     return _ok(key, value, methods=methods, confidence=0.8 if locations else 0.6, needs_confirmation=True,
                message=f"I heard {value}. Is that your complete address?",
                warnings=["Barangay not recognized — please check the address."])
+
+
+# ─── Address in parts: town or city, barangay, purok or street (plan 001.6) ─────
+
+def _office_town() -> Optional[place_gazetteer.Place]:
+    """The office's own city or municipality (Settings), as a PSGC place."""
+    municipality, province = _office_location()
+    found = place_gazetteer.find_town(f"{municipality}, {province}", home_province=province)
+    return found["place"] if found else None
+
+
+def _office_barangay_words() -> frozenset:
+    """The office town's barangays and their aliases, normalised: never taken for a town of the same name."""
+    return frozenset(place_gazetteer.normalise(n) for n in load_barangays() + list(load_aliases()))
+
+
+def _find_address_town(text: str) -> Optional[dict]:
+    return place_gazetteer.find_town(text, exclude=_office_barangay_words(), home_province=_office_location()[1])
+
+
+def _town_value(place: place_gazetteer.Place) -> str:
+    """"Cagayan de Oro City, Misamis Oriental": the town with its OWN province (from the Region X list there)."""
+    province = (region_town(place.psgc) or {}).get("province") or place.province
+    return place.display if not province or province == place.display else f"{place.display}, {province}"
+
+
+def _barangay_label(name: str) -> str:
+    """"Carmen" -> "Barangay Carmen"; "Barangay 10" stays as it is."""
+    return name if re.match(r"barangay\b", name, re.IGNORECASE) else f"Barangay {name}"
+
+
+def _join_address(*parts: str) -> str:
+    joined = ", ".join(p.strip(" ,.;") for p in parts if p and p.strip(" ,.;"))
+    return _squash(re.sub(r"\s*,(?:\s*,)+\s*", ", ", joined))
+
+
+def _parse_address(cleaned: str, town: Optional[dict]) -> dict:
+    """
+    Split a one-sentence address into its parts, the town found first:
+    {"place", "ambiguous", "barangay" (or None), "rest" (purok / street, as said)}.
+    Without a town, the office town is assumed.
+    """
+    place = town["place"] if town else _office_town()
+    before = cleaned[:town["span"][0]] if town else cleaned
+    before = re.sub(r"(?:[\s,]+(?:city|municipality|town|of|in|at|sa))+\s*$", "", f" {before}",
+                    flags=re.IGNORECASE).strip(" ,.;")
+    names, aliases = town_barangays(place.psgc) if place else ([], {})
+    barangay, heard = None, None
+    if names and before:
+        barangay, _, heard = _find_barangay(before, names, aliases)
+    rest = before
+    if barangay and heard:
+        words = r"[\s-]+".join(re.escape(w) for w in heard.split())
+        rest = re.sub(rf"(?:\bBarangay\s+)?(?:\b(?:In|At|Sa)\s+)?{words}", " ", before, count=1, flags=re.IGNORECASE)
+    rest = re.sub(r"\b(?:Brgy|Bgy)\.?(?=\s|$)", "Barangay", _title(_squash(rest).strip(" ,.;")))
+    rest = re.sub(r"(?:,\s*)?\bBarangay\s*$", "", rest).strip(" ,")
+    return {"place": place, "ambiguous": bool(town and town["ambiguous"]), "barangay": barangay, "rest": rest}
+
+
+def split_address(text: str) -> dict:
+    """
+    An address's parts, for scoring (eval/run_eval.py) and checks:
+    {"town_psgc", "town", "town_said", "barangay", "rest"}. town_said is False when no town was named and the
+    office town was assumed. Uses the same town + barangay matching as the interview.
+    """
+    cleaned = _normalize_address_words(_basic_clean(text))
+    town = _find_address_town(cleaned)
+    parts = _parse_address(cleaned, town)
+    place = parts["place"]
+    return {"town_psgc": place.psgc if place and not parts["ambiguous"] else "",
+            "town": place.display if place else "", "town_said": town is not None,
+            "barangay": parts["barangay"] or "", "rest": parts["rest"]}
+
+
+def _address_in_town(key: str, cleaned: str, town: dict, methods: List[str]) -> AnswerResult:
+    """A one-sentence address with an explicitly named town."""
+    parts = _parse_address(cleaned, town)
+    place = parts["place"]
+    town_value = place.name if parts["ambiguous"] else _town_value(place)
+    barangay = parts["barangay"]
+    value = _join_address(parts["rest"], _barangay_label(barangay) if barangay else "", town_value)
+    if barangay:
+        return _ok(key, value, methods=methods, confidence=0.95)
+    warning = ("Barangay not recognized — please check the address." if region_town(place.psgc)
+               else f"No barangay list for {place.display} (outside Region X) — please check the address.")
+    return _ok(key, value, methods=methods, confidence=0.6, needs_confirmation=True,
+               message=f"I heard {value}. Is that your complete address?", warnings=[warning])
+
+
+def _handle_address_town(key: str, text: str, spoken: bool = False) -> AnswerResult:
+    """"Which town or city do you live in?" PSGC towns, Region X first. normalized = the town's PSGC code."""
+    cleaned = _strip_prefix(_basic_clean(text), [
+        r"^(?:my\s+)?(?:town|city|municipality|home\s?town)(?:\s+(?:is|ay|ko))?\s*:?\s*",
+        r"^i\s+live\s+(?:in|at)\s+", r"^(?:nakatira\s+ako\s+sa|taga|sa|in|at)\s+",
+        r"^(?:the\s+)?(?:city|municipality|town)\s+of\s+",
+    ])
+    if not cleaned or len(re.sub(r"[^A-Za-z]", "", cleaned)) < 3:
+        return _fail(key, "Please tell me the town or city where you live.")
+    methods = ["regex", "gazetteer"]
+    town = _find_address_town(_normalize_address_words(cleaned))
+    if town and not town["ambiguous"]:
+        value = _town_value(town["place"])
+        return _ok(key, value, normalized=town["place"].psgc, methods=methods, confidence=0.95)
+    if town:
+        # The same town name in several provinces outside Region X, and no province said.
+        name = town["place"].name
+        return _ok(key, name, normalized="", methods=methods, confidence=0.6, needs_confirmation=True,
+                   message=f"I heard {name}. Is that your town or city?")
+    office = _office_town()
+    if spoken and office:
+        # Nothing matched: most applicants live in the office's own town, so offer it for a yes.
+        value = _town_value(office)
+        return _ok(key, value, normalized=office.psgc, methods=methods, confidence=0.4, needs_confirmation=True,
+                   message=f"I didn't catch the town. Do you live in {value}?",
+                   warnings=["Town not recognized; the office town was offered."])
+    value = _title(cleaned)
+    return _ok(key, value, normalized="", methods=methods, confidence=0.5, needs_confirmation=True,
+               message=f"I heard {value}. Is that your town or city?")
+
+
+def _handle_address_barangay(key: str, text: str, town: Optional[str] = None) -> AnswerResult:
+    """"What is your barangay?" Matched only against the barangays of `town` (a PSGC code; default: office)."""
+    cleaned = _strip_prefix(_basic_clean(text), [
+        r"^my\s+barangay(?:\s+(?:is|ay))?\s*:?\s*", r"^barangay\s+ko\s+(?:ay\s+)?",
+        r"^i\s+live\s+(?:in|at)\s+", r"^(?:nakatira\s+ako\s+sa|taga)\s+",
+    ])
+    if not re.search(r"[A-Za-z0-9]", cleaned or ""):
+        return _fail(key, "Please tell me your barangay.")
+    cleaned = _normalize_address_words(cleaned)
+    stripped = re.sub(r"^(?:in|at|sa)\s+", "", cleaned, flags=re.IGNORECASE)
+    if spoken_numbers(stripped) and not re.search(r"[A-Za-z]{3,}", re.sub(NUMBER_WORD, " ", stripped, flags=re.I)):
+        stripped = f"Barangay {stripped}"          # "Ten" for "Barangay 10"
+    methods = ["regex", "gazetteer"]
+    office = _office_town()
+    psgc = town or (office.psgc if office else "")
+    names, aliases = town_barangays(psgc)
+    if names:
+        # Keep "in" for sound-alike matching ("in Baedig" -> Imbatug) before trying it as a prefix.
+        found, _, _ = _find_barangay(cleaned, names, aliases)
+        if not found:
+            found, _, _ = _find_barangay(stripped, names, aliases)
+        if found:
+            return _ok(key, found, display=_barangay_label(found), methods=methods, confidence=0.95)
+    heard = re.sub(r"^(?:barangay|brgy|bgy)\.?\s+", "", _title(stripped), flags=re.IGNORECASE).strip(" ,.")
+    if not heard or heard.lower() == "barangay":
+        return _fail(key, "Please tell me the name of your barangay.")
+    label = _barangay_label(heard)
+    town_name = (region_town(psgc) or {}).get("town", "")
+    warning = (f"Not a barangay of {town_name} — please check it." if names
+               else "No barangay list for this town (outside Region X) — please check it.")
+    return _ok(key, heard, display=label, methods=methods, confidence=0.5, needs_confirmation=True,
+               message=f"I heard {label}. Is that your barangay?", warnings=[warning])
+
+
+def _handle_address_purok(key: str, text: str) -> AnswerResult:
+    """"What is your purok, sitio or street?" Taken as said (purok numbers written as digits)."""
+    if _is_blank_answer(text):
+        return _ok(key, "", display="none")
+    cleaned = _basic_clean(text)
+    said = re.match(r"^(?:my\s+)?(purok|sitio|zone|street)(?:\s+ko)?\s+(?:is|ay)\s+(.+)$", cleaned, re.IGNORECASE)
+    if said:
+        cleaned = f"{said.group(1)} {said.group(2)}"
+    cleaned = _strip_prefix(cleaned, [r"^i\s+live\s+(?:in|at)\s+", r"^(?:nakatira\s+ako\s+sa|sa|in|at)\s+"])
+    cleaned = _normalize_address_words(cleaned)
+    number = re.fullmatch(r"(?:number\s+)?([A-Za-z]+|\d+[A-Za-z]?)", cleaned, re.IGNORECASE)
+    if number and (number.group(1)[0].isdigit() or number.group(1).lower() in PUROK_NUMBERS):
+        n = number.group(1)
+        cleaned = f"Purok {PUROK_NUMBERS.get(n.lower(), n)}"     # "Two" / "2" alone: Purok 2
+    if not re.search(r"[A-Za-z0-9]", cleaned):
+        return _fail(key, "Please tell me your purok, sitio or street, or say none.")
+    value = re.sub(r"\b(?:Brgy|Bgy)\.?(?=\s|$)", "Barangay", _title(cleaned))
+    return _ok(key, value, methods=["regex"], confidence=0.9)
 
 
 def _handle_place_of_birth(key: str, text: str) -> AnswerResult:
@@ -1060,8 +1272,9 @@ FIELD_LABELS = {
     "citizenship": "citizenship", "icr_no": "ICR number", "place_of_birth": "place of birth",
     "height": "height", "weight": "weight", "occupation": "occupation",
     "gross_annual_income": "gross annual income",
+    "address_town": "town or city", "address_barangay": "barangay", "address_purok": "purok or street",
 }
-OPTIONAL_FIELDS = {"middle_name", "icr_no"}
+OPTIONAL_FIELDS = {"middle_name", "icr_no", "address_purok"}
 
 HANDLERS: Dict[str, Callable[..., AnswerResult]] = {
     "surname": lambda k, t, spoken=False: _handle_name(k, t, "surname", optional=False, spoken=spoken),
@@ -1081,17 +1294,26 @@ HANDLERS: Dict[str, Callable[..., AnswerResult]] = {
 }
 
 
+# The voice interview asks the address in 3 short questions (plan 001.6); the web joins the answers into
+# the one `address` value. Not in HANDLERS: understand_answers() checks the joined address instead.
+ADDRESS_PART_HANDLERS: Dict[str, Callable[..., AnswerResult]] = {
+    "address_town": _handle_address_town,
+    "address_barangay": _handle_address_barangay,
+    "address_purok": _handle_address_purok,
+}
+
 NAME_KEYS = {"surname", "given_name", "middle_name"}
 
 
-def understand_answer(field_key: str, transcript: str, spoken: bool = False) -> AnswerResult:
+def understand_answer(field_key: str, transcript: str, spoken: bool = False, town: Optional[str] = None) -> AnswerResult:
     """
     Interpret one interview answer for one field (see module docstring).
     spoken=True: the text is Whisper's transcript, so a name may also be rejoined
     ("Da Gondon") and given its local spelling ("Bakulio" -> "Baculio"). Typed
     text is kept as typed.
+    town: the PSGC code of the town already answered, for "address_barangay".
     """
-    handler = HANDLERS.get(field_key)
+    handler = HANDLERS.get(field_key) or ADDRESS_PART_HANDLERS.get(field_key)
     if handler is None:
         raise KeyError(field_key)
     text = _squash(transcript)
@@ -1103,8 +1325,10 @@ def understand_answer(field_key: str, transcript: str, spoken: bool = False) -> 
     if _is_unclear(text):
         return _fail(field_key, "No problem, let me ask again.", reason="unclear")
     try:
-        if field_key in NAME_KEYS:
+        if field_key in NAME_KEYS or field_key == "address_town":
             return handler(field_key, text, spoken=spoken)
+        if field_key == "address_barangay":
+            return handler(field_key, text, town=town)
         return handler(field_key, text)
     except Exception as exc:  # never break the interview on a parsing bug
         logger.exception(f"Answer parsing failed for {field_key}: {exc}")

@@ -1,0 +1,2023 @@
+psgc_code,barangay,town,town_psgc,province
+1001301001,Balintad,Baungon,1001301000,Bukidnon
+1001301002,Buenavista,Baungon,1001301000,Bukidnon
+1001301003,Danatag,Baungon,1001301000,Bukidnon
+1001301004,Kalilangan,Baungon,1001301000,Bukidnon
+1001301005,Lacolac,Baungon,1001301000,Bukidnon
+1001301006,Langaon,Baungon,1001301000,Bukidnon
+1001301007,Liboran,Baungon,1001301000,Bukidnon
+1001301008,Lingating,Baungon,1001301000,Bukidnon
+1001301009,Mabuhay,Baungon,1001301000,Bukidnon
+1001301010,Mabunga,Baungon,1001301000,Bukidnon
+1001301011,Nicdao,Baungon,1001301000,Bukidnon
+1001301012,Imbatug,Baungon,1001301000,Bukidnon
+1001301013,Pualas,Baungon,1001301000,Bukidnon
+1001301014,Salimbalan,Baungon,1001301000,Bukidnon
+1001301015,San Vicente,Baungon,1001301000,Bukidnon
+1001301016,San Miguel,Baungon,1001301000,Bukidnon
+1001302001,Aludas,Damulog,1001302000,Bukidnon
+1001302002,Angga-an,Damulog,1001302000,Bukidnon
+1001302003,Tangkulan,Damulog,1001302000,Bukidnon
+1001302004,Kinapat,Damulog,1001302000,Bukidnon
+1001302005,Kiraon,Damulog,1001302000,Bukidnon
+1001302006,Kitingting,Damulog,1001302000,Bukidnon
+1001302007,Lagandang,Damulog,1001302000,Bukidnon
+1001302008,Macapari,Damulog,1001302000,Bukidnon
+1001302009,Maican,Damulog,1001302000,Bukidnon
+1001302010,Migcawayan,Damulog,1001302000,Bukidnon
+1001302011,New Compostela,Damulog,1001302000,Bukidnon
+1001302013,Old Damulog,Damulog,1001302000,Bukidnon
+1001302014,Omonay,Damulog,1001302000,Bukidnon
+1001302015,Poblacion,Damulog,1001302000,Bukidnon
+1001302016,Pocopoco,Damulog,1001302000,Bukidnon
+1001302017,Sampagar,Damulog,1001302000,Bukidnon
+1001302019,San Isidro,Damulog,1001302000,Bukidnon
+1001303001,Barongcot,Dangcagan,1001303000,Bukidnon
+1001303002,Bugwak,Dangcagan,1001303000,Bukidnon
+1001303003,Dolorosa,Dangcagan,1001303000,Bukidnon
+1001303004,Kapalaran,Dangcagan,1001303000,Bukidnon
+1001303005,Kianggat,Dangcagan,1001303000,Bukidnon
+1001303006,Lourdes,Dangcagan,1001303000,Bukidnon
+1001303007,Macarthur,Dangcagan,1001303000,Bukidnon
+1001303008,Miaray,Dangcagan,1001303000,Bukidnon
+1001303009,Migcuya,Dangcagan,1001303000,Bukidnon
+1001303010,New Visayas,Dangcagan,1001303000,Bukidnon
+1001303011,Osmeña,Dangcagan,1001303000,Bukidnon
+1001303012,Poblacion,Dangcagan,1001303000,Bukidnon
+1001303013,Sagbayan,Dangcagan,1001303000,Bukidnon
+1001303014,San Vicente,Dangcagan,1001303000,Bukidnon
+1001304001,Cabadiangan,Don Carlos,1001304000,Bukidnon
+1001304002,Bocboc,Don Carlos,1001304000,Bukidnon
+1001304003,Buyot,Don Carlos,1001304000,Bukidnon
+1001304004,Calaocalao,Don Carlos,1001304000,Bukidnon
+1001304005,Don Carlos Norte,Don Carlos,1001304000,Bukidnon
+1001304006,Embayao,Don Carlos,1001304000,Bukidnon
+1001304008,Kalubihon,Don Carlos,1001304000,Bukidnon
+1001304009,Kasigkot,Don Carlos,1001304000,Bukidnon
+1001304010,Kawilihan,Don Carlos,1001304000,Bukidnon
+1001304011,Kiara,Don Carlos,1001304000,Bukidnon
+1001304012,Kibatang,Don Carlos,1001304000,Bukidnon
+1001304013,Mahayahay,Don Carlos,1001304000,Bukidnon
+1001304014,Manlamonay,Don Carlos,1001304000,Bukidnon
+1001304015,Maraymaray,Don Carlos,1001304000,Bukidnon
+1001304016,Mauswagon,Don Carlos,1001304000,Bukidnon
+1001304017,Minsalagan,Don Carlos,1001304000,Bukidnon
+1001304018,New Nongnongan,Don Carlos,1001304000,Bukidnon
+1001304019,New Visayas,Don Carlos,1001304000,Bukidnon
+1001304020,Old Nongnongan,Don Carlos,1001304000,Bukidnon
+1001304021,Pinamaloy,Don Carlos,1001304000,Bukidnon
+1001304022,Don Carlos Sur,Don Carlos,1001304000,Bukidnon
+1001304023,Pualas,Don Carlos,1001304000,Bukidnon
+1001304024,San Antonio East,Don Carlos,1001304000,Bukidnon
+1001304025,San Antonio West,Don Carlos,1001304000,Bukidnon
+1001304026,San Francisco,Don Carlos,1001304000,Bukidnon
+1001304027,San Nicolas,Don Carlos,1001304000,Bukidnon
+1001304028,San Roque,Don Carlos,1001304000,Bukidnon
+1001304029,Sinangguyan,Don Carlos,1001304000,Bukidnon
+1001304030,Bismartz,Don Carlos,1001304000,Bukidnon
+1001305001,Bontongon,Impasug-ong,1001305000,Bukidnon
+1001305002,Bulonay,Impasug-ong,1001305000,Bukidnon
+1001305003,Capitan Bayong,Impasug-ong,1001305000,Bukidnon
+1001305004,Cawayan,Impasug-ong,1001305000,Bukidnon
+1001305005,Dumalaguing,Impasug-ong,1001305000,Bukidnon
+1001305006,Guihean,Impasug-ong,1001305000,Bukidnon
+1001305007,Hagpa,Impasug-ong,1001305000,Bukidnon
+1001305008,Impalutao,Impasug-ong,1001305000,Bukidnon
+1001305010,Kalabugao,Impasug-ong,1001305000,Bukidnon
+1001305011,Kibenton,Impasug-ong,1001305000,Bukidnon
+1001305012,La Fortuna,Impasug-ong,1001305000,Bukidnon
+1001305013,Poblacion,Impasug-ong,1001305000,Bukidnon
+1001305015,Sayawan,Impasug-ong,1001305000,Bukidnon
+1001306001,Bagongbayan,Kadingilan,1001306000,Bukidnon
+1001306002,Bagor,Kadingilan,1001306000,Bukidnon
+1001306003,Balaoro,Kadingilan,1001306000,Bukidnon
+1001306004,Baroy,Kadingilan,1001306000,Bukidnon
+1001306005,Cabadiangan,Kadingilan,1001306000,Bukidnon
+1001306006,Husayan,Kadingilan,1001306000,Bukidnon
+1001306007,Kibalagon,Kadingilan,1001306000,Bukidnon
+1001306008,Mabuhay,Kadingilan,1001306000,Bukidnon
+1001306009,Malinao,Kadingilan,1001306000,Bukidnon
+1001306010,Matampay,Kadingilan,1001306000,Bukidnon
+1001306011,Sibonga,Kadingilan,1001306000,Bukidnon
+1001306012,Pay-as,Kadingilan,1001306000,Bukidnon
+1001306013,Pinamanguhan,Kadingilan,1001306000,Bukidnon
+1001306014,Poblacion,Kadingilan,1001306000,Bukidnon
+1001306015,Salvacion,Kadingilan,1001306000,Bukidnon
+1001306016,San Andres,Kadingilan,1001306000,Bukidnon
+1001306017,Kibogtok,Kadingilan,1001306000,Bukidnon
+1001307001,Bangbang,Kalilangan,1001307000,Bukidnon
+1001307002,Barorawon,Kalilangan,1001307000,Bukidnon
+1001307003,Canituan,Kalilangan,1001307000,Bukidnon
+1001307004,Kibaning,Kalilangan,1001307000,Bukidnon
+1001307005,Kinura,Kalilangan,1001307000,Bukidnon
+1001307006,Lampanusan,Kalilangan,1001307000,Bukidnon
+1001307007,Macaopao,Kalilangan,1001307000,Bukidnon
+1001307008,Malinao,Kalilangan,1001307000,Bukidnon
+1001307009,Pamotolon,Kalilangan,1001307000,Bukidnon
+1001307010,Poblacion,Kalilangan,1001307000,Bukidnon
+1001307012,Public,Kalilangan,1001307000,Bukidnon
+1001307013,Ninoy Aquino,Kalilangan,1001307000,Bukidnon
+1001307014,San Vicente Ferrer,Kalilangan,1001307000,Bukidnon
+1001307015,West Poblacion,Kalilangan,1001307000,Bukidnon
+1001308003,Balintawak,Kibawe,1001308000,Bukidnon
+1001308006,Cagawasan,Kibawe,1001308000,Bukidnon
+1001308007,East Kibawe,Kibawe,1001308000,Bukidnon
+1001308008,Gutapol,Kibawe,1001308000,Bukidnon
+1001308011,Pinamula,Kibawe,1001308000,Bukidnon
+1001308013,Kiorao,Kibawe,1001308000,Bukidnon
+1001308014,Kisawa,Kibawe,1001308000,Bukidnon
+1001308015,Labuagon,Kibawe,1001308000,Bukidnon
+1001308016,Magsaysay,Kibawe,1001308000,Bukidnon
+1001308018,Marapangi,Kibawe,1001308000,Bukidnon
+1001308019,Mascariñas,Kibawe,1001308000,Bukidnon
+1001308020,Natulongan,Kibawe,1001308000,Bukidnon
+1001308021,New Kidapawan,Kibawe,1001308000,Bukidnon
+1001308023,Old Kibawe,Kibawe,1001308000,Bukidnon
+1001308028,Romagooc,Kibawe,1001308000,Bukidnon
+1001308030,Sampaguita,Kibawe,1001308000,Bukidnon
+1001308031,Sanipon,Kibawe,1001308000,Bukidnon
+1001308032,Spring,Kibawe,1001308000,Bukidnon
+1001308033,Talahiron,Kibawe,1001308000,Bukidnon
+1001308034,Tumaras,Kibawe,1001308000,Bukidnon
+1001308035,West Kibawe,Kibawe,1001308000,Bukidnon
+1001308036,Bukang Liwayway,Kibawe,1001308000,Bukidnon
+1001308037,Palma,Kibawe,1001308000,Bukidnon
+1001309001,Balangigay,Kitaotao,1001309000,Bukidnon
+1001309002,Balocbocan,Kitaotao,1001309000,Bukidnon
+1001309003,Bershiba,Kitaotao,1001309000,Bukidnon
+1001309004,Bobong,Kitaotao,1001309000,Bukidnon
+1001309005,Bolocaon,Kitaotao,1001309000,Bukidnon
+1001309006,Cabalantian,Kitaotao,1001309000,Bukidnon
+1001309007,Calapaton,Kitaotao,1001309000,Bukidnon
+1001309009,Sinaysayan,Kitaotao,1001309000,Bukidnon
+1001309010,Kahusayan,Kitaotao,1001309000,Bukidnon
+1001309011,Kalumihan,Kitaotao,1001309000,Bukidnon
+1001309012,Kauyonan,Kitaotao,1001309000,Bukidnon
+1001309013,Kimolong,Kitaotao,1001309000,Bukidnon
+1001309014,Kitaihon,Kitaotao,1001309000,Bukidnon
+1001309015,Kitobo,Kitaotao,1001309000,Bukidnon
+1001309019,Magsaysay,Kitaotao,1001309000,Bukidnon
+1001309020,Malobalo,Kitaotao,1001309000,Bukidnon
+1001309021,Metebagao,Kitaotao,1001309000,Bukidnon
+1001309022,Sagundanon,Kitaotao,1001309000,Bukidnon
+1001309023,Pagan,Kitaotao,1001309000,Bukidnon
+1001309025,Panganan,Kitaotao,1001309000,Bukidnon
+1001309026,Poblacion,Kitaotao,1001309000,Bukidnon
+1001309028,San Isidro,Kitaotao,1001309000,Bukidnon
+1001309029,San Lorenzo,Kitaotao,1001309000,Bukidnon
+1001309030,Sto. Rosario,Kitaotao,1001309000,Bukidnon
+1001309031,Sinuda,Kitaotao,1001309000,Bukidnon
+1001309032,Tandong,Kitaotao,1001309000,Bukidnon
+1001309033,Tawas,Kitaotao,1001309000,Bukidnon
+1001309034,White Kulaman,Kitaotao,1001309000,Bukidnon
+1001309035,Napalico,Kitaotao,1001309000,Bukidnon
+1001309037,Digongan,Kitaotao,1001309000,Bukidnon
+1001309038,Kiulom,Kitaotao,1001309000,Bukidnon
+1001309039,Binoongan,Kitaotao,1001309000,Bukidnon
+1001309040,Kipilas,Kitaotao,1001309000,Bukidnon
+1001309041,East Dalurong,Kitaotao,1001309000,Bukidnon
+1001309042,West Dalurong,Kitaotao,1001309000,Bukidnon
+1001310001,Alanib,Lantapan,1001310000,Bukidnon
+1001310002,Baclayon,Lantapan,1001310000,Bukidnon
+1001310003,Balila,Lantapan,1001310000,Bukidnon
+1001310004,Bantuanon,Lantapan,1001310000,Bukidnon
+1001310005,Basak,Lantapan,1001310000,Bukidnon
+1001310006,Bugcaon,Lantapan,1001310000,Bukidnon
+1001310007,Ka-atoan,Lantapan,1001310000,Bukidnon
+1001310008,Capitan Juan,Lantapan,1001310000,Bukidnon
+1001310009,Cawayan,Lantapan,1001310000,Bukidnon
+1001310010,Kulasihan,Lantapan,1001310000,Bukidnon
+1001310011,Kibangay,Lantapan,1001310000,Bukidnon
+1001310012,Poblacion,Lantapan,1001310000,Bukidnon
+1001310013,Songco,Lantapan,1001310000,Bukidnon
+1001310014,Victory,Lantapan,1001310000,Bukidnon
+1001311001,Capihan,Libona,1001311000,Bukidnon
+1001311002,Crossing,Libona,1001311000,Bukidnon
+1001311003,Gango,Libona,1001311000,Bukidnon
+1001311004,Kiliog,Libona,1001311000,Bukidnon
+1001311005,Kinawe,Libona,1001311000,Bukidnon
+1001311006,Laturan,Libona,1001311000,Bukidnon
+1001311007,Maambong,Libona,1001311000,Bukidnon
+1001311008,Nangka,Libona,1001311000,Bukidnon
+1001311009,Palabucan,Libona,1001311000,Bukidnon
+1001311010,Poblacion,Libona,1001311000,Bukidnon
+1001311011,Pongol,Libona,1001311000,Bukidnon
+1001311012,San Jose,Libona,1001311000,Bukidnon
+1001311013,Santa Fe,Libona,1001311000,Bukidnon
+1001311014,Sil-ipon,Libona,1001311000,Bukidnon
+1001312001,Aglayan,Malaybalay,1001312000,Bukidnon
+1001312002,Bangcud,Malaybalay,1001312000,Bukidnon
+1001312003,Busdi,Malaybalay,1001312000,Bukidnon
+1001312004,Cabangahan,Malaybalay,1001312000,Bukidnon
+1001312007,Caburacanan,Malaybalay,1001312000,Bukidnon
+1001312009,Canayan,Malaybalay,1001312000,Bukidnon
+1001312010,Capitan Angel,Malaybalay,1001312000,Bukidnon
+1001312012,Casisang,Malaybalay,1001312000,Bukidnon
+1001312014,Dalwangan,Malaybalay,1001312000,Bukidnon
+1001312017,Imbayao,Malaybalay,1001312000,Bukidnon
+1001312018,Indalasa,Malaybalay,1001312000,Bukidnon
+1001312019,Kalasungay,Malaybalay,1001312000,Bukidnon
+1001312021,Kibalabag,Malaybalay,1001312000,Bukidnon
+1001312022,Kulaman,Malaybalay,1001312000,Bukidnon
+1001312023,Laguitas,Malaybalay,1001312000,Bukidnon
+1001312025,Patpat,Malaybalay,1001312000,Bukidnon
+1001312026,Linabo,Malaybalay,1001312000,Bukidnon
+1001312027,Apo Macote,Malaybalay,1001312000,Bukidnon
+1001312028,Miglamin,Malaybalay,1001312000,Bukidnon
+1001312029,Magsaysay,Malaybalay,1001312000,Bukidnon
+1001312030,Maligaya,Malaybalay,1001312000,Bukidnon
+1001312031,Managok,Malaybalay,1001312000,Bukidnon
+1001312032,Manalog,Malaybalay,1001312000,Bukidnon
+1001312034,Mapayag,Malaybalay,1001312000,Bukidnon
+1001312035,Mapulo,Malaybalay,1001312000,Bukidnon
+1001312038,Barangay 1,Malaybalay,1001312000,Bukidnon
+1001312045,Barangay 2,Malaybalay,1001312000,Bukidnon
+1001312046,Barangay 3,Malaybalay,1001312000,Bukidnon
+1001312047,Barangay 4,Malaybalay,1001312000,Bukidnon
+1001312048,Barangay 5,Malaybalay,1001312000,Bukidnon
+1001312049,Barangay 6,Malaybalay,1001312000,Bukidnon
+1001312050,Barangay 7,Malaybalay,1001312000,Bukidnon
+1001312051,Barangay 8,Malaybalay,1001312000,Bukidnon
+1001312052,Barangay 9,Malaybalay,1001312000,Bukidnon
+1001312053,Barangay 10,Malaybalay,1001312000,Bukidnon
+1001312054,Barangay 11,Malaybalay,1001312000,Bukidnon
+1001312058,St. Peter,Malaybalay,1001312000,Bukidnon
+1001312059,San Jose,Malaybalay,1001312000,Bukidnon
+1001312060,San Martin,Malaybalay,1001312000,Bukidnon
+1001312061,Sto. Niño,Malaybalay,1001312000,Bukidnon
+1001312062,Silae,Malaybalay,1001312000,Bukidnon
+1001312063,Simaya,Malaybalay,1001312000,Bukidnon
+1001312064,Sinanglanan,Malaybalay,1001312000,Bukidnon
+1001312065,Sumpong,Malaybalay,1001312000,Bukidnon
+1001312066,Violeta,Malaybalay,1001312000,Bukidnon
+1001312067,Zamboanguita,Malaybalay,1001312000,Bukidnon
+1001313001,Kalingking,Malitbog,1001313000,Bukidnon
+1001313002,Kiabo,Malitbog,1001313000,Bukidnon
+1001313003,Mindagat,Malitbog,1001313000,Bukidnon
+1001313004,Omagling,Malitbog,1001313000,Bukidnon
+1001313005,Patpat,Malitbog,1001313000,Bukidnon
+1001313006,Poblacion,Malitbog,1001313000,Bukidnon
+1001313007,Sampiano,Malitbog,1001313000,Bukidnon
+1001313008,San Luis,Malitbog,1001313000,Bukidnon
+1001313009,Sta. Ines,Malitbog,1001313000,Bukidnon
+1001313010,Silo-o,Malitbog,1001313000,Bukidnon
+1001313011,Sumalsag,Malitbog,1001313000,Bukidnon
+1001314001,Agusan Canyon,Manolo Fortich,1001314000,Bukidnon
+1001314002,Alae,Manolo Fortich,1001314000,Bukidnon
+1001314003,Dahilayan,Manolo Fortich,1001314000,Bukidnon
+1001314004,Dalirig,Manolo Fortich,1001314000,Bukidnon
+1001314005,Damilag,Manolo Fortich,1001314000,Bukidnon
+1001314006,Diclum,Manolo Fortich,1001314000,Bukidnon
+1001314007,Guilang-guilang,Manolo Fortich,1001314000,Bukidnon
+1001314008,Kalugmanan,Manolo Fortich,1001314000,Bukidnon
+1001314009,Lindaban,Manolo Fortich,1001314000,Bukidnon
+1001314010,Lingion,Manolo Fortich,1001314000,Bukidnon
+1001314011,Lunocan,Manolo Fortich,1001314000,Bukidnon
+1001314012,Maluko,Manolo Fortich,1001314000,Bukidnon
+1001314013,Mambatangan,Manolo Fortich,1001314000,Bukidnon
+1001314014,Mampayag,Manolo Fortich,1001314000,Bukidnon
+1001314015,Minsuro,Manolo Fortich,1001314000,Bukidnon
+1001314016,Mantibugao,Manolo Fortich,1001314000,Bukidnon
+1001314017,Tankulan,Manolo Fortich,1001314000,Bukidnon
+1001314018,San Miguel,Manolo Fortich,1001314000,Bukidnon
+1001314019,Sankanan,Manolo Fortich,1001314000,Bukidnon
+1001314020,Santiago,Manolo Fortich,1001314000,Bukidnon
+1001314021,Sto. Niño,Manolo Fortich,1001314000,Bukidnon
+1001314023,Ticala,Manolo Fortich,1001314000,Bukidnon
+1001315001,Anahawon,Maramag,1001315000,Bukidnon
+1001315002,Base Camp,Maramag,1001315000,Bukidnon
+1001315003,Bayabason,Maramag,1001315000,Bukidnon
+1001315004,Camp I,Maramag,1001315000,Bukidnon
+1001315005,Colambugan,Maramag,1001315000,Bukidnon
+1001315006,Dagumba-an,Maramag,1001315000,Bukidnon
+1001315007,Danggawan,Maramag,1001315000,Bukidnon
+1001315008,Dologon,Maramag,1001315000,Bukidnon
+1001315009,Kisanday,Maramag,1001315000,Bukidnon
+1001315010,Kuya,Maramag,1001315000,Bukidnon
+1001315011,La Roxas,Maramag,1001315000,Bukidnon
+1001315012,Panadtalan,Maramag,1001315000,Bukidnon
+1001315013,Panalsalan,Maramag,1001315000,Bukidnon
+1001315014,North Poblacion,Maramag,1001315000,Bukidnon
+1001315015,South Poblacion,Maramag,1001315000,Bukidnon
+1001315016,San Miguel,Maramag,1001315000,Bukidnon
+1001315017,San Roque,Maramag,1001315000,Bukidnon
+1001315018,Tubigon,Maramag,1001315000,Bukidnon
+1001315019,Bagongsilang,Maramag,1001315000,Bukidnon
+1001315020,Kiharong,Maramag,1001315000,Bukidnon
+1001316001,Adtuyon,Pangantucan,1001316000,Bukidnon
+1001316002,Bacusanon,Pangantucan,1001316000,Bukidnon
+1001316003,Bangahan,Pangantucan,1001316000,Bukidnon
+1001316004,Barandias,Pangantucan,1001316000,Bukidnon
+1001316005,Concepcion,Pangantucan,1001316000,Bukidnon
+1001316006,Gandingan,Pangantucan,1001316000,Bukidnon
+1001316007,Kimanait,Pangantucan,1001316000,Bukidnon
+1001316008,Kipadukan,Pangantucan,1001316000,Bukidnon
+1001316009,Langcataon,Pangantucan,1001316000,Bukidnon
+1001316010,Lantay,Pangantucan,1001316000,Bukidnon
+1001316011,Madaya,Pangantucan,1001316000,Bukidnon
+1001316012,Malipayon,Pangantucan,1001316000,Bukidnon
+1001316013,Mendis,Pangantucan,1001316000,Bukidnon
+1001316014,Nabaliwa,Pangantucan,1001316000,Bukidnon
+1001316015,New Eden,Pangantucan,1001316000,Bukidnon
+1001316016,Payad,Pangantucan,1001316000,Bukidnon
+1001316017,Pigtauranan,Pangantucan,1001316000,Bukidnon
+1001316018,Poblacion,Pangantucan,1001316000,Bukidnon
+1001316019,Portulin,Pangantucan,1001316000,Bukidnon
+1001317001,Butong,Quezon,1001317000,Bukidnon
+1001317002,Cebole,Quezon,1001317000,Bukidnon
+1001317003,Delapa,Quezon,1001317000,Bukidnon
+1001317004,Dumalama,Quezon,1001317000,Bukidnon
+1001317006,C-Handumanan,Quezon,1001317000,Bukidnon
+1001317007,Cawayan,Quezon,1001317000,Bukidnon
+1001317008,Kiburiao,Quezon,1001317000,Bukidnon
+1001317009,Kipaypayon,Quezon,1001317000,Bukidnon
+1001317010,Libertad,Quezon,1001317000,Bukidnon
+1001317012,Linabo,Quezon,1001317000,Bukidnon
+1001317013,Lipa,Quezon,1001317000,Bukidnon
+1001317014,Lumintao,Quezon,1001317000,Bukidnon
+1001317016,Magsaysay,Quezon,1001317000,Bukidnon
+1001317017,Mahayag,Quezon,1001317000,Bukidnon
+1001317018,Manuto,Quezon,1001317000,Bukidnon
+1001317019,Merangeran,Quezon,1001317000,Bukidnon
+1001317020,Mibantang,Quezon,1001317000,Bukidnon
+1001317021,Minongan,Quezon,1001317000,Bukidnon
+1001317022,Minsamongan,Quezon,1001317000,Bukidnon
+1001317025,Paitan,Quezon,1001317000,Bukidnon
+1001317026,Palacapao,Quezon,1001317000,Bukidnon
+1001317027,Pinilayan,Quezon,1001317000,Bukidnon
+1001317028,Poblacion,Quezon,1001317000,Bukidnon
+1001317029,Puntian,Quezon,1001317000,Bukidnon
+1001317030,Salawagan,Quezon,1001317000,Bukidnon
+1001317031,San Isidro,Quezon,1001317000,Bukidnon
+1001317032,San Jose,Quezon,1001317000,Bukidnon
+1001317033,San Roque,Quezon,1001317000,Bukidnon
+1001317034,Sta. Cruz,Quezon,1001317000,Bukidnon
+1001317035,Santa Filomena,Quezon,1001317000,Bukidnon
+1001317036,Minsalirak,Quezon,1001317000,Bukidnon
+1001318001,Bonacao,San Fernando,1001318000,Bukidnon
+1001318002,Cabuling,San Fernando,1001318000,Bukidnon
+1001318003,Kawayan,San Fernando,1001318000,Bukidnon
+1001318004,Cayaga,San Fernando,1001318000,Bukidnon
+1001318005,Dao,San Fernando,1001318000,Bukidnon
+1001318007,Durian,San Fernando,1001318000,Bukidnon
+1001318009,Iglugsad,San Fernando,1001318000,Bukidnon
+1001318010,Kalagangan,San Fernando,1001318000,Bukidnon
+1001318014,Kibongcog,San Fernando,1001318000,Bukidnon
+1001318016,Little Baguio,San Fernando,1001318000,Bukidnon
+1001318019,Nacabuklad,San Fernando,1001318000,Bukidnon
+1001318020,Namnam,San Fernando,1001318000,Bukidnon
+1001318021,Palacpacan,San Fernando,1001318000,Bukidnon
+1001318022,Halapitan,San Fernando,1001318000,Bukidnon
+1001318023,San Jose,San Fernando,1001318000,Bukidnon
+1001318024,Santo Domingo,San Fernando,1001318000,Bukidnon
+1001318025,Tugop,San Fernando,1001318000,Bukidnon
+1001318026,Matupe,San Fernando,1001318000,Bukidnon
+1001318027,Bulalang,San Fernando,1001318000,Bukidnon
+1001318028,Candelaria,San Fernando,1001318000,Bukidnon
+1001318029,Mabuhay,San Fernando,1001318000,Bukidnon
+1001318030,Magkalungay,San Fernando,1001318000,Bukidnon
+1001318031,Malayanan,San Fernando,1001318000,Bukidnon
+1001318032,Sacramento Valley,San Fernando,1001318000,Bukidnon
+1001319001,Kisolon,Sumilao,1001319000,Bukidnon
+1001319002,Kulasi,Sumilao,1001319000,Bukidnon
+1001319003,Licoan,Sumilao,1001319000,Bukidnon
+1001319004,Lupiagan,Sumilao,1001319000,Bukidnon
+1001319005,Ocasion,Sumilao,1001319000,Bukidnon
+1001319006,Puntian,Sumilao,1001319000,Bukidnon
+1001319007,San Roque,Sumilao,1001319000,Bukidnon
+1001319008,San Vicente,Sumilao,1001319000,Bukidnon
+1001319009,Poblacion,Sumilao,1001319000,Bukidnon
+1001319010,Vista Villa,Sumilao,1001319000,Bukidnon
+1001320001,Basak,Talakag,1001320000,Bukidnon
+1001320002,Baylanan,Talakag,1001320000,Bukidnon
+1001320003,Cacaon,Talakag,1001320000,Bukidnon
+1001320004,Colawingon,Talakag,1001320000,Bukidnon
+1001320005,Cosina,Talakag,1001320000,Bukidnon
+1001320006,Dagumbaan,Talakag,1001320000,Bukidnon
+1001320007,Dagundalahon,Talakag,1001320000,Bukidnon
+1001320008,Dominorog,Talakag,1001320000,Bukidnon
+1001320009,Lapok,Talakag,1001320000,Bukidnon
+1001320010,Indulang,Talakag,1001320000,Bukidnon
+1001320011,Lantud,Talakag,1001320000,Bukidnon
+1001320013,Liguron,Talakag,1001320000,Bukidnon
+1001320014,Lingi-on,Talakag,1001320000,Bukidnon
+1001320015,Lirongan,Talakag,1001320000,Bukidnon
+1001320016,Sto. Niño,Talakag,1001320000,Bukidnon
+1001320018,Miarayon,Talakag,1001320000,Bukidnon
+1001320019,Barangay 1,Talakag,1001320000,Bukidnon
+1001320020,Barangay 2,Talakag,1001320000,Bukidnon
+1001320021,Barangay 3,Talakag,1001320000,Bukidnon
+1001320022,Barangay 4,Talakag,1001320000,Bukidnon
+1001320023,Barangay 5,Talakag,1001320000,Bukidnon
+1001320024,Sagaran,Talakag,1001320000,Bukidnon
+1001320025,Salucot,Talakag,1001320000,Bukidnon
+1001320026,San Antonio,Talakag,1001320000,Bukidnon
+1001320027,San Isidro,Talakag,1001320000,Bukidnon
+1001320028,San Miguel,Talakag,1001320000,Bukidnon
+1001320029,San Rafael,Talakag,1001320000,Bukidnon
+1001320030,Tagbak,Talakag,1001320000,Bukidnon
+1001320031,Tikalaan,Talakag,1001320000,Bukidnon
+1001321001,Bagontaas,Valencia,1001321000,Bukidnon
+1001321002,Banlag,Valencia,1001321000,Bukidnon
+1001321003,Barobo,Valencia,1001321000,Bukidnon
+1001321004,Batangan,Valencia,1001321000,Bukidnon
+1001321005,Catumbalon,Valencia,1001321000,Bukidnon
+1001321006,Colonia,Valencia,1001321000,Bukidnon
+1001321007,Concepcion,Valencia,1001321000,Bukidnon
+1001321008,Dagat-Kidavao,Valencia,1001321000,Bukidnon
+1001321010,Guinoyuran,Valencia,1001321000,Bukidnon
+1001321011,Kahaponan,Valencia,1001321000,Bukidnon
+1001321012,Laligan,Valencia,1001321000,Bukidnon
+1001321013,Lilingayon,Valencia,1001321000,Bukidnon
+1001321014,Lourdes,Valencia,1001321000,Bukidnon
+1001321015,Lumbayao,Valencia,1001321000,Bukidnon
+1001321016,Lumbo,Valencia,1001321000,Bukidnon
+1001321017,Lurugan,Valencia,1001321000,Bukidnon
+1001321018,Maapag,Valencia,1001321000,Bukidnon
+1001321019,Mabuhay,Valencia,1001321000,Bukidnon
+1001321020,Mailag,Valencia,1001321000,Bukidnon
+1001321021,Mt. Nebo,Valencia,1001321000,Bukidnon
+1001321022,Nabag-o,Valencia,1001321000,Bukidnon
+1001321023,Pinatilan,Valencia,1001321000,Bukidnon
+1001321024,Poblacion,Valencia,1001321000,Bukidnon
+1001321025,San Carlos,Valencia,1001321000,Bukidnon
+1001321026,San Isidro,Valencia,1001321000,Bukidnon
+1001321028,Sinabuagan,Valencia,1001321000,Bukidnon
+1001321029,Sinayawan,Valencia,1001321000,Bukidnon
+1001321030,Sugod,Valencia,1001321000,Bukidnon
+1001321033,Tongantongan,Valencia,1001321000,Bukidnon
+1001321034,Tugaya,Valencia,1001321000,Bukidnon
+1001321035,Vintar,Valencia,1001321000,Bukidnon
+1001322001,Cabulohan,Cabanglasan,1001322000,Bukidnon
+1001322002,Canangaan,Cabanglasan,1001322000,Bukidnon
+1001322003,Iba,Cabanglasan,1001322000,Bukidnon
+1001322004,Imbatug,Cabanglasan,1001322000,Bukidnon
+1001322005,Lambagan,Cabanglasan,1001322000,Bukidnon
+1001322006,Mandaing,Cabanglasan,1001322000,Bukidnon
+1001322007,Paradise,Cabanglasan,1001322000,Bukidnon
+1001322008,Poblacion,Cabanglasan,1001322000,Bukidnon
+1001322009,Anlogan,Cabanglasan,1001322000,Bukidnon
+1001322010,Capinonan,Cabanglasan,1001322000,Bukidnon
+1001322011,Dalacutan,Cabanglasan,1001322000,Bukidnon
+1001322012,Freedom,Cabanglasan,1001322000,Bukidnon
+1001322013,Mandahikan,Cabanglasan,1001322000,Bukidnon
+1001322014,Mauswagon,Cabanglasan,1001322000,Bukidnon
+1001322015,Jasaan,Cabanglasan,1001322000,Bukidnon
+1001801001,Alga,Catarman,1001801000,Camiguin
+1001801002,Bonbon,Catarman,1001801000,Camiguin
+1001801003,Bura,Catarman,1001801000,Camiguin
+1001801004,Catibac,Catarman,1001801000,Camiguin
+1001801005,Compol,Catarman,1001801000,Camiguin
+1001801006,Lawigan,Catarman,1001801000,Camiguin
+1001801007,Liloan,Catarman,1001801000,Camiguin
+1001801008,Looc,Catarman,1001801000,Camiguin
+1001801009,Mainit,Catarman,1001801000,Camiguin
+1001801010,Manduao,Catarman,1001801000,Camiguin
+1001801011,Panghiawan,Catarman,1001801000,Camiguin
+1001801012,Poblacion,Catarman,1001801000,Camiguin
+1001801013,Santo Niño,Catarman,1001801000,Camiguin
+1001801014,Tangaro,Catarman,1001801000,Camiguin
+1001802001,Butay,Guinsiliban,1001802000,Camiguin
+1001802002,Cabuan,Guinsiliban,1001802000,Camiguin
+1001802003,Cantaan,Guinsiliban,1001802000,Camiguin
+1001802004,Liong,Guinsiliban,1001802000,Camiguin
+1001802005,Maac,Guinsiliban,1001802000,Camiguin
+1001802006,North Poblacion,Guinsiliban,1001802000,Camiguin
+1001802007,South Poblacion,Guinsiliban,1001802000,Camiguin
+1001803001,Benoni,Mahinog,1001803000,Camiguin
+1001803002,Binatubo,Mahinog,1001803000,Camiguin
+1001803004,Catohugan,Mahinog,1001803000,Camiguin
+1001803005,Hubangon,Mahinog,1001803000,Camiguin
+1001803006,Owakan,Mahinog,1001803000,Camiguin
+1001803007,Poblacion,Mahinog,1001803000,Camiguin
+1001803008,Puntod,Mahinog,1001803000,Camiguin
+1001803009,San Isidro,Mahinog,1001803000,Camiguin
+1001803010,San Jose,Mahinog,1001803000,Camiguin
+1001803011,San Miguel,Mahinog,1001803000,Camiguin
+1001803012,San Roque,Mahinog,1001803000,Camiguin
+1001803013,Tubod,Mahinog,1001803000,Camiguin
+1001803014,Tupsan Pequeño,Mahinog,1001803000,Camiguin
+1001804001,Agoho,Mambajao,1001804000,Camiguin
+1001804002,Anito,Mambajao,1001804000,Camiguin
+1001804003,Balbagon,Mambajao,1001804000,Camiguin
+1001804004,Baylao,Mambajao,1001804000,Camiguin
+1001804005,Benhaan,Mambajao,1001804000,Camiguin
+1001804006,Bug-ong,Mambajao,1001804000,Camiguin
+1001804007,Kuguita,Mambajao,1001804000,Camiguin
+1001804008,Magting,Mambajao,1001804000,Camiguin
+1001804009,Naasag,Mambajao,1001804000,Camiguin
+1001804010,Pandan,Mambajao,1001804000,Camiguin
+1001804011,Poblacion,Mambajao,1001804000,Camiguin
+1001804015,Soro-soro,Mambajao,1001804000,Camiguin
+1001804016,Tagdo,Mambajao,1001804000,Camiguin
+1001804017,Tupsan,Mambajao,1001804000,Camiguin
+1001804018,Yumbing,Mambajao,1001804000,Camiguin
+1001805001,Alangilan,Sagay,1001805000,Camiguin
+1001805002,Bacnit,Sagay,1001805000,Camiguin
+1001805003,Balite,Sagay,1001805000,Camiguin
+1001805004,Bonbon,Sagay,1001805000,Camiguin
+1001805005,Bugang,Sagay,1001805000,Camiguin
+1001805006,Cuna,Sagay,1001805000,Camiguin
+1001805007,Manuyog,Sagay,1001805000,Camiguin
+1001805008,Mayana,Sagay,1001805000,Camiguin
+1001805009,Poblacion,Sagay,1001805000,Camiguin
+1003501001,Alegria,Bacolod,1003501000,Lanao del Norte
+1003501002,Babalaya,Bacolod,1003501000,Lanao del Norte
+1003501003,Babalayan Townsite,Bacolod,1003501000,Lanao del Norte
+1003501005,Binuni,Bacolod,1003501000,Lanao del Norte
+1003501006,Demologan,Bacolod,1003501000,Lanao del Norte
+1003501007,Dimarao,Bacolod,1003501000,Lanao del Norte
+1003501008,Esperanza,Bacolod,1003501000,Lanao del Norte
+1003501009,Kahayag,Bacolod,1003501000,Lanao del Norte
+1003501010,Liangan East,Bacolod,1003501000,Lanao del Norte
+1003501012,Punod,Bacolod,1003501000,Lanao del Norte
+1003501013,Mati,Bacolod,1003501000,Lanao del Norte
+1003501016,Minaulon,Bacolod,1003501000,Lanao del Norte
+1003501017,Pagayawan,Bacolod,1003501000,Lanao del Norte
+1003501018,Poblacion Bacolod,Bacolod,1003501000,Lanao del Norte
+1003501019,Rupagan,Bacolod,1003501000,Lanao del Norte
+1003501020,Delabayan West,Bacolod,1003501000,Lanao del Norte
+1003502001,Abaga,Baloi,1003502000,Lanao del Norte
+1003502002,Adapun-Ali,Baloi,1003502000,Lanao del Norte
+1003502003,Angandog,Baloi,1003502000,Lanao del Norte
+1003502004,Angayen,Baloi,1003502000,Lanao del Norte
+1003502005,Bangko,Baloi,1003502000,Lanao del Norte
+1003502006,Batolacongan,Baloi,1003502000,Lanao del Norte
+1003502007,Buenavista,Baloi,1003502000,Lanao del Norte
+1003502009,Cadayonan,Baloi,1003502000,Lanao del Norte
+1003502012,Landa,Baloi,1003502000,Lanao del Norte
+1003502013,Lumbac,Baloi,1003502000,Lanao del Norte
+1003502014,Mamaanun,Baloi,1003502000,Lanao del Norte
+1003502015,Maria-Cristina,Baloi,1003502000,Lanao del Norte
+1003502016,Matampay,Baloi,1003502000,Lanao del Norte
+1003502017,Nangka,Baloi,1003502000,Lanao del Norte
+1003502019,Pacalundo,Baloi,1003502000,Lanao del Norte
+1003502022,Poblacion East,Baloi,1003502000,Lanao del Norte
+1003502023,Poblacion West,Baloi,1003502000,Lanao del Norte
+1003502025,Sandor,Baloi,1003502000,Lanao del Norte
+1003502026,Sangcad,Baloi,1003502000,Lanao del Norte
+1003502027,Sarip-Alawi,Baloi,1003502000,Lanao del Norte
+1003502028,Sigayan,Baloi,1003502000,Lanao del Norte
+1003503001,Andil,Baroy,1003503000,Lanao del Norte
+1003503002,Bagong Dawis,Baroy,1003503000,Lanao del Norte
+1003503003,Baroy Daku,Baroy,1003503000,Lanao del Norte
+1003503004,Bato,Baroy,1003503000,Lanao del Norte
+1003503005,Cabasagan,Baroy,1003503000,Lanao del Norte
+1003503006,Dalama,Baroy,1003503000,Lanao del Norte
+1003503007,Libertad,Baroy,1003503000,Lanao del Norte
+1003503008,Limwag,Baroy,1003503000,Lanao del Norte
+1003503009,Lindongan,Baroy,1003503000,Lanao del Norte
+1003503011,Maliwanag,Baroy,1003503000,Lanao del Norte
+1003503012,Manan-ao,Baroy,1003503000,Lanao del Norte
+1003503013,Pange,Baroy,1003503000,Lanao del Norte
+1003503014,Pindolonan,Baroy,1003503000,Lanao del Norte
+1003503015,Poblacion,Baroy,1003503000,Lanao del Norte
+1003503016,Princesa,Baroy,1003503000,Lanao del Norte
+1003503017,Rawan Point,Baroy,1003503000,Lanao del Norte
+1003503018,Riverside,Baroy,1003503000,Lanao del Norte
+1003503019,Sagadan,Baroy,1003503000,Lanao del Norte
+1003503020,Salong,Baroy,1003503000,Lanao del Norte
+1003503021,Tinubdan,Baroy,1003503000,Lanao del Norte
+1003503022,Sagadan Upper,Baroy,1003503000,Lanao del Norte
+1003503023,San Juan,Baroy,1003503000,Lanao del Norte
+1003503024,Village,Baroy,1003503000,Lanao del Norte
+1003505001,Bagong Badian,Kapatagan,1003505000,Lanao del Norte
+1003505003,Bagong Silang,Kapatagan,1003505000,Lanao del Norte
+1003505004,Balili,Kapatagan,1003505000,Lanao del Norte
+1003505005,Bansarvil,Kapatagan,1003505000,Lanao del Norte
+1003505007,Belis,Kapatagan,1003505000,Lanao del Norte
+1003505008,Buenavista,Kapatagan,1003505000,Lanao del Norte
+1003505010,Butadon,Kapatagan,1003505000,Lanao del Norte
+1003505012,Cathedral Falls,Kapatagan,1003505000,Lanao del Norte
+1003505014,Concepcion,Kapatagan,1003505000,Lanao del Norte
+1003505015,Curvada,Kapatagan,1003505000,Lanao del Norte
+1003505016,De Asis,Kapatagan,1003505000,Lanao del Norte
+1003505018,Donggoan,Kapatagan,1003505000,Lanao del Norte
+1003505019,Durano,Kapatagan,1003505000,Lanao del Norte
+1003505021,Kahayagan,Kapatagan,1003505000,Lanao del Norte
+1003505026,Kidalos,Kapatagan,1003505000,Lanao del Norte
+1003505027,La Libertad,Kapatagan,1003505000,Lanao del Norte
+1003505028,Lapinig,Kapatagan,1003505000,Lanao del Norte
+1003505030,Mahayahay,Kapatagan,1003505000,Lanao del Norte
+1003505031,Malinas,Kapatagan,1003505000,Lanao del Norte
+1003505033,Maranding,Kapatagan,1003505000,Lanao del Norte
+1003505034,Margos,Kapatagan,1003505000,Lanao del Norte
+1003505036,Poblacion,Kapatagan,1003505000,Lanao del Norte
+1003505038,Pulang Yuta,Kapatagan,1003505000,Lanao del Norte
+1003505039,San Isidro,Kapatagan,1003505000,Lanao del Norte
+1003505040,San Vicente,Kapatagan,1003505000,Lanao del Norte
+1003505041,Santa Cruz,Kapatagan,1003505000,Lanao del Norte
+1003505042,Santo Tomas,Kapatagan,1003505000,Lanao del Norte
+1003505043,Suso,Kapatagan,1003505000,Lanao del Norte
+1003505046,Taguitic,Kapatagan,1003505000,Lanao del Norte
+1003505047,Tiacongan,Kapatagan,1003505000,Lanao del Norte
+1003505048,Tipolo,Kapatagan,1003505000,Lanao del Norte
+1003505049,Tulatulahan,Kapatagan,1003505000,Lanao del Norte
+1003505050,Waterfalls,Kapatagan,1003505000,Lanao del Norte
+1003506001,Bangaan,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506002,Bangco,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506003,Bansarvil II,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506004,Bauyan,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506005,Cabongbongan,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506006,Calibao,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506007,Calipapa,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506008,Calube,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506009,Campo Islam,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506010,Capocao,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506011,Dabliston,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506012,Dangulaan,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506013,Ditago,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506014,Ilian,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506015,Kauswagan,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506016,Kirapan,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506017,Koreo,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506018,Lantawan,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506019,Mabuhay,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506020,Maguindanao,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506021,Mahayahay,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506022,Mamagum,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506023,Pandanan,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506024,Payong,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506025,Piraka,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506026,Pikalawag,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506027,Pikinit,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506028,Poblacion,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506029,Ramain,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506030,Rebucon,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506031,Sigayan,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506032,Sugod,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506033,Tagulo,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506034,Tantaon,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506035,Topocon,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506036,Dalama,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003506037,Mina,Sultan Naga Dimaporo,1003506000,Lanao del Norte
+1003507001,Bagumbayan,Kauswagan,1003507000,Lanao del Norte
+1003507002,Bara-ason,Kauswagan,1003507000,Lanao del Norte
+1003507003,Cayontor,Kauswagan,1003507000,Lanao del Norte
+1003507004,Delabayan,Kauswagan,1003507000,Lanao del Norte
+1003507005,Inudaran,Kauswagan,1003507000,Lanao del Norte
+1003507006,Kawit Occidental,Kauswagan,1003507000,Lanao del Norte
+1003507007,Kawit Oriental,Kauswagan,1003507000,Lanao del Norte
+1003507008,Libertad,Kauswagan,1003507000,Lanao del Norte
+1003507009,Paiton,Kauswagan,1003507000,Lanao del Norte
+1003507010,Poblacion,Kauswagan,1003507000,Lanao del Norte
+1003507011,Tacub,Kauswagan,1003507000,Lanao del Norte
+1003507012,Tingintingin,Kauswagan,1003507000,Lanao del Norte
+1003507013,Tugar,Kauswagan,1003507000,Lanao del Norte
+1003508001,Austin Heights,Kolambugan,1003508000,Lanao del Norte
+1003508002,Baybay,Kolambugan,1003508000,Lanao del Norte
+1003508004,Bubong,Kolambugan,1003508000,Lanao del Norte
+1003508005,Caromatan,Kolambugan,1003508000,Lanao del Norte
+1003508006,Inudaran,Kolambugan,1003508000,Lanao del Norte
+1003508007,Kulasihan,Kolambugan,1003508000,Lanao del Norte
+1003508009,Libertad,Kolambugan,1003508000,Lanao del Norte
+1003508010,Lumbac,Kolambugan,1003508000,Lanao del Norte
+1003508011,Manga,Kolambugan,1003508000,Lanao del Norte
+1003508012,Matampay,Kolambugan,1003508000,Lanao del Norte
+1003508013,Mukas,Kolambugan,1003508000,Lanao del Norte
+1003508014,Muntay,Kolambugan,1003508000,Lanao del Norte
+1003508016,Pagalungan,Kolambugan,1003508000,Lanao del Norte
+1003508017,Palao,Kolambugan,1003508000,Lanao del Norte
+1003508018,Pantaon,Kolambugan,1003508000,Lanao del Norte
+1003508019,Pantar,Kolambugan,1003508000,Lanao del Norte
+1003508020,Poblacion,Kolambugan,1003508000,Lanao del Norte
+1003508021,Rebucon,Kolambugan,1003508000,Lanao del Norte
+1003508022,Riverside,Kolambugan,1003508000,Lanao del Norte
+1003508023,San Roque,Kolambugan,1003508000,Lanao del Norte
+1003508024,Santo Niño,Kolambugan,1003508000,Lanao del Norte
+1003508025,Simbuco,Kolambugan,1003508000,Lanao del Norte
+1003508026,Small Banisilan,Kolambugan,1003508000,Lanao del Norte
+1003508027,Sucodan,Kolambugan,1003508000,Lanao del Norte
+1003508028,Tabigue,Kolambugan,1003508000,Lanao del Norte
+1003508029,Titunod,Kolambugan,1003508000,Lanao del Norte
+1003509001,Abaga,Lala,1003509000,Lanao del Norte
+1003509002,Andil,Lala,1003509000,Lanao del Norte
+1003509003,Matampay Bucana,Lala,1003509000,Lanao del Norte
+1003509004,Darumawang Bucana,Lala,1003509000,Lanao del Norte
+1003509005,Cabasagan,Lala,1003509000,Lanao del Norte
+1003509006,Camalan,Lala,1003509000,Lanao del Norte
+1003509008,Darumawang Ilaya,Lala,1003509000,Lanao del Norte
+1003509009,El Salvador,Lala,1003509000,Lanao del Norte
+1003509010,Gumagamot,Lala,1003509000,Lanao del Norte
+1003509012,Lala Proper,Lala,1003509000,Lanao del Norte
+1003509013,Lanipao,Lala,1003509000,Lanao del Norte
+1003509014,Magpatao,Lala,1003509000,Lanao del Norte
+1003509015,Maranding,Lala,1003509000,Lanao del Norte
+1003509016,Matampay Ilaya,Lala,1003509000,Lanao del Norte
+1003509017,Pacita,Lala,1003509000,Lanao del Norte
+1003509018,Pendolonan,Lala,1003509000,Lanao del Norte
+1003509019,Pinoyak,Lala,1003509000,Lanao del Norte
+1003509020,Raw-an,Lala,1003509000,Lanao del Norte
+1003509021,Rebe,Lala,1003509000,Lanao del Norte
+1003509022,San Isidro Lower,Lala,1003509000,Lanao del Norte
+1003509023,San Isidro Upper,Lala,1003509000,Lanao del Norte
+1003509024,San Manuel,Lala,1003509000,Lanao del Norte
+1003509025,Santa Cruz Lower,Lala,1003509000,Lanao del Norte
+1003509026,Santa Cruz Upper,Lala,1003509000,Lanao del Norte
+1003509027,Simpak,Lala,1003509000,Lanao del Norte
+1003509028,Tenazas,Lala,1003509000,Lanao del Norte
+1003509029,Tuna-an,Lala,1003509000,Lanao del Norte
+1003510001,Busque,Linamon,1003510000,Lanao del Norte
+1003510002,Larapan,Linamon,1003510000,Lanao del Norte
+1003510003,Magoong,Linamon,1003510000,Lanao del Norte
+1003510004,Napo,Linamon,1003510000,Lanao del Norte
+1003510005,Poblacion,Linamon,1003510000,Lanao del Norte
+1003510006,Purakan,Linamon,1003510000,Lanao del Norte
+1003510007,Robocon,Linamon,1003510000,Lanao del Norte
+1003510008,Samburon,Linamon,1003510000,Lanao del Norte
+1003511001,Babasalon,Magsaysay,1003511000,Lanao del Norte
+1003511002,Baguiguicon,Magsaysay,1003511000,Lanao del Norte
+1003511003,Daan Campo,Magsaysay,1003511000,Lanao del Norte
+1003511004,Durianon,Magsaysay,1003511000,Lanao del Norte
+1003511005,Ilihan,Magsaysay,1003511000,Lanao del Norte
+1003511006,Lamigadato,Magsaysay,1003511000,Lanao del Norte
+1003511007,Lemoncret,Magsaysay,1003511000,Lanao del Norte
+1003511008,Lubo,Magsaysay,1003511000,Lanao del Norte
+1003511009,Lumbac,Magsaysay,1003511000,Lanao del Norte
+1003511010,Malabaogan,Magsaysay,1003511000,Lanao del Norte
+1003511011,Mapantao,Magsaysay,1003511000,Lanao del Norte
+1003511012,Olango,Magsaysay,1003511000,Lanao del Norte
+1003511013,Pangao,Magsaysay,1003511000,Lanao del Norte
+1003511014,Pelingkingan,Magsaysay,1003511000,Lanao del Norte
+1003511015,Lower Caningag,Magsaysay,1003511000,Lanao del Norte
+1003511016,Poblacion,Magsaysay,1003511000,Lanao del Norte
+1003511017,Rarab,Magsaysay,1003511000,Lanao del Norte
+1003511018,Somiorang,Magsaysay,1003511000,Lanao del Norte
+1003511019,Upper Caningag,Magsaysay,1003511000,Lanao del Norte
+1003511020,Talambo,Magsaysay,1003511000,Lanao del Norte
+1003511021,Tambacon,Magsaysay,1003511000,Lanao del Norte
+1003511022,Tawinian,Magsaysay,1003511000,Lanao del Norte
+1003511023,Tipaan,Magsaysay,1003511000,Lanao del Norte
+1003511024,Tombador,Magsaysay,1003511000,Lanao del Norte
+1003512001,Balagatasa,Maigo,1003512000,Lanao del Norte
+1003512002,Camp 1,Maigo,1003512000,Lanao del Norte
+1003512003,Claro M. Recto,Maigo,1003512000,Lanao del Norte
+1003512004,Inoma,Maigo,1003512000,Lanao del Norte
+1003512005,Labuay,Maigo,1003512000,Lanao del Norte
+1003512006,Liangan West,Maigo,1003512000,Lanao del Norte
+1003512007,Mahayahay,Maigo,1003512000,Lanao del Norte
+1003512008,Maliwanag,Maigo,1003512000,Lanao del Norte
+1003512009,Mentring,Maigo,1003512000,Lanao del Norte
+1003512010,Poblacion,Maigo,1003512000,Lanao del Norte
+1003512011,Santa Cruz,Maigo,1003512000,Lanao del Norte
+1003512012,Segapod,Maigo,1003512000,Lanao del Norte
+1003512013,Kulasihan,Maigo,1003512000,Lanao del Norte
+1003513001,Bubong Radapan,Matungao,1003513000,Lanao del Norte
+1003513002,Bangco,Matungao,1003513000,Lanao del Norte
+1003513003,Batal,Matungao,1003513000,Lanao del Norte
+1003513004,Batangan,Matungao,1003513000,Lanao del Norte
+1003513005,Cadayonan,Matungao,1003513000,Lanao del Norte
+1003513013,Matampay,Matungao,1003513000,Lanao del Norte
+1003513015,Pangi,Matungao,1003513000,Lanao del Norte
+1003513016,Pasayanon,Matungao,1003513000,Lanao del Norte
+1003513018,Poblacion,Matungao,1003513000,Lanao del Norte
+1003513019,Puntod,Matungao,1003513000,Lanao del Norte
+1003513020,Santa Cruz,Matungao,1003513000,Lanao del Norte
+1003513021,Somiorang,Matungao,1003513000,Lanao del Norte
+1003514001,Bacayawan,Munai,1003514000,Lanao del Norte
+1003514002,Balabacun,Munai,1003514000,Lanao del Norte
+1003514003,Balintad,Munai,1003514000,Lanao del Norte
+1003514005,Kadayonan,Munai,1003514000,Lanao del Norte
+1003514008,Dalama,Munai,1003514000,Lanao del Norte
+1003514011,Lindongan,Munai,1003514000,Lanao del Norte
+1003514012,Lingco-an,Munai,1003514000,Lanao del Norte
+1003514013,Lininding,Munai,1003514000,Lanao del Norte
+1003514014,Lumba-Bayabao,Munai,1003514000,Lanao del Norte
+1003514015,Madaya,Munai,1003514000,Lanao del Norte
+1003514016,Maganding,Munai,1003514000,Lanao del Norte
+1003514019,Matampay,Munai,1003514000,Lanao del Norte
+1003514020,Old Poblacion,Munai,1003514000,Lanao del Norte
+1003514021,North Cadulawan,Munai,1003514000,Lanao del Norte
+1003514022,Panggao,Munai,1003514000,Lanao del Norte
+1003514023,Pantao,Munai,1003514000,Lanao del Norte
+1003514024,Pantao-A-Munai,Munai,1003514000,Lanao del Norte
+1003514025,Pantaon,Munai,1003514000,Lanao del Norte
+1003514026,Pindolonan,Munai,1003514000,Lanao del Norte
+1003514027,Punong,Munai,1003514000,Lanao del Norte
+1003514028,Ramain,Munai,1003514000,Lanao del Norte
+1003514029,Sandigamunai,Munai,1003514000,Lanao del Norte
+1003514031,Tagoranao,Munai,1003514000,Lanao del Norte
+1003514032,Tambo,Munai,1003514000,Lanao del Norte
+1003514033,Tamparan,Munai,1003514000,Lanao del Norte
+1003514034,Taporog,Munai,1003514000,Lanao del Norte
+1003515001,Abaga,Nunungan,1003515000,Lanao del Norte
+1003515002,Bangco,Nunungan,1003515000,Lanao del Norte
+1003515003,Canibongan,Nunungan,1003515000,Lanao del Norte
+1003515004,Karcum,Nunungan,1003515000,Lanao del Norte
+1003515005,Dimayon,Nunungan,1003515000,Lanao del Norte
+1003515006,Inayawan,Nunungan,1003515000,Lanao del Norte
+1003515008,Kaludan,Nunungan,1003515000,Lanao del Norte
+1003515010,Katubuan,Nunungan,1003515000,Lanao del Norte
+1003515011,Cabasaran,Nunungan,1003515000,Lanao del Norte
+1003515012,Liangan,Nunungan,1003515000,Lanao del Norte
+1003515013,Lupitan,Nunungan,1003515000,Lanao del Norte
+1003515014,Mangan,Nunungan,1003515000,Lanao del Norte
+1003515015,Malaig,Nunungan,1003515000,Lanao del Norte
+1003515016,Masibay,Nunungan,1003515000,Lanao del Norte
+1003515017,Poblacion,Nunungan,1003515000,Lanao del Norte
+1003515018,Notongan,Nunungan,1003515000,Lanao del Norte
+1003515019,Petadun,Nunungan,1003515000,Lanao del Norte
+1003515020,Panganapan,Nunungan,1003515000,Lanao del Norte
+1003515021,Pantar,Nunungan,1003515000,Lanao del Norte
+1003515022,Paridi,Nunungan,1003515000,Lanao del Norte
+1003515023,Rarab,Nunungan,1003515000,Lanao del Norte
+1003515024,Raraban,Nunungan,1003515000,Lanao del Norte
+1003515025,Rebucon,Nunungan,1003515000,Lanao del Norte
+1003515026,Songgod,Nunungan,1003515000,Lanao del Norte
+1003515027,Taraka,Nunungan,1003515000,Lanao del Norte
+1003516001,Aloon,Pantao Ragat,1003516000,Lanao del Norte
+1003516003,Banday,Pantao Ragat,1003516000,Lanao del Norte
+1003516004,Bobonga Pantao Ragat,Pantao Ragat,1003516000,Lanao del Norte
+1003516005,Bobonga Radapan,Pantao Ragat,1003516000,Lanao del Norte
+1003516006,Cabasagan,Pantao Ragat,1003516000,Lanao del Norte
+1003516008,Calawe,Pantao Ragat,1003516000,Lanao del Norte
+1003516009,Culubun,Pantao Ragat,1003516000,Lanao del Norte
+1003516010,Dilimbayan,Pantao Ragat,1003516000,Lanao del Norte
+1003516011,Dimayon,Pantao Ragat,1003516000,Lanao del Norte
+1003516012,Poblacion East,Pantao Ragat,1003516000,Lanao del Norte
+1003516013,Lomidong,Pantao Ragat,1003516000,Lanao del Norte
+1003516015,Madaya,Pantao Ragat,1003516000,Lanao del Norte
+1003516016,Maliwanag,Pantao Ragat,1003516000,Lanao del Norte
+1003516017,Matampay,Pantao Ragat,1003516000,Lanao del Norte
+1003516018,Natangcopan,Pantao Ragat,1003516000,Lanao del Norte
+1003516019,Pansor,Pantao Ragat,1003516000,Lanao del Norte
+1003516021,Pantao Marug,Pantao Ragat,1003516000,Lanao del Norte
+1003516022,Tangcal,Pantao Ragat,1003516000,Lanao del Norte
+1003516023,Tongcopan,Pantao Ragat,1003516000,Lanao del Norte
+1003516024,Poblacion West,Pantao Ragat,1003516000,Lanao del Norte
+1003517001,Alowin,Poona Piagapo,1003517000,Lanao del Norte
+1003517002,Bubong-Dinaig,Poona Piagapo,1003517000,Lanao del Norte
+1003517003,Caromatan,Poona Piagapo,1003517000,Lanao del Norte
+1003517004,Daramba,Poona Piagapo,1003517000,Lanao del Norte
+1003517005,Dinaig,Poona Piagapo,1003517000,Lanao del Norte
+1003517007,Cabasaran,Poona Piagapo,1003517000,Lanao del Norte
+1003517008,Kablangan,Poona Piagapo,1003517000,Lanao del Norte
+1003517009,Cadayonan,Poona Piagapo,1003517000,Lanao del Norte
+1003517010,Linindingan,Poona Piagapo,1003517000,Lanao del Norte
+1003517012,Lumbatan,Poona Piagapo,1003517000,Lanao del Norte
+1003517013,Lupitan,Poona Piagapo,1003517000,Lanao del Norte
+1003517014,Madamba,Poona Piagapo,1003517000,Lanao del Norte
+1003517015,Madaya,Poona Piagapo,1003517000,Lanao del Norte
+1003517016,Maliwanag,Poona Piagapo,1003517000,Lanao del Norte
+1003517017,Nunang,Poona Piagapo,1003517000,Lanao del Norte
+1003517018,Nunungan,Poona Piagapo,1003517000,Lanao del Norte
+1003517019,Pantao Raya,Poona Piagapo,1003517000,Lanao del Norte
+1003517020,Pantaon,Poona Piagapo,1003517000,Lanao del Norte
+1003517021,Pened,Poona Piagapo,1003517000,Lanao del Norte
+1003517022,Piangamangaan,Poona Piagapo,1003517000,Lanao del Norte
+1003517023,Pendolonan,Poona Piagapo,1003517000,Lanao del Norte
+1003517024,Poblacion,Poona Piagapo,1003517000,Lanao del Norte
+1003517025,Sulo,Poona Piagapo,1003517000,Lanao del Norte
+1003517026,Tagoranao,Poona Piagapo,1003517000,Lanao del Norte
+1003517027,Tangclao,Poona Piagapo,1003517000,Lanao del Norte
+1003517028,Timbangalan,Poona Piagapo,1003517000,Lanao del Norte
+1003518001,Barandia,Salvador,1003518000,Lanao del Norte
+1003518002,Bulacon,Salvador,1003518000,Lanao del Norte
+1003518003,Buntong,Salvador,1003518000,Lanao del Norte
+1003518004,Calimodan,Salvador,1003518000,Lanao del Norte
+1003518005,Camp III,Salvador,1003518000,Lanao del Norte
+1003518006,Curva-Miagao,Salvador,1003518000,Lanao del Norte
+1003518007,Daligdigan,Salvador,1003518000,Lanao del Norte
+1003518008,Kilala,Salvador,1003518000,Lanao del Norte
+1003518009,Mabatao,Salvador,1003518000,Lanao del Norte
+1003518010,Madaya,Salvador,1003518000,Lanao del Norte
+1003518011,Mamaanon,Salvador,1003518000,Lanao del Norte
+1003518012,Mapantao,Salvador,1003518000,Lanao del Norte
+1003518013,Mindalano,Salvador,1003518000,Lanao del Norte
+1003518014,Padianan,Salvador,1003518000,Lanao del Norte
+1003518015,Pagalongan,Salvador,1003518000,Lanao del Norte
+1003518016,Pagayawan,Salvador,1003518000,Lanao del Norte
+1003518017,Panaliwad-on,Salvador,1003518000,Lanao del Norte
+1003518018,Pangantapan,Salvador,1003518000,Lanao del Norte
+1003518019,Pansor,Salvador,1003518000,Lanao del Norte
+1003518020,Patidon,Salvador,1003518000,Lanao del Norte
+1003518021,Pawak,Salvador,1003518000,Lanao del Norte
+1003518022,Poblacion,Salvador,1003518000,Lanao del Norte
+1003518023,Saumay,Salvador,1003518000,Lanao del Norte
+1003518024,Sudlon,Salvador,1003518000,Lanao del Norte
+1003518025,Inasagan,Salvador,1003518000,Lanao del Norte
+1003519001,Baning,Sapad,1003519000,Lanao del Norte
+1003519002,Buriasan,Sapad,1003519000,Lanao del Norte
+1003519004,Dansalan,Sapad,1003519000,Lanao del Norte
+1003519005,Gamal,Sapad,1003519000,Lanao del Norte
+1003519006,Inudaran I,Sapad,1003519000,Lanao del Norte
+1003519007,Inudaran II,Sapad,1003519000,Lanao del Norte
+1003519008,Karkum,Sapad,1003519000,Lanao del Norte
+1003519009,Katipunan,Sapad,1003519000,Lanao del Norte
+1003519010,Mabugnao,Sapad,1003519000,Lanao del Norte
+1003519011,Maito Salug,Sapad,1003519000,Lanao del Norte
+1003519012,Mala Salug,Sapad,1003519000,Lanao del Norte
+1003519013,Mama-anon,Sapad,1003519000,Lanao del Norte
+1003519014,Mapurog,Sapad,1003519000,Lanao del Norte
+1003519016,Pancilan,Sapad,1003519000,Lanao del Norte
+1003519017,Panoloon,Sapad,1003519000,Lanao del Norte
+1003519018,Pili,Sapad,1003519000,Lanao del Norte
+1003519019,Sapad,Sapad,1003519000,Lanao del Norte
+1003520001,Dalamas,Tagoloan,1003520000,Lanao del Norte
+1003520002,Darimbang,Tagoloan,1003520000,Lanao del Norte
+1003520003,Dimayon,Tagoloan,1003520000,Lanao del Norte
+1003520004,Inagongan,Tagoloan,1003520000,Lanao del Norte
+1003520005,Kiazar,Tagoloan,1003520000,Lanao del Norte
+1003520006,Malimbato,Tagoloan,1003520000,Lanao del Norte
+1003520007,Panalawan,Tagoloan,1003520000,Lanao del Norte
+1003521001,Small Banisilon,Tangcal,1003521000,Lanao del Norte
+1003521003,Bayabao,Tangcal,1003521000,Lanao del Norte
+1003521004,Berwar,Tangcal,1003521000,Lanao del Norte
+1003521005,Big Banisilon,Tangcal,1003521000,Lanao del Norte
+1003521006,Big Meladoc,Tangcal,1003521000,Lanao del Norte
+1003521007,Bubong,Tangcal,1003521000,Lanao del Norte
+1003521008,Lamaosa,Tangcal,1003521000,Lanao del Norte
+1003521009,Linao,Tangcal,1003521000,Lanao del Norte
+1003521010,Lindongan,Tangcal,1003521000,Lanao del Norte
+1003521011,Lingco-an,Tangcal,1003521000,Lanao del Norte
+1003521013,Small Meladoc,Tangcal,1003521000,Lanao del Norte
+1003521014,Papan,Tangcal,1003521000,Lanao del Norte
+1003521016,Pelingkingan,Tangcal,1003521000,Lanao del Norte
+1003521017,Poblacion,Tangcal,1003521000,Lanao del Norte
+1003521018,Poona Kapatagan,Tangcal,1003521000,Lanao del Norte
+1003521019,Punod,Tangcal,1003521000,Lanao del Norte
+1003521021,Somiorang,Tangcal,1003521000,Lanao del Norte
+1003521024,Tangcal Proper,Tangcal,1003521000,Lanao del Norte
+1003522001,Barakanas,Tubod,1003522000,Lanao del Norte
+1003522002,Baris,Tubod,1003522000,Lanao del Norte
+1003522003,Bualan,Tubod,1003522000,Lanao del Norte
+1003522004,Bulod,Tubod,1003522000,Lanao del Norte
+1003522005,Camp V,Tubod,1003522000,Lanao del Norte
+1003522006,Candis,Tubod,1003522000,Lanao del Norte
+1003522007,Caniogan,Tubod,1003522000,Lanao del Norte
+1003522008,Dalama,Tubod,1003522000,Lanao del Norte
+1003522010,Kakai Renabor,Tubod,1003522000,Lanao del Norte
+1003522011,Kalilangan,Tubod,1003522000,Lanao del Norte
+1003522012,Licapao,Tubod,1003522000,Lanao del Norte
+1003522014,Malingao,Tubod,1003522000,Lanao del Norte
+1003522015,Palao,Tubod,1003522000,Lanao del Norte
+1003522016,Patudan,Tubod,1003522000,Lanao del Norte
+1003522017,Pigcarangan,Tubod,1003522000,Lanao del Norte
+1003522018,Pinpin,Tubod,1003522000,Lanao del Norte
+1003522019,Poblacion,Tubod,1003522000,Lanao del Norte
+1003522020,Pualas,Tubod,1003522000,Lanao del Norte
+1003522021,San Antonio,Tubod,1003522000,Lanao del Norte
+1003522022,Santo Niño,Tubod,1003522000,Lanao del Norte
+1003522023,Taden,Tubod,1003522000,Lanao del Norte
+1003522024,Tangueguiron,Tubod,1003522000,Lanao del Norte
+1003522025,Taguranao,Tubod,1003522000,Lanao del Norte
+1003522026,Tubaran,Tubod,1003522000,Lanao del Norte
+1003523001,Bangcal,Pantar,1003523000,Lanao del Norte
+1003523003,Bubong Madaya,Pantar,1003523000,Lanao del Norte
+1003523005,Bowi,Pantar,1003523000,Lanao del Norte
+1003523006,Cabasaran,Pantar,1003523000,Lanao del Norte
+1003523007,Cadayonan,Pantar,1003523000,Lanao del Norte
+1003523008,Campong,Pantar,1003523000,Lanao del Norte
+1003523010,Dibarosan,Pantar,1003523000,Lanao del Norte
+1003523012,Kalanganan East,Pantar,1003523000,Lanao del Norte
+1003523013,Kalanganan Lower,Pantar,1003523000,Lanao del Norte
+1003523014,Kalilangan,Pantar,1003523000,Lanao del Norte
+1003523016,Pantao-Marug,Pantar,1003523000,Lanao del Norte
+1003523017,Pantao-Ranao,Pantar,1003523000,Lanao del Norte
+1003523018,Pantar East,Pantar,1003523000,Lanao del Norte
+1003523019,Poblacion,Pantar,1003523000,Lanao del Norte
+1003523021,Pitubo,Pantar,1003523000,Lanao del Norte
+1003523022,Poona-Punod,Pantar,1003523000,Lanao del Norte
+1003523023,Punod,Pantar,1003523000,Lanao del Norte
+1003523026,Sundiga-Punod,Pantar,1003523000,Lanao del Norte
+1003523029,Tawanan,Pantar,1003523000,Lanao del Norte
+1003523030,West Pantar,Pantar,1003523000,Lanao del Norte
+1003523031,Lumba-Punod,Pantar,1003523000,Lanao del Norte
+1004201001,Balintonga,Aloran,1004201000,Misamis Occidental
+1004201002,Banisilon,Aloran,1004201000,Misamis Occidental
+1004201003,Burgos,Aloran,1004201000,Misamis Occidental
+1004201004,Calube,Aloran,1004201000,Misamis Occidental
+1004201005,Caputol,Aloran,1004201000,Misamis Occidental
+1004201006,Casusan,Aloran,1004201000,Misamis Occidental
+1004201007,Conat,Aloran,1004201000,Misamis Occidental
+1004201008,Culpan,Aloran,1004201000,Misamis Occidental
+1004201009,Dalisay,Aloran,1004201000,Misamis Occidental
+1004201010,Dullan,Aloran,1004201000,Misamis Occidental
+1004201011,Ibabao,Aloran,1004201000,Misamis Occidental
+1004201012,Tubod,Aloran,1004201000,Misamis Occidental
+1004201013,Labo,Aloran,1004201000,Misamis Occidental
+1004201014,Lawa-an,Aloran,1004201000,Misamis Occidental
+1004201015,Lobogon,Aloran,1004201000,Misamis Occidental
+1004201016,Lumbayao,Aloran,1004201000,Misamis Occidental
+1004201017,Makawa,Aloran,1004201000,Misamis Occidental
+1004201018,Manamong,Aloran,1004201000,Misamis Occidental
+1004201019,Matipaz,Aloran,1004201000,Misamis Occidental
+1004201020,Maular,Aloran,1004201000,Misamis Occidental
+1004201021,Mitazan,Aloran,1004201000,Misamis Occidental
+1004201022,Mohon,Aloran,1004201000,Misamis Occidental
+1004201023,Monterico,Aloran,1004201000,Misamis Occidental
+1004201024,Nabuna,Aloran,1004201000,Misamis Occidental
+1004201025,Palayan,Aloran,1004201000,Misamis Occidental
+1004201026,Pelong,Aloran,1004201000,Misamis Occidental
+1004201027,Ospital,Aloran,1004201000,Misamis Occidental
+1004201028,Roxas,Aloran,1004201000,Misamis Occidental
+1004201029,San Pedro,Aloran,1004201000,Misamis Occidental
+1004201030,Santa Ana,Aloran,1004201000,Misamis Occidental
+1004201031,Sinampongan,Aloran,1004201000,Misamis Occidental
+1004201032,Taguanao,Aloran,1004201000,Misamis Occidental
+1004201033,Tawi-tawi,Aloran,1004201000,Misamis Occidental
+1004201034,Toril,Aloran,1004201000,Misamis Occidental
+1004201035,Tuburan,Aloran,1004201000,Misamis Occidental
+1004201036,Zamora,Aloran,1004201000,Misamis Occidental
+1004201037,Macubon,Aloran,1004201000,Misamis Occidental
+1004201038,Tugaya,Aloran,1004201000,Misamis Occidental
+1004202001,Del Pilar,Baliangao,1004202000,Misamis Occidental
+1004202002,Landing,Baliangao,1004202000,Misamis Occidental
+1004202003,Lumipac,Baliangao,1004202000,Misamis Occidental
+1004202004,Lusot,Baliangao,1004202000,Misamis Occidental
+1004202005,Mabini,Baliangao,1004202000,Misamis Occidental
+1004202006,Magsaysay,Baliangao,1004202000,Misamis Occidental
+1004202007,Misom,Baliangao,1004202000,Misamis Occidental
+1004202008,Mitacas,Baliangao,1004202000,Misamis Occidental
+1004202009,Naburos,Baliangao,1004202000,Misamis Occidental
+1004202010,Northern Poblacion,Baliangao,1004202000,Misamis Occidental
+1004202011,Punta Miray,Baliangao,1004202000,Misamis Occidental
+1004202012,Punta Sulong,Baliangao,1004202000,Misamis Occidental
+1004202013,Sinian,Baliangao,1004202000,Misamis Occidental
+1004202014,Southern Poblacion,Baliangao,1004202000,Misamis Occidental
+1004202015,Tugas,Baliangao,1004202000,Misamis Occidental
+1004203002,Bag-ong Anonang,Bonifacio,1004203000,Misamis Occidental
+1004203003,Bagumbang,Bonifacio,1004203000,Misamis Occidental
+1004203004,Baybay,Bonifacio,1004203000,Misamis Occidental
+1004203005,Bolinsong,Bonifacio,1004203000,Misamis Occidental
+1004203006,Buenavista,Bonifacio,1004203000,Misamis Occidental
+1004203007,Buracan,Bonifacio,1004203000,Misamis Occidental
+1004203009,Calolot,Bonifacio,1004203000,Misamis Occidental
+1004203010,Dimalco,Bonifacio,1004203000,Misamis Occidental
+1004203011,Dullan,Bonifacio,1004203000,Misamis Occidental
+1004203012,Kanaokanao,Bonifacio,1004203000,Misamis Occidental
+1004203013,Liloan,Bonifacio,1004203000,Misamis Occidental
+1004203014,Linconan,Bonifacio,1004203000,Misamis Occidental
+1004203015,Lodiong,Bonifacio,1004203000,Misamis Occidental
+1004203016,Lower Usugan,Bonifacio,1004203000,Misamis Occidental
+1004203017,Mapurog,Bonifacio,1004203000,Misamis Occidental
+1004203019,Migpange,Bonifacio,1004203000,Misamis Occidental
+1004203020,Montol,Bonifacio,1004203000,Misamis Occidental
+1004203023,Pisa-an,Bonifacio,1004203000,Misamis Occidental
+1004203024,Poblacion,Bonifacio,1004203000,Misamis Occidental
+1004203025,Remedios,Bonifacio,1004203000,Misamis Occidental
+1004203026,Rufino Lumapas,Bonifacio,1004203000,Misamis Occidental
+1004203027,Sibuyon,Bonifacio,1004203000,Misamis Occidental
+1004203028,Tangab,Bonifacio,1004203000,Misamis Occidental
+1004203029,Tiaman,Bonifacio,1004203000,Misamis Occidental
+1004203030,Tusik,Bonifacio,1004203000,Misamis Occidental
+1004203031,Upper Usogan,Bonifacio,1004203000,Misamis Occidental
+1004203032,Demetrio Fernan,Bonifacio,1004203000,Misamis Occidental
+1004203033,Digson,Bonifacio,1004203000,Misamis Occidental
+1004204001,Bonifacio,Calamba,1004204000,Misamis Occidental
+1004204002,Bunawan,Calamba,1004204000,Misamis Occidental
+1004204003,Calaran,Calamba,1004204000,Misamis Occidental
+1004204004,Dapacan Alto,Calamba,1004204000,Misamis Occidental
+1004204005,Dapacan Bajo,Calamba,1004204000,Misamis Occidental
+1004204006,Langub,Calamba,1004204000,Misamis Occidental
+1004204007,Libertad,Calamba,1004204000,Misamis Occidental
+1004204008,Magcamiguing,Calamba,1004204000,Misamis Occidental
+1004204009,Mamalad,Calamba,1004204000,Misamis Occidental
+1004204010,Mauswagon,Calamba,1004204000,Misamis Occidental
+1004204011,Northern Poblacion,Calamba,1004204000,Misamis Occidental
+1004204012,Salvador,Calamba,1004204000,Misamis Occidental
+1004204013,San Isidro,Calamba,1004204000,Misamis Occidental
+1004204014,Siloy,Calamba,1004204000,Misamis Occidental
+1004204015,Singalat,Calamba,1004204000,Misamis Occidental
+1004204016,Solinog,Calamba,1004204000,Misamis Occidental
+1004204017,Southwestern Poblacion,Calamba,1004204000,Misamis Occidental
+1004204018,Sulipat,Calamba,1004204000,Misamis Occidental
+1004204019,Don Bernardo Nery Pob.,Calamba,1004204000,Misamis Occidental
+1004205002,Bernad,Clarin,1004205000,Misamis Occidental
+1004205003,Bito-on,Clarin,1004205000,Misamis Occidental
+1004205004,Cabunga-an,Clarin,1004205000,Misamis Occidental
+1004205005,Canibungan Daku,Clarin,1004205000,Misamis Occidental
+1004205006,Canibungan Putol,Clarin,1004205000,Misamis Occidental
+1004205007,Canipacan,Clarin,1004205000,Misamis Occidental
+1004205008,Dalingap,Clarin,1004205000,Misamis Occidental
+1004205009,Dela Paz,Clarin,1004205000,Misamis Occidental
+1004205010,Dolores,Clarin,1004205000,Misamis Occidental
+1004205011,Gata Daku,Clarin,1004205000,Misamis Occidental
+1004205012,Gata Diot,Clarin,1004205000,Misamis Occidental
+1004205013,Guba,Clarin,1004205000,Misamis Occidental
+1004205014,Kinangay Norte,Clarin,1004205000,Misamis Occidental
+1004205015,Kinangay Sur,Clarin,1004205000,Misamis Occidental
+1004205016,Lapasan,Clarin,1004205000,Misamis Occidental
+1004205017,Lupagan,Clarin,1004205000,Misamis Occidental
+1004205018,Malibangcao,Clarin,1004205000,Misamis Occidental
+1004205019,Masabud,Clarin,1004205000,Misamis Occidental
+1004205020,Mialen,Clarin,1004205000,Misamis Occidental
+1004205021,Pan-ay,Clarin,1004205000,Misamis Occidental
+1004205022,Penacio,Clarin,1004205000,Misamis Occidental
+1004205023,Poblacion I,Clarin,1004205000,Misamis Occidental
+1004205024,Segatic Daku,Clarin,1004205000,Misamis Occidental
+1004205025,Segatic Diot,Clarin,1004205000,Misamis Occidental
+1004205026,Sebasi,Clarin,1004205000,Misamis Occidental
+1004205027,Tinacla-an,Clarin,1004205000,Misamis Occidental
+1004205028,Poblacion II,Clarin,1004205000,Misamis Occidental
+1004205029,Poblacion III,Clarin,1004205000,Misamis Occidental
+1004205030,Poblacion IV,Clarin,1004205000,Misamis Occidental
+1004206001,Bagong Nayon,Concepcion,1004206000,Misamis Occidental
+1004206002,Capule,Concepcion,1004206000,Misamis Occidental
+1004206003,New Casul,Concepcion,1004206000,Misamis Occidental
+1004206004,Guiban,Concepcion,1004206000,Misamis Occidental
+1004206005,Laya-an,Concepcion,1004206000,Misamis Occidental
+1004206006,Lingatongan,Concepcion,1004206000,Misamis Occidental
+1004206007,Maligubaan,Concepcion,1004206000,Misamis Occidental
+1004206008,Mantukoy,Concepcion,1004206000,Misamis Occidental
+1004206009,Marugang,Concepcion,1004206000,Misamis Occidental
+1004206011,Poblacion,Concepcion,1004206000,Misamis Occidental
+1004206012,Pogan,Concepcion,1004206000,Misamis Occidental
+1004206013,Small Potongan,Concepcion,1004206000,Misamis Occidental
+1004206014,Soso-on,Concepcion,1004206000,Misamis Occidental
+1004206015,Upper Dapitan,Concepcion,1004206000,Misamis Occidental
+1004206016,Upper Dioyo,Concepcion,1004206000,Misamis Occidental
+1004206017,Upper Potongan,Concepcion,1004206000,Misamis Occidental
+1004206018,Upper Salimpono,Concepcion,1004206000,Misamis Occidental
+1004206019,Virayan,Concepcion,1004206000,Misamis Occidental
+1004207001,Adorable,Jimenez,1004207000,Misamis Occidental
+1004207002,Butuay,Jimenez,1004207000,Misamis Occidental
+1004207003,Carmen,Jimenez,1004207000,Misamis Occidental
+1004207004,Corrales,Jimenez,1004207000,Misamis Occidental
+1004207005,Dicoloc,Jimenez,1004207000,Misamis Occidental
+1004207006,Gata,Jimenez,1004207000,Misamis Occidental
+1004207007,Guintomoyan,Jimenez,1004207000,Misamis Occidental
+1004207008,Malibacsan,Jimenez,1004207000,Misamis Occidental
+1004207009,Macabayao,Jimenez,1004207000,Misamis Occidental
+1004207010,Matugas Alto,Jimenez,1004207000,Misamis Occidental
+1004207011,Matugas Bajo,Jimenez,1004207000,Misamis Occidental
+1004207012,Mialem,Jimenez,1004207000,Misamis Occidental
+1004207014,Naga,Jimenez,1004207000,Misamis Occidental
+1004207015,Palilan,Jimenez,1004207000,Misamis Occidental
+1004207016,Nacional,Jimenez,1004207000,Misamis Occidental
+1004207017,Rizal,Jimenez,1004207000,Misamis Occidental
+1004207018,San Isidro,Jimenez,1004207000,Misamis Occidental
+1004207019,Santa Cruz,Jimenez,1004207000,Misamis Occidental
+1004207020,Sibaroc,Jimenez,1004207000,Misamis Occidental
+1004207021,Sinara Alto,Jimenez,1004207000,Misamis Occidental
+1004207022,Sinara Bajo,Jimenez,1004207000,Misamis Occidental
+1004207023,Seti,Jimenez,1004207000,Misamis Occidental
+1004207024,Tabo-o,Jimenez,1004207000,Misamis Occidental
+1004207025,Taraka,Jimenez,1004207000,Misamis Occidental
+1004208001,Alegria,Lopez Jaena,1004208000,Misamis Occidental
+1004208002,Bagong Silang,Lopez Jaena,1004208000,Misamis Occidental
+1004208003,Biasong,Lopez Jaena,1004208000,Misamis Occidental
+1004208004,Bonifacio,Lopez Jaena,1004208000,Misamis Occidental
+1004208005,Burgos,Lopez Jaena,1004208000,Misamis Occidental
+1004208006,Dalacon,Lopez Jaena,1004208000,Misamis Occidental
+1004208007,Dampalan,Lopez Jaena,1004208000,Misamis Occidental
+1004208008,Estante,Lopez Jaena,1004208000,Misamis Occidental
+1004208010,Jasa-an,Lopez Jaena,1004208000,Misamis Occidental
+1004208011,Katipa,Lopez Jaena,1004208000,Misamis Occidental
+1004208012,Luzaran,Lopez Jaena,1004208000,Misamis Occidental
+1004208013,Macalibre Alto,Lopez Jaena,1004208000,Misamis Occidental
+1004208014,Macalibre Bajo,Lopez Jaena,1004208000,Misamis Occidental
+1004208015,Mahayahay,Lopez Jaena,1004208000,Misamis Occidental
+1004208016,Manguehan,Lopez Jaena,1004208000,Misamis Occidental
+1004208017,Mansabay Bajo,Lopez Jaena,1004208000,Misamis Occidental
+1004208018,Molatuhan Alto,Lopez Jaena,1004208000,Misamis Occidental
+1004208019,Molatuhan Bajo,Lopez Jaena,1004208000,Misamis Occidental
+1004208021,Peniel,Lopez Jaena,1004208000,Misamis Occidental
+1004208022,Eastern Poblacion,Lopez Jaena,1004208000,Misamis Occidental
+1004208023,Puntod,Lopez Jaena,1004208000,Misamis Occidental
+1004208024,Rizal,Lopez Jaena,1004208000,Misamis Occidental
+1004208025,Sibugon,Lopez Jaena,1004208000,Misamis Occidental
+1004208026,Sibula,Lopez Jaena,1004208000,Misamis Occidental
+1004208027,Don Andres Soriano,Lopez Jaena,1004208000,Misamis Occidental
+1004208028,Mabas,Lopez Jaena,1004208000,Misamis Occidental
+1004208029,Mansabay Alto,Lopez Jaena,1004208000,Misamis Occidental
+1004208030,Western Poblacion,Lopez Jaena,1004208000,Misamis Occidental
+1004209001,Apil,Oroquieta,1004209000,Misamis Occidental
+1004209002,Binuangan,Oroquieta,1004209000,Misamis Occidental
+1004209003,Bolibol,Oroquieta,1004209000,Misamis Occidental
+1004209004,Buenavista,Oroquieta,1004209000,Misamis Occidental
+1004209005,Bunga,Oroquieta,1004209000,Misamis Occidental
+1004209006,Buntawan,Oroquieta,1004209000,Misamis Occidental
+1004209007,Burgos,Oroquieta,1004209000,Misamis Occidental
+1004209008,Canubay,Oroquieta,1004209000,Misamis Occidental
+1004209009,Clarin Settlement,Oroquieta,1004209000,Misamis Occidental
+1004209010,Dolipos Bajo,Oroquieta,1004209000,Misamis Occidental
+1004209011,Dolipos Alto,Oroquieta,1004209000,Misamis Occidental
+1004209012,Dulapo,Oroquieta,1004209000,Misamis Occidental
+1004209013,Dullan Norte,Oroquieta,1004209000,Misamis Occidental
+1004209014,Dullan Sur,Oroquieta,1004209000,Misamis Occidental
+1004209015,Lamac Lower,Oroquieta,1004209000,Misamis Occidental
+1004209016,Lamac Upper,Oroquieta,1004209000,Misamis Occidental
+1004209017,Langcangan Lower,Oroquieta,1004209000,Misamis Occidental
+1004209018,Langcangan Proper,Oroquieta,1004209000,Misamis Occidental
+1004209019,Langcangan Upper,Oroquieta,1004209000,Misamis Occidental
+1004209020,Layawan,Oroquieta,1004209000,Misamis Occidental
+1004209021,Loboc Lower,Oroquieta,1004209000,Misamis Occidental
+1004209022,Loboc Upper,Oroquieta,1004209000,Misamis Occidental
+1004209023,Rizal Lower,Oroquieta,1004209000,Misamis Occidental
+1004209024,Malindang,Oroquieta,1004209000,Misamis Occidental
+1004209025,Mialen,Oroquieta,1004209000,Misamis Occidental
+1004209026,Mobod,Oroquieta,1004209000,Misamis Occidental
+1004209027,Ciriaco C. Pastrano,Oroquieta,1004209000,Misamis Occidental
+1004209028,Paypayan,Oroquieta,1004209000,Misamis Occidental
+1004209029,Pines,Oroquieta,1004209000,Misamis Occidental
+1004209030,Poblacion I,Oroquieta,1004209000,Misamis Occidental
+1004209031,Poblacion II,Oroquieta,1004209000,Misamis Occidental
+1004209033,San Vicente Alto,Oroquieta,1004209000,Misamis Occidental
+1004209034,San Vicente Bajo,Oroquieta,1004209000,Misamis Occidental
+1004209035,Sebucal,Oroquieta,1004209000,Misamis Occidental
+1004209036,Senote,Oroquieta,1004209000,Misamis Occidental
+1004209037,Taboc Norte,Oroquieta,1004209000,Misamis Occidental
+1004209038,Taboc Sur,Oroquieta,1004209000,Misamis Occidental
+1004209039,Talairon,Oroquieta,1004209000,Misamis Occidental
+1004209040,Talic,Oroquieta,1004209000,Misamis Occidental
+1004209041,Toliyok,Oroquieta,1004209000,Misamis Occidental
+1004209042,Tipan,Oroquieta,1004209000,Misamis Occidental
+1004209043,Tuyabang Alto,Oroquieta,1004209000,Misamis Occidental
+1004209044,Tuyabang Bajo,Oroquieta,1004209000,Misamis Occidental
+1004209045,Tuyabang Proper,Oroquieta,1004209000,Misamis Occidental
+1004209046,Rizal Upper,Oroquieta,1004209000,Misamis Occidental
+1004209047,Victoria,Oroquieta,1004209000,Misamis Occidental
+1004209048,Villaflor,Oroquieta,1004209000,Misamis Occidental
+1004210001,Aguada,Ozamiz,1004210000,Misamis Occidental
+1004210002,Banadero,Ozamiz,1004210000,Misamis Occidental
+1004210003,Bacolod,Ozamiz,1004210000,Misamis Occidental
+1004210004,Bagakay,Ozamiz,1004210000,Misamis Occidental
+1004210005,Balintawak,Ozamiz,1004210000,Misamis Occidental
+1004210006,Baybay Santa Cruz,Ozamiz,1004210000,Misamis Occidental
+1004210007,Baybay Triunfo,Ozamiz,1004210000,Misamis Occidental
+1004210008,Bongbong,Ozamiz,1004210000,Misamis Occidental
+1004210009,Calabayan,Ozamiz,1004210000,Misamis Occidental
+1004210010,Capucao C.,Ozamiz,1004210000,Misamis Occidental
+1004210011,Capucao P.,Ozamiz,1004210000,Misamis Occidental
+1004210012,Carangan,Ozamiz,1004210000,Misamis Occidental
+1004210013,Catadman-Manabay,Ozamiz,1004210000,Misamis Occidental
+1004210014,Cavinte,Ozamiz,1004210000,Misamis Occidental
+1004210015,Cogon,Ozamiz,1004210000,Misamis Occidental
+1004210016,Dalapang,Ozamiz,1004210000,Misamis Occidental
+1004210017,Diguan,Ozamiz,1004210000,Misamis Occidental
+1004210018,Dimaluna,Ozamiz,1004210000,Misamis Occidental
+1004210019,Embargo,Ozamiz,1004210000,Misamis Occidental
+1004210020,Gala,Ozamiz,1004210000,Misamis Occidental
+1004210021,Gango,Ozamiz,1004210000,Misamis Occidental
+1004210022,Gotokan Daku,Ozamiz,1004210000,Misamis Occidental
+1004210023,Gotokan Diot,Ozamiz,1004210000,Misamis Occidental
+1004210024,Guimad,Ozamiz,1004210000,Misamis Occidental
+1004210025,Guingona,Ozamiz,1004210000,Misamis Occidental
+1004210026,Kinuman Norte,Ozamiz,1004210000,Misamis Occidental
+1004210027,Kinuman Sur,Ozamiz,1004210000,Misamis Occidental
+1004210028,Labinay,Ozamiz,1004210000,Misamis Occidental
+1004210029,Labo,Ozamiz,1004210000,Misamis Occidental
+1004210030,Lam-an,Ozamiz,1004210000,Misamis Occidental
+1004210031,Liposong,Ozamiz,1004210000,Misamis Occidental
+1004210032,Litapan,Ozamiz,1004210000,Misamis Occidental
+1004210033,Malaubang,Ozamiz,1004210000,Misamis Occidental
+1004210034,Manaka,Ozamiz,1004210000,Misamis Occidental
+1004210035,Maningcol,Ozamiz,1004210000,Misamis Occidental
+1004210036,Mentering,Ozamiz,1004210000,Misamis Occidental
+1004210037,Carmen,Ozamiz,1004210000,Misamis Occidental
+1004210038,Molicay,Ozamiz,1004210000,Misamis Occidental
+1004210039,Stimson Abordo,Ozamiz,1004210000,Misamis Occidental
+1004210040,Pantaon,Ozamiz,1004210000,Misamis Occidental
+1004210041,Pulot,Ozamiz,1004210000,Misamis Occidental
+1004210042,San Antonio,Ozamiz,1004210000,Misamis Occidental
+1004210043,Baybay San Roque,Ozamiz,1004210000,Misamis Occidental
+1004210044,Sangay Daku,Ozamiz,1004210000,Misamis Occidental
+1004210045,Sangay Diot,Ozamiz,1004210000,Misamis Occidental
+1004210046,Sinuza,Ozamiz,1004210000,Misamis Occidental
+1004210047,Tabid,Ozamiz,1004210000,Misamis Occidental
+1004210048,Tinago,Ozamiz,1004210000,Misamis Occidental
+1004210049,Trigos,Ozamiz,1004210000,Misamis Occidental
+1004210051,50th District,Ozamiz,1004210000,Misamis Occidental
+1004210052,Doña Consuelo,Ozamiz,1004210000,Misamis Occidental
+1004211001,Baga,Panaon,1004211000,Misamis Occidental
+1004211002,Bangko,Panaon,1004211000,Misamis Occidental
+1004211003,Camanucan,Panaon,1004211000,Misamis Occidental
+1004211004,Dela Paz,Panaon,1004211000,Misamis Occidental
+1004211005,Lutao,Panaon,1004211000,Misamis Occidental
+1004211006,Magsaysay,Panaon,1004211000,Misamis Occidental
+1004211007,Map-an,Panaon,1004211000,Misamis Occidental
+1004211008,Mohon,Panaon,1004211000,Misamis Occidental
+1004211009,Poblacion,Panaon,1004211000,Misamis Occidental
+1004211010,Punta,Panaon,1004211000,Misamis Occidental
+1004211011,Salimpuno,Panaon,1004211000,Misamis Occidental
+1004211012,San Andres,Panaon,1004211000,Misamis Occidental
+1004211013,San Juan,Panaon,1004211000,Misamis Occidental
+1004211014,San Roque,Panaon,1004211000,Misamis Occidental
+1004211015,Sumasap,Panaon,1004211000,Misamis Occidental
+1004211016,Villalin,Panaon,1004211000,Misamis Occidental
+1004212001,Agunod,Plaridel,1004212000,Misamis Occidental
+1004212002,Bato,Plaridel,1004212000,Misamis Occidental
+1004212003,Buena Voluntad,Plaridel,1004212000,Misamis Occidental
+1004212004,Calaca-an,Plaridel,1004212000,Misamis Occidental
+1004212005,Cartagena Proper,Plaridel,1004212000,Misamis Occidental
+1004212006,Catarman,Plaridel,1004212000,Misamis Occidental
+1004212007,Cebulin,Plaridel,1004212000,Misamis Occidental
+1004212008,Clarin,Plaridel,1004212000,Misamis Occidental
+1004212009,Danao,Plaridel,1004212000,Misamis Occidental
+1004212010,Deboloc,Plaridel,1004212000,Misamis Occidental
+1004212011,Divisoria,Plaridel,1004212000,Misamis Occidental
+1004212012,Eastern Looc,Plaridel,1004212000,Misamis Occidental
+1004212013,Ilisan,Plaridel,1004212000,Misamis Occidental
+1004212014,Katipunan,Plaridel,1004212000,Misamis Occidental
+1004212015,Kauswagan,Plaridel,1004212000,Misamis Occidental
+1004212016,Lao Proper,Plaridel,1004212000,Misamis Occidental
+1004212017,Lao Santa Cruz,Plaridel,1004212000,Misamis Occidental
+1004212018,Looc Proper,Plaridel,1004212000,Misamis Occidental
+1004212019,Mamanga Daku,Plaridel,1004212000,Misamis Occidental
+1004212020,Mamanga Gamay,Plaridel,1004212000,Misamis Occidental
+1004212021,Mangidkid,Plaridel,1004212000,Misamis Occidental
+1004212022,New Cartagena,Plaridel,1004212000,Misamis Occidental
+1004212023,New Look,Plaridel,1004212000,Misamis Occidental
+1004212024,Northern Poblacion,Plaridel,1004212000,Misamis Occidental
+1004212025,Panalsalan,Plaridel,1004212000,Misamis Occidental
+1004212026,Puntod,Plaridel,1004212000,Misamis Occidental
+1004212027,Quirino,Plaridel,1004212000,Misamis Occidental
+1004212028,Santa Cruz,Plaridel,1004212000,Misamis Occidental
+1004212029,Southern Looc,Plaridel,1004212000,Misamis Occidental
+1004212030,Southern Poblacion,Plaridel,1004212000,Misamis Occidental
+1004212031,Tipolo,Plaridel,1004212000,Misamis Occidental
+1004212032,Unidos,Plaridel,1004212000,Misamis Occidental
+1004212033,Usocan,Plaridel,1004212000,Misamis Occidental
+1004213001,Bautista,Sapang Dalaga,1004213000,Misamis Occidental
+1004213002,Bitibut,Sapang Dalaga,1004213000,Misamis Occidental
+1004213003,Boundary,Sapang Dalaga,1004213000,Misamis Occidental
+1004213004,Caluya,Sapang Dalaga,1004213000,Misamis Occidental
+1004213005,Capundag,Sapang Dalaga,1004213000,Misamis Occidental
+1004213006,Casul,Sapang Dalaga,1004213000,Misamis Occidental
+1004213007,Dasa,Sapang Dalaga,1004213000,Misamis Occidental
+1004213008,Dioyo,Sapang Dalaga,1004213000,Misamis Occidental
+1004213009,Guinabot,Sapang Dalaga,1004213000,Misamis Occidental
+1004213010,Libertad,Sapang Dalaga,1004213000,Misamis Occidental
+1004213011,Locus,Sapang Dalaga,1004213000,Misamis Occidental
+1004213012,Manla,Sapang Dalaga,1004213000,Misamis Occidental
+1004213013,Masubong,Sapang Dalaga,1004213000,Misamis Occidental
+1004213016,"Agapito Yap, Sr.",Sapang Dalaga,1004213000,Misamis Occidental
+1004213017,Poblacion,Sapang Dalaga,1004213000,Misamis Occidental
+1004213018,Salimpuno,Sapang Dalaga,1004213000,Misamis Occidental
+1004213019,San Agustin,Sapang Dalaga,1004213000,Misamis Occidental
+1004213020,Sinaad,Sapang Dalaga,1004213000,Misamis Occidental
+1004213021,Sipac,Sapang Dalaga,1004213000,Misamis Occidental
+1004213022,"Sixto Velez, Sr.",Sapang Dalaga,1004213000,Misamis Occidental
+1004213023,Upper Bautista,Sapang Dalaga,1004213000,Misamis Occidental
+1004213024,Ventura,Sapang Dalaga,1004213000,Misamis Occidental
+1004213025,Medallo,Sapang Dalaga,1004213000,Misamis Occidental
+1004213026,Dalumpinas,Sapang Dalaga,1004213000,Misamis Occidental
+1004213027,Disoy,Sapang Dalaga,1004213000,Misamis Occidental
+1004213028,El Paraiso,Sapang Dalaga,1004213000,Misamis Occidental
+1004213029,Macabibo,Sapang Dalaga,1004213000,Misamis Occidental
+1004213030,Sapang Ama,Sapang Dalaga,1004213000,Misamis Occidental
+1004214001,Cagay-anon,Sinacaban,1004214000,Misamis Occidental
+1004214002,Camanse,Sinacaban,1004214000,Misamis Occidental
+1004214004,Colupan Alto,Sinacaban,1004214000,Misamis Occidental
+1004214005,Colupan Bajo,Sinacaban,1004214000,Misamis Occidental
+1004214006,Dinas,Sinacaban,1004214000,Misamis Occidental
+1004214007,Estrella,Sinacaban,1004214000,Misamis Occidental
+1004214008,Katipunan,Sinacaban,1004214000,Misamis Occidental
+1004214010,Libertad Alto,Sinacaban,1004214000,Misamis Occidental
+1004214011,Libertad Bajo,Sinacaban,1004214000,Misamis Occidental
+1004214013,Poblacion,Sinacaban,1004214000,Misamis Occidental
+1004214014,San Isidro Alto,Sinacaban,1004214000,Misamis Occidental
+1004214015,San Isidro Bajo,Sinacaban,1004214000,Misamis Occidental
+1004214016,San Vicente,Sinacaban,1004214000,Misamis Occidental
+1004214017,Señor,Sinacaban,1004214000,Misamis Occidental
+1004214018,Sinonoc,Sinacaban,1004214000,Misamis Occidental
+1004214019,San Lorenzo Ruiz,Sinacaban,1004214000,Misamis Occidental
+1004214020,Tipan,Sinacaban,1004214000,Misamis Occidental
+1004215001,Santa Maria,Tangub,1004215000,Misamis Occidental
+1004215002,Balatacan,Tangub,1004215000,Misamis Occidental
+1004215003,Banglay,Tangub,1004215000,Misamis Occidental
+1004215004,Mantic,Tangub,1004215000,Misamis Occidental
+1004215005,Migcanaway,Tangub,1004215000,Misamis Occidental
+1004215006,Bintana,Tangub,1004215000,Misamis Occidental
+1004215007,Bocator,Tangub,1004215000,Misamis Occidental
+1004215008,Bongabong,Tangub,1004215000,Misamis Occidental
+1004215009,Caniangan,Tangub,1004215000,Misamis Occidental
+1004215010,Capalaran,Tangub,1004215000,Misamis Occidental
+1004215011,Catagan,Tangub,1004215000,Misamis Occidental
+1004215012,Barangay I - City Hall,Tangub,1004215000,Misamis Occidental
+1004215013,Barangay II - Marilou Annex,Tangub,1004215000,Misamis Occidental
+1004215014,Barangay IV - St. Michael,Tangub,1004215000,Misamis Occidental
+1004215015,Isidro D. Tan,Tangub,1004215000,Misamis Occidental
+1004215016,Garang,Tangub,1004215000,Misamis Occidental
+1004215017,Guinabot,Tangub,1004215000,Misamis Occidental
+1004215018,Guinalaban,Tangub,1004215000,Misamis Occidental
+1004215019,Kauswagan,Tangub,1004215000,Misamis Occidental
+1004215020,Kimat,Tangub,1004215000,Misamis Occidental
+1004215021,Labuyo,Tangub,1004215000,Misamis Occidental
+1004215022,Lorenzo Tan,Tangub,1004215000,Misamis Occidental
+1004215023,Barangay VI - Lower Polao,Tangub,1004215000,Misamis Occidental
+1004215024,Lumban,Tangub,1004215000,Misamis Occidental
+1004215025,Maloro,Tangub,1004215000,Misamis Occidental
+1004215026,Barangay V - Malubog,Tangub,1004215000,Misamis Occidental
+1004215027,Manga,Tangub,1004215000,Misamis Occidental
+1004215028,Maquilao,Tangub,1004215000,Misamis Occidental
+1004215029,Barangay III- Market Kalubian,Tangub,1004215000,Misamis Occidental
+1004215030,Minsubong,Tangub,1004215000,Misamis Occidental
+1004215031,Owayan,Tangub,1004215000,Misamis Occidental
+1004215032,Paiton,Tangub,1004215000,Misamis Occidental
+1004215033,Panalsalan,Tangub,1004215000,Misamis Occidental
+1004215034,Pangabuan,Tangub,1004215000,Misamis Occidental
+1004215035,Prenza,Tangub,1004215000,Misamis Occidental
+1004215036,Salimpuno,Tangub,1004215000,Misamis Occidental
+1004215037,San Antonio,Tangub,1004215000,Misamis Occidental
+1004215038,San Apolinario,Tangub,1004215000,Misamis Occidental
+1004215039,San Vicente,Tangub,1004215000,Misamis Occidental
+1004215040,Santa Cruz,Tangub,1004215000,Misamis Occidental
+1004215041,Santo Niño,Tangub,1004215000,Misamis Occidental
+1004215042,Silangit,Tangub,1004215000,Misamis Occidental
+1004215043,Simasay,Tangub,1004215000,Misamis Occidental
+1004215044,Sumirap,Tangub,1004215000,Misamis Occidental
+1004215045,Taguite,Tangub,1004215000,Misamis Occidental
+1004215046,Tituron,Tangub,1004215000,Misamis Occidental
+1004215047,Barangay VII - Upper Polao,Tangub,1004215000,Misamis Occidental
+1004215048,Villaba,Tangub,1004215000,Misamis Occidental
+1004215049,Silanga,Tangub,1004215000,Misamis Occidental
+1004215050,Aquino,Tangub,1004215000,Misamis Occidental
+1004215051,Baluk,Tangub,1004215000,Misamis Occidental
+1004215052,Huyohoy,Tangub,1004215000,Misamis Occidental
+1004215053,Matugnaw,Tangub,1004215000,Misamis Occidental
+1004215054,Sicot,Tangub,1004215000,Misamis Occidental
+1004215055,Tugas,Tangub,1004215000,Misamis Occidental
+1004216001,Balon,Tudela,1004216000,Misamis Occidental
+1004216002,Barra,Tudela,1004216000,Misamis Occidental
+1004216003,Basirang,Tudela,1004216000,Misamis Occidental
+1004216004,Bongabong,Tudela,1004216000,Misamis Occidental
+1004216005,Buenavista,Tudela,1004216000,Misamis Occidental
+1004216006,Cabol-anonan,Tudela,1004216000,Misamis Occidental
+1004216007,Cahayag,Tudela,1004216000,Misamis Occidental
+1004216008,Camating,Tudela,1004216000,Misamis Occidental
+1004216009,Canibungan Proper,Tudela,1004216000,Misamis Occidental
+1004216010,Casilak San Agustin,Tudela,1004216000,Misamis Occidental
+1004216011,Centro Hulpa,Tudela,1004216000,Misamis Occidental
+1004216012,Centro Napu,Tudela,1004216000,Misamis Occidental
+1004216013,Centro Upper,Tudela,1004216000,Misamis Occidental
+1004216014,Calambutan Bajo,Tudela,1004216000,Misamis Occidental
+1004216015,Calambutan Settlement,Tudela,1004216000,Misamis Occidental
+1004216016,Duanguican,Tudela,1004216000,Misamis Occidental
+1004216017,Gala,Tudela,1004216000,Misamis Occidental
+1004216018,Gumbil,Tudela,1004216000,Misamis Occidental
+1004216021,Locso-on,Tudela,1004216000,Misamis Occidental
+1004216022,Maikay,Tudela,1004216000,Misamis Occidental
+1004216023,Maribojoc,Tudela,1004216000,Misamis Occidental
+1004216024,Mitugas,Tudela,1004216000,Misamis Occidental
+1004216025,Nailon,Tudela,1004216000,Misamis Occidental
+1004216026,Namut,Tudela,1004216000,Misamis Occidental
+1004216027,Napurog,Tudela,1004216000,Misamis Occidental
+1004216028,Pan-ay Diot,Tudela,1004216000,Misamis Occidental
+1004216029,San Nicolas,Tudela,1004216000,Misamis Occidental
+1004216032,Sebac,Tudela,1004216000,Misamis Occidental
+1004216034,Silongon,Tudela,1004216000,Misamis Occidental
+1004216035,Sinuza,Tudela,1004216000,Misamis Occidental
+1004216036,Taguima,Tudela,1004216000,Misamis Occidental
+1004216038,Tigdok,Tudela,1004216000,Misamis Occidental
+1004216039,Yahong,Tudela,1004216000,Misamis Occidental
+1004217001,Bagong Clarin,Don Victoriano,1004217000,Misamis Occidental
+1004217002,Gandawan,Don Victoriano,1004217000,Misamis Occidental
+1004217003,Lake Duminagat,Don Victoriano,1004217000,Misamis Occidental
+1004217004,Lalud,Don Victoriano,1004217000,Misamis Occidental
+1004217005,Lampasan,Don Victoriano,1004217000,Misamis Occidental
+1004217006,Liboron,Don Victoriano,1004217000,Misamis Occidental
+1004217007,Maramara,Don Victoriano,1004217000,Misamis Occidental
+1004217008,Napangan,Don Victoriano,1004217000,Misamis Occidental
+1004217009,Nueva Vista,Don Victoriano,1004217000,Misamis Occidental
+1004217010,Petianan,Don Victoriano,1004217000,Misamis Occidental
+1004217011,Tuno,Don Victoriano,1004217000,Misamis Occidental
+1004301001,Baybay,Alubijid,1004301000,Misamis Oriental
+1004301002,Benigwayan,Alubijid,1004301000,Misamis Oriental
+1004301003,Calatcat,Alubijid,1004301000,Misamis Oriental
+1004301004,Lagtang,Alubijid,1004301000,Misamis Oriental
+1004301005,Lanao,Alubijid,1004301000,Misamis Oriental
+1004301006,Loguilo,Alubijid,1004301000,Misamis Oriental
+1004301007,Lourdes,Alubijid,1004301000,Misamis Oriental
+1004301008,Lumbo,Alubijid,1004301000,Misamis Oriental
+1004301009,Molocboloc,Alubijid,1004301000,Misamis Oriental
+1004301010,Poblacion,Alubijid,1004301000,Misamis Oriental
+1004301011,Sampatulog,Alubijid,1004301000,Misamis Oriental
+1004301012,Sungay,Alubijid,1004301000,Misamis Oriental
+1004301013,Talaba,Alubijid,1004301000,Misamis Oriental
+1004301014,Taparak,Alubijid,1004301000,Misamis Oriental
+1004301015,Tugasnon,Alubijid,1004301000,Misamis Oriental
+1004301016,Tula,Alubijid,1004301000,Misamis Oriental
+1004302001,Balagnan,Balingasag,1004302000,Misamis Oriental
+1004302003,Baliwagan,Balingasag,1004302000,Misamis Oriental
+1004302004,San Francisco,Balingasag,1004302000,Misamis Oriental
+1004302005,Binitinan,Balingasag,1004302000,Misamis Oriental
+1004302006,Blanco,Balingasag,1004302000,Misamis Oriental
+1004302008,Calawag,Balingasag,1004302000,Misamis Oriental
+1004302009,Camuayan,Balingasag,1004302000,Misamis Oriental
+1004302010,Cogon,Balingasag,1004302000,Misamis Oriental
+1004302011,Dansuli,Balingasag,1004302000,Misamis Oriental
+1004302012,Dumarait,Balingasag,1004302000,Misamis Oriental
+1004302013,Hermano,Balingasag,1004302000,Misamis Oriental
+1004302014,Kibanban,Balingasag,1004302000,Misamis Oriental
+1004302015,Linabu,Balingasag,1004302000,Misamis Oriental
+1004302016,Linggangao,Balingasag,1004302000,Misamis Oriental
+1004302017,Mambayaan,Balingasag,1004302000,Misamis Oriental
+1004302018,Mandangoa,Balingasag,1004302000,Misamis Oriental
+1004302019,Napaliran,Balingasag,1004302000,Misamis Oriental
+1004302020,Barangay 1,Balingasag,1004302000,Misamis Oriental
+1004302021,Barangay 2,Balingasag,1004302000,Misamis Oriental
+1004302022,Barangay 3,Balingasag,1004302000,Misamis Oriental
+1004302023,Barangay 4,Balingasag,1004302000,Misamis Oriental
+1004302024,Barangay 5,Balingasag,1004302000,Misamis Oriental
+1004302025,Barangay 6,Balingasag,1004302000,Misamis Oriental
+1004302026,Quezon,Balingasag,1004302000,Misamis Oriental
+1004302027,Rosario,Balingasag,1004302000,Misamis Oriental
+1004302028,Samay,Balingasag,1004302000,Misamis Oriental
+1004302029,San Isidro,Balingasag,1004302000,Misamis Oriental
+1004302030,San Juan,Balingasag,1004302000,Misamis Oriental
+1004302031,Talusan,Balingasag,1004302000,Misamis Oriental
+1004302032,Waterfall,Balingasag,1004302000,Misamis Oriental
+1004303002,Dahilig,Balingoan,1004303000,Misamis Oriental
+1004303003,Baukbauk Pob.,Balingoan,1004303000,Misamis Oriental
+1004303004,Kabangasan,Balingoan,1004303000,Misamis Oriental
+1004303005,Kabulakan,Balingoan,1004303000,Misamis Oriental
+1004303006,Kauswagan,Balingoan,1004303000,Misamis Oriental
+1004303007,Lapinig,Balingoan,1004303000,Misamis Oriental
+1004303008,Mantangale,Balingoan,1004303000,Misamis Oriental
+1004303009,Mapua,Balingoan,1004303000,Misamis Oriental
+1004303010,San Alonzo,Balingoan,1004303000,Misamis Oriental
+1004304001,Dampias,Binuangan,1004304000,Misamis Oriental
+1004304002,Kitamban,Binuangan,1004304000,Misamis Oriental
+1004304003,Kitambis,Binuangan,1004304000,Misamis Oriental
+1004304004,Mabini,Binuangan,1004304000,Misamis Oriental
+1004304005,Mosangot,Binuangan,1004304000,Misamis Oriental
+1004304006,Nabataan,Binuangan,1004304000,Misamis Oriental
+1004304007,Poblacion,Binuangan,1004304000,Misamis Oriental
+1004304008,Valdeconcha,Binuangan,1004304000,Misamis Oriental
+1004306001,Ani-e,Claveria,1004306000,Misamis Oriental
+1004306002,Aposkahoy,Claveria,1004306000,Misamis Oriental
+1004306003,Bulahan,Claveria,1004306000,Misamis Oriental
+1004306004,Cabacungan,Claveria,1004306000,Misamis Oriental
+1004306006,Pelaez,Claveria,1004306000,Misamis Oriental
+1004306007,Gumaod,Claveria,1004306000,Misamis Oriental
+1004306008,Hinaplanan,Claveria,1004306000,Misamis Oriental
+1004306009,Kalawitan,Claveria,1004306000,Misamis Oriental
+1004306010,Lanise,Claveria,1004306000,Misamis Oriental
+1004306011,Luna,Claveria,1004306000,Misamis Oriental
+1004306012,Madaguing,Claveria,1004306000,Misamis Oriental
+1004306013,Malagana,Claveria,1004306000,Misamis Oriental
+1004306014,Minalwang,Claveria,1004306000,Misamis Oriental
+1004306015,Mat-i,Claveria,1004306000,Misamis Oriental
+1004306016,Panampawan,Claveria,1004306000,Misamis Oriental
+1004306017,Pambugas,Claveria,1004306000,Misamis Oriental
+1004306018,Patrocenio,Claveria,1004306000,Misamis Oriental
+1004306019,Plaridel,Claveria,1004306000,Misamis Oriental
+1004306020,Poblacion,Claveria,1004306000,Misamis Oriental
+1004306021,Punong,Claveria,1004306000,Misamis Oriental
+1004306022,Rizal,Claveria,1004306000,Misamis Oriental
+1004306023,Santa Cruz,Claveria,1004306000,Misamis Oriental
+1004306024,Tamboboan,Claveria,1004306000,Misamis Oriental
+1004306025,Tipolohon,Claveria,1004306000,Misamis Oriental
+1004307001,Amoros,El Salvador,1004307000,Misamis Oriental
+1004307002,Bolisong,El Salvador,1004307000,Misamis Oriental
+1004307003,Bolobolo,El Salvador,1004307000,Misamis Oriental
+1004307004,Calongonan,El Salvador,1004307000,Misamis Oriental
+1004307006,Cogon,El Salvador,1004307000,Misamis Oriental
+1004307007,Himaya,El Salvador,1004307000,Misamis Oriental
+1004307008,Hinigdaan,El Salvador,1004307000,Misamis Oriental
+1004307010,Kalabaylabay,El Salvador,1004307000,Misamis Oriental
+1004307011,Molugan,El Salvador,1004307000,Misamis Oriental
+1004307012,Poblacion,El Salvador,1004307000,Misamis Oriental
+1004307013,Kibonbon,El Salvador,1004307000,Misamis Oriental
+1004307014,Sambulawan,El Salvador,1004307000,Misamis Oriental
+1004307015,Sinaloc,El Salvador,1004307000,Misamis Oriental
+1004307016,Taytay,El Salvador,1004307000,Misamis Oriental
+1004307018,Ulaliman,El Salvador,1004307000,Misamis Oriental
+1004308001,Agay-ayan,Gingoog,1004308000,Misamis Oriental
+1004308002,Alagatan,Gingoog,1004308000,Misamis Oriental
+1004308003,Anakan,Gingoog,1004308000,Misamis Oriental
+1004308004,Bagubad,Gingoog,1004308000,Misamis Oriental
+1004308005,Bakidbakid,Gingoog,1004308000,Misamis Oriental
+1004308006,Bal-ason,Gingoog,1004308000,Misamis Oriental
+1004308007,Bantaawan,Gingoog,1004308000,Misamis Oriental
+1004308008,Binakalan,Gingoog,1004308000,Misamis Oriental
+1004308010,Capitulangan,Gingoog,1004308000,Misamis Oriental
+1004308011,Daan-Lungsod,Gingoog,1004308000,Misamis Oriental
+1004308012,Hindangon,Gingoog,1004308000,Misamis Oriental
+1004308013,Kalagonoy,Gingoog,1004308000,Misamis Oriental
+1004308014,Kibuging,Gingoog,1004308000,Misamis Oriental
+1004308015,Kipuntos,Gingoog,1004308000,Misamis Oriental
+1004308016,Lawaan,Gingoog,1004308000,Misamis Oriental
+1004308017,Lawit,Gingoog,1004308000,Misamis Oriental
+1004308018,Libertad,Gingoog,1004308000,Misamis Oriental
+1004308019,Libon,Gingoog,1004308000,Misamis Oriental
+1004308020,Lunao,Gingoog,1004308000,Misamis Oriental
+1004308021,Lunotan,Gingoog,1004308000,Misamis Oriental
+1004308022,Malibud,Gingoog,1004308000,Misamis Oriental
+1004308023,Malinao,Gingoog,1004308000,Misamis Oriental
+1004308024,Maribucao,Gingoog,1004308000,Misamis Oriental
+1004308025,Mimbuntong,Gingoog,1004308000,Misamis Oriental
+1004308026,Mimbalagon,Gingoog,1004308000,Misamis Oriental
+1004308027,Mimbunga,Gingoog,1004308000,Misamis Oriental
+1004308028,Minsapinit,Gingoog,1004308000,Misamis Oriental
+1004308029,Murallon,Gingoog,1004308000,Misamis Oriental
+1004308030,Odiongan,Gingoog,1004308000,Misamis Oriental
+1004308031,Pangasihan,Gingoog,1004308000,Misamis Oriental
+1004308032,Pigsaluhan,Gingoog,1004308000,Misamis Oriental
+1004308033,Barangay 1,Gingoog,1004308000,Misamis Oriental
+1004308034,Barangay 10,Gingoog,1004308000,Misamis Oriental
+1004308035,Barangay 11,Gingoog,1004308000,Misamis Oriental
+1004308036,Barangay 12,Gingoog,1004308000,Misamis Oriental
+1004308037,Barangay 13,Gingoog,1004308000,Misamis Oriental
+1004308038,Barangay 14,Gingoog,1004308000,Misamis Oriental
+1004308039,Barangay 15,Gingoog,1004308000,Misamis Oriental
+1004308040,Barangay 16,Gingoog,1004308000,Misamis Oriental
+1004308041,Barangay 17,Gingoog,1004308000,Misamis Oriental
+1004308042,Barangay 18-A,Gingoog,1004308000,Misamis Oriental
+1004308043,Barangay 19,Gingoog,1004308000,Misamis Oriental
+1004308044,Barangay 2,Gingoog,1004308000,Misamis Oriental
+1004308045,Barangay 20,Gingoog,1004308000,Misamis Oriental
+1004308046,Barangay 21,Gingoog,1004308000,Misamis Oriental
+1004308047,Barangay 22-A,Gingoog,1004308000,Misamis Oriental
+1004308048,Barangay 23,Gingoog,1004308000,Misamis Oriental
+1004308049,Barangay 24,Gingoog,1004308000,Misamis Oriental
+1004308050,Barangay 25,Gingoog,1004308000,Misamis Oriental
+1004308051,Barangay 26,Gingoog,1004308000,Misamis Oriental
+1004308055,Barangay 3,Gingoog,1004308000,Misamis Oriental
+1004308056,Barangay 4,Gingoog,1004308000,Misamis Oriental
+1004308057,Barangay 5,Gingoog,1004308000,Misamis Oriental
+1004308058,Barangay 6,Gingoog,1004308000,Misamis Oriental
+1004308059,Barangay 7,Gingoog,1004308000,Misamis Oriental
+1004308060,Barangay 8,Gingoog,1004308000,Misamis Oriental
+1004308061,Barangay 9,Gingoog,1004308000,Misamis Oriental
+1004308062,Punong,Gingoog,1004308000,Misamis Oriental
+1004308063,Ricoro,Gingoog,1004308000,Misamis Oriental
+1004308064,Samay,Gingoog,1004308000,Misamis Oriental
+1004308065,San Juan,Gingoog,1004308000,Misamis Oriental
+1004308066,San Luis,Gingoog,1004308000,Misamis Oriental
+1004308067,San Miguel,Gingoog,1004308000,Misamis Oriental
+1004308068,Santiago,Gingoog,1004308000,Misamis Oriental
+1004308069,Talisay,Gingoog,1004308000,Misamis Oriental
+1004308070,Talon,Gingoog,1004308000,Misamis Oriental
+1004308071,Tinabalan,Gingoog,1004308000,Misamis Oriental
+1004308072,Tinulongan,Gingoog,1004308000,Misamis Oriental
+1004308073,Barangay 18,Gingoog,1004308000,Misamis Oriental
+1004308074,Barangay 22,Gingoog,1004308000,Misamis Oriental
+1004308075,Barangay 24-A,Gingoog,1004308000,Misamis Oriental
+1004308076,Dinawehan,Gingoog,1004308000,Misamis Oriental
+1004308077,Eureka,Gingoog,1004308000,Misamis Oriental
+1004308078,Kalipay,Gingoog,1004308000,Misamis Oriental
+1004308079,Kamanikan,Gingoog,1004308000,Misamis Oriental
+1004308080,Kianlagan,Gingoog,1004308000,Misamis Oriental
+1004308081,San Jose,Gingoog,1004308000,Misamis Oriental
+1004308082,Sangalan,Gingoog,1004308000,Misamis Oriental
+1004308083,Tagpako,Gingoog,1004308000,Misamis Oriental
+1004309001,Burnay,Gitagum,1004309000,Misamis Oriental
+1004309002,Carlos P. Garcia,Gitagum,1004309000,Misamis Oriental
+1004309004,Cogon,Gitagum,1004309000,Misamis Oriental
+1004309005,Gregorio Pelaez,Gitagum,1004309000,Misamis Oriental
+1004309006,Kilangit,Gitagum,1004309000,Misamis Oriental
+1004309007,Matangad,Gitagum,1004309000,Misamis Oriental
+1004309008,Pangayawan,Gitagum,1004309000,Misamis Oriental
+1004309009,Poblacion,Gitagum,1004309000,Misamis Oriental
+1004309010,Quezon,Gitagum,1004309000,Misamis Oriental
+1004309011,Tala-o,Gitagum,1004309000,Misamis Oriental
+1004309012,Ulab,Gitagum,1004309000,Misamis Oriental
+1004310001,Aluna,Initao,1004310000,Misamis Oriental
+1004310002,Andales,Initao,1004310000,Misamis Oriental
+1004310003,Apas,Initao,1004310000,Misamis Oriental
+1004310004,Calacapan,Initao,1004310000,Misamis Oriental
+1004310005,Gimangpang,Initao,1004310000,Misamis Oriental
+1004310006,Jampason,Initao,1004310000,Misamis Oriental
+1004310007,Kamelon,Initao,1004310000,Misamis Oriental
+1004310008,Kanitoan,Initao,1004310000,Misamis Oriental
+1004310009,Oguis,Initao,1004310000,Misamis Oriental
+1004310010,Pagahan,Initao,1004310000,Misamis Oriental
+1004310011,Poblacion,Initao,1004310000,Misamis Oriental
+1004310012,Pontacon,Initao,1004310000,Misamis Oriental
+1004310013,San Pedro,Initao,1004310000,Misamis Oriental
+1004310014,Sinalac,Initao,1004310000,Misamis Oriental
+1004310015,Tawantawan,Initao,1004310000,Misamis Oriental
+1004310016,Tubigan,Initao,1004310000,Misamis Oriental
+1004311001,Aplaya,Jasaan,1004311000,Misamis Oriental
+1004311002,Bobontugan,Jasaan,1004311000,Misamis Oriental
+1004311003,Corrales,Jasaan,1004311000,Misamis Oriental
+1004311004,Danao,Jasaan,1004311000,Misamis Oriental
+1004311005,Jampason,Jasaan,1004311000,Misamis Oriental
+1004311006,Kimaya,Jasaan,1004311000,Misamis Oriental
+1004311007,Lower Jasaan,Jasaan,1004311000,Misamis Oriental
+1004311008,Luz Banzon,Jasaan,1004311000,Misamis Oriental
+1004311009,Natubo,Jasaan,1004311000,Misamis Oriental
+1004311010,San Antonio,Jasaan,1004311000,Misamis Oriental
+1004311011,San Isidro,Jasaan,1004311000,Misamis Oriental
+1004311012,San Nicolas,Jasaan,1004311000,Misamis Oriental
+1004311013,Solana,Jasaan,1004311000,Misamis Oriental
+1004311014,Upper Jasaan,Jasaan,1004311000,Misamis Oriental
+1004311015,I. S. Cruz,Jasaan,1004311000,Misamis Oriental
+1004312001,Beray,Kinoguitan,1004312000,Misamis Oriental
+1004312002,Bolisong,Kinoguitan,1004312000,Misamis Oriental
+1004312003,Buko,Kinoguitan,1004312000,Misamis Oriental
+1004312004,Kalitian,Kinoguitan,1004312000,Misamis Oriental
+1004312005,Calubo,Kinoguitan,1004312000,Misamis Oriental
+1004312006,Campo,Kinoguitan,1004312000,Misamis Oriental
+1004312007,Esperanza,Kinoguitan,1004312000,Misamis Oriental
+1004312008,Kagumahan,Kinoguitan,1004312000,Misamis Oriental
+1004312009,Kitotok,Kinoguitan,1004312000,Misamis Oriental
+1004312010,Panabol,Kinoguitan,1004312000,Misamis Oriental
+1004312011,Poblacion,Kinoguitan,1004312000,Misamis Oriental
+1004312012,Salicapawan,Kinoguitan,1004312000,Misamis Oriental
+1004312013,Salubsob,Kinoguitan,1004312000,Misamis Oriental
+1004312014,Suarez,Kinoguitan,1004312000,Misamis Oriental
+1004312015,Sumalag,Kinoguitan,1004312000,Misamis Oriental
+1004313001,Banglay,Lagonglong,1004313000,Misamis Oriental
+1004313002,Dampil,Lagonglong,1004313000,Misamis Oriental
+1004313003,Gaston,Lagonglong,1004313000,Misamis Oriental
+1004313004,Kabulawan,Lagonglong,1004313000,Misamis Oriental
+1004313005,Kauswagan,Lagonglong,1004313000,Misamis Oriental
+1004313006,Lumbo,Lagonglong,1004313000,Misamis Oriental
+1004313007,Manaol,Lagonglong,1004313000,Misamis Oriental
+1004313008,Poblacion,Lagonglong,1004313000,Misamis Oriental
+1004313009,Tabok,Lagonglong,1004313000,Misamis Oriental
+1004313010,Umagos,Lagonglong,1004313000,Misamis Oriental
+1004314001,Aromahon,Laguindingan,1004314000,Misamis Oriental
+1004314002,Gasi,Laguindingan,1004314000,Misamis Oriental
+1004314003,Kibaghot,Laguindingan,1004314000,Misamis Oriental
+1004314004,Lapad,Laguindingan,1004314000,Misamis Oriental
+1004314005,Liberty,Laguindingan,1004314000,Misamis Oriental
+1004314006,Mauswagon,Laguindingan,1004314000,Misamis Oriental
+1004314007,Moog,Laguindingan,1004314000,Misamis Oriental
+1004314008,Poblacion,Laguindingan,1004314000,Misamis Oriental
+1004314009,Sambulawan,Laguindingan,1004314000,Misamis Oriental
+1004314010,Sinai,Laguindingan,1004314000,Misamis Oriental
+1004314011,Tubajon,Laguindingan,1004314000,Misamis Oriental
+1004315001,Dulong,Libertad,1004315000,Misamis Oriental
+1004315002,Gimaylan,Libertad,1004315000,Misamis Oriental
+1004315003,Kimalok,Libertad,1004315000,Misamis Oriental
+1004315004,Lubluban,Libertad,1004315000,Misamis Oriental
+1004315005,Poblacion,Libertad,1004315000,Misamis Oriental
+1004315006,Retablo,Libertad,1004315000,Misamis Oriental
+1004315007,Santo Niño,Libertad,1004315000,Misamis Oriental
+1004315008,Tangcub,Libertad,1004315000,Misamis Oriental
+1004315009,Taytayan,Libertad,1004315000,Misamis Oriental
+1004316001,Aya-aya,Lugait,1004316000,Misamis Oriental
+1004316002,Betahon,Lugait,1004316000,Misamis Oriental
+1004316003,Biga,Lugait,1004316000,Misamis Oriental
+1004316004,Calangahan,Lugait,1004316000,Misamis Oriental
+1004316005,Kaluknayan,Lugait,1004316000,Misamis Oriental
+1004316006,Lower Talacogon,Lugait,1004316000,Misamis Oriental
+1004316007,Poblacion,Lugait,1004316000,Misamis Oriental
+1004316008,Upper Talacogon,Lugait,1004316000,Misamis Oriental
+1004317001,Abunda,Magsaysay,1004317000,Misamis Oriental
+1004317002,Artadi,Magsaysay,1004317000,Misamis Oriental
+1004317003,Bonifacio Aquino,Magsaysay,1004317000,Misamis Oriental
+1004317004,Cabalawan,Magsaysay,1004317000,Misamis Oriental
+1004317005,Cabantian,Magsaysay,1004317000,Misamis Oriental
+1004317006,Cabubuhan,Magsaysay,1004317000,Misamis Oriental
+1004317007,Candiis,Magsaysay,1004317000,Misamis Oriental
+1004317008,Consuelo,Magsaysay,1004317000,Misamis Oriental
+1004317009,Damayuhan,Magsaysay,1004317000,Misamis Oriental
+1004317010,Gumabon,Magsaysay,1004317000,Misamis Oriental
+1004317011,Kauswagan,Magsaysay,1004317000,Misamis Oriental
+1004317012,Kibungsod,Magsaysay,1004317000,Misamis Oriental
+1004317013,Mahayahay,Magsaysay,1004317000,Misamis Oriental
+1004317014,Mindulao,Magsaysay,1004317000,Misamis Oriental
+1004317015,Pag-asa,Magsaysay,1004317000,Misamis Oriental
+1004317016,Poblacion,Magsaysay,1004317000,Misamis Oriental
+1004317017,San Isidro,Magsaysay,1004317000,Misamis Oriental
+1004317018,San Vicente,Magsaysay,1004317000,Misamis Oriental
+1004317019,Santa Cruz,Magsaysay,1004317000,Misamis Oriental
+1004317020,Tibon-tibon,Magsaysay,1004317000,Misamis Oriental
+1004317021,Tulang,Magsaysay,1004317000,Misamis Oriental
+1004317022,Villa Felipa,Magsaysay,1004317000,Misamis Oriental
+1004317023,Katipunan,Magsaysay,1004317000,Misamis Oriental
+1004317024,Tama,Magsaysay,1004317000,Misamis Oriental
+1004317025,Tinaan,Magsaysay,1004317000,Misamis Oriental
+1004318001,Argayoso,Manticao,1004318000,Misamis Oriental
+1004318002,Balintad,Manticao,1004318000,Misamis Oriental
+1004318003,Cabalantian,Manticao,1004318000,Misamis Oriental
+1004318004,Camanga,Manticao,1004318000,Misamis Oriental
+1004318005,Digkilaan,Manticao,1004318000,Misamis Oriental
+1004318006,Mahayahay,Manticao,1004318000,Misamis Oriental
+1004318007,Pagawan,Manticao,1004318000,Misamis Oriental
+1004318008,Paniangan,Manticao,1004318000,Misamis Oriental
+1004318009,Patag,Manticao,1004318000,Misamis Oriental
+1004318010,Poblacion,Manticao,1004318000,Misamis Oriental
+1004318011,Punta Silum,Manticao,1004318000,Misamis Oriental
+1004318012,Tuod,Manticao,1004318000,Misamis Oriental
+1004318013,Upper Malubog,Manticao,1004318000,Misamis Oriental
+1004319001,Bangbang,Medina,1004319000,Misamis Oriental
+1004319002,Bulwa,Medina,1004319000,Misamis Oriental
+1004319003,Cabug,Medina,1004319000,Misamis Oriental
+1004319004,Dig-aguyan,Medina,1004319000,Misamis Oriental
+1004319005,Duka,Medina,1004319000,Misamis Oriental
+1004319006,Gasa,Medina,1004319000,Misamis Oriental
+1004319007,Maanas,Medina,1004319000,Misamis Oriental
+1004319008,Mananum Bag-o,Medina,1004319000,Misamis Oriental
+1004319009,Mananum Daan,Medina,1004319000,Misamis Oriental
+1004319011,North Poblacion,Medina,1004319000,Misamis Oriental
+1004319012,Pahindong,Medina,1004319000,Misamis Oriental
+1004319013,Portulin,Medina,1004319000,Misamis Oriental
+1004319014,San Isidro,Medina,1004319000,Misamis Oriental
+1004319015,San Jose,Medina,1004319000,Misamis Oriental
+1004319016,San Roque,Medina,1004319000,Misamis Oriental
+1004319017,San Vicente,Medina,1004319000,Misamis Oriental
+1004319018,South Poblacion,Medina,1004319000,Misamis Oriental
+1004319019,Tambagan,Medina,1004319000,Misamis Oriental
+1004319020,Tup-on,Medina,1004319000,Misamis Oriental
+1004320001,Don Pedro,Naawan,1004320000,Misamis Oriental
+1004320002,Linangkayan,Naawan,1004320000,Misamis Oriental
+1004320003,Lubilan,Naawan,1004320000,Misamis Oriental
+1004320004,Mapulog,Naawan,1004320000,Misamis Oriental
+1004320005,Maputi,Naawan,1004320000,Misamis Oriental
+1004320006,Mat-i,Naawan,1004320000,Misamis Oriental
+1004320007,Patag,Naawan,1004320000,Misamis Oriental
+1004320008,Poblacion,Naawan,1004320000,Misamis Oriental
+1004320009,Tagbalogo,Naawan,1004320000,Misamis Oriental
+1004320010,Tuboran,Naawan,1004320000,Misamis Oriental
+1004321001,Awang,Opol,1004321000,Misamis Oriental
+1004321002,Bagocboc,Opol,1004321000,Misamis Oriental
+1004321003,Barra,Opol,1004321000,Misamis Oriental
+1004321004,Bonbon,Opol,1004321000,Misamis Oriental
+1004321005,Cauyonan,Opol,1004321000,Misamis Oriental
+1004321006,Igpit,Opol,1004321000,Misamis Oriental
+1004321007,Limonda,Opol,1004321000,Misamis Oriental
+1004321008,Luyongbonbon,Opol,1004321000,Misamis Oriental
+1004321009,Malanang,Opol,1004321000,Misamis Oriental
+1004321011,Nangcaon,Opol,1004321000,Misamis Oriental
+1004321013,Patag,Opol,1004321000,Misamis Oriental
+1004321014,Poblacion,Opol,1004321000,Misamis Oriental
+1004321015,Taboc,Opol,1004321000,Misamis Oriental
+1004321016,Tingalan,Opol,1004321000,Misamis Oriental
+1004322001,Alipuaton,Salay,1004322000,Misamis Oriental
+1004322002,Ampenican,Salay,1004322000,Misamis Oriental
+1004322003,Bunal,Salay,1004322000,Misamis Oriental
+1004322004,Dinagsaan,Salay,1004322000,Misamis Oriental
+1004322005,Guinalaban,Salay,1004322000,Misamis Oriental
+1004322006,Ili-ilihon,Salay,1004322000,Misamis Oriental
+1004322007,Inobulan,Salay,1004322000,Misamis Oriental
+1004322008,Looc,Salay,1004322000,Misamis Oriental
+1004322009,Matampa,Salay,1004322000,Misamis Oriental
+1004322010,Membuli,Salay,1004322000,Misamis Oriental
+1004322011,Poblacion,Salay,1004322000,Misamis Oriental
+1004322012,Salagsag,Salay,1004322000,Misamis Oriental
+1004322014,Salay River I,Salay,1004322000,Misamis Oriental
+1004322015,Salay River II,Salay,1004322000,Misamis Oriental
+1004322016,Saray,Salay,1004322000,Misamis Oriental
+1004322017,Tinagaan,Salay,1004322000,Misamis Oriental
+1004322018,Yungod,Salay,1004322000,Misamis Oriental
+1004322019,Casulog,Salay,1004322000,Misamis Oriental
+1004323001,Alicomohan,Sugbongcogon,1004323000,Misamis Oriental
+1004323002,Ampianga,Sugbongcogon,1004323000,Misamis Oriental
+1004323003,Kaulayanan,Sugbongcogon,1004323000,Misamis Oriental
+1004323004,Kidampas,Sugbongcogon,1004323000,Misamis Oriental
+1004323005,Kiraging,Sugbongcogon,1004323000,Misamis Oriental
+1004323006,Mangga,Sugbongcogon,1004323000,Misamis Oriental
+1004323007,Mimbuahan,Sugbongcogon,1004323000,Misamis Oriental
+1004323008,Poblacion,Sugbongcogon,1004323000,Misamis Oriental
+1004323009,Santa Cruz,Sugbongcogon,1004323000,Misamis Oriental
+1004323010,Silad,Sugbongcogon,1004323000,Misamis Oriental
+1004324001,Baluarte,Tagoloan,1004324000,Misamis Oriental
+1004324002,Casinglot,Tagoloan,1004324000,Misamis Oriental
+1004324003,Gracia,Tagoloan,1004324000,Misamis Oriental
+1004324004,Mohon,Tagoloan,1004324000,Misamis Oriental
+1004324005,Natumolan,Tagoloan,1004324000,Misamis Oriental
+1004324006,Poblacion,Tagoloan,1004324000,Misamis Oriental
+1004324007,Rosario,Tagoloan,1004324000,Misamis Oriental
+1004324008,Santa Ana,Tagoloan,1004324000,Misamis Oriental
+1004324009,Santa Cruz,Tagoloan,1004324000,Misamis Oriental
+1004324010,Sugbongcogon,Tagoloan,1004324000,Misamis Oriental
+1004325001,Bugdang,Talisayan,1004325000,Misamis Oriental
+1004325002,Calamcam,Talisayan,1004325000,Misamis Oriental
+1004325003,Casibole,Talisayan,1004325000,Misamis Oriental
+1004325004,Macopa,Talisayan,1004325000,Misamis Oriental
+1004325005,Magkarila,Talisayan,1004325000,Misamis Oriental
+1004325006,Mahayag,Talisayan,1004325000,Misamis Oriental
+1004325007,Mandahilag,Talisayan,1004325000,Misamis Oriental
+1004325008,Mintabon,Talisayan,1004325000,Misamis Oriental
+1004325009,Pangpangon,Talisayan,1004325000,Misamis Oriental
+1004325010,Poblacion,Talisayan,1004325000,Misamis Oriental
+1004325011,Pook,Talisayan,1004325000,Misamis Oriental
+1004325012,Punta Santiago,Talisayan,1004325000,Misamis Oriental
+1004325013,Puting Balas,Talisayan,1004325000,Misamis Oriental
+1004325014,San Jose,Talisayan,1004325000,Misamis Oriental
+1004325015,Santa Ines,Talisayan,1004325000,Misamis Oriental
+1004325016,Sibantang,Talisayan,1004325000,Misamis Oriental
+1004325017,Sindangan,Talisayan,1004325000,Misamis Oriental
+1004325018,Tagbocboc,Talisayan,1004325000,Misamis Oriental
+1004326001,Balacanas,Villanueva,1004326000,Misamis Oriental
+1004326003,Dayawan,Villanueva,1004326000,Misamis Oriental
+1004326004,Katipunan,Villanueva,1004326000,Misamis Oriental
+1004326005,Kimaya,Villanueva,1004326000,Misamis Oriental
+1004326007,Poblacion 1,Villanueva,1004326000,Misamis Oriental
+1004326008,San Martin,Villanueva,1004326000,Misamis Oriental
+1004326009,Tambobong,Villanueva,1004326000,Misamis Oriental
+1004326010,Imelda,Villanueva,1004326000,Misamis Oriental
+1004326011,Looc,Villanueva,1004326000,Misamis Oriental
+1004326012,Poblacion 2,Villanueva,1004326000,Misamis Oriental
+1004326013,Poblacion 3,Villanueva,1004326000,Misamis Oriental
+1030500001,Agusan,Cagayan de Oro,1030500000,Misamis Oriental
+1030500002,Baikingon,Cagayan de Oro,1030500000,Misamis Oriental
+1030500003,Bulua,Cagayan de Oro,1030500000,Misamis Oriental
+1030500004,Balubal,Cagayan de Oro,1030500000,Misamis Oriental
+1030500005,Balulang,Cagayan de Oro,1030500000,Misamis Oriental
+1030500006,Barangay 10,Cagayan de Oro,1030500000,Misamis Oriental
+1030500007,Barangay 11,Cagayan de Oro,1030500000,Misamis Oriental
+1030500008,Barangay 12,Cagayan de Oro,1030500000,Misamis Oriental
+1030500009,Barangay 13,Cagayan de Oro,1030500000,Misamis Oriental
+1030500010,Barangay 14,Cagayan de Oro,1030500000,Misamis Oriental
+1030500011,Barangay 15,Cagayan de Oro,1030500000,Misamis Oriental
+1030500012,Barangay 16,Cagayan de Oro,1030500000,Misamis Oriental
+1030500013,Barangay 17,Cagayan de Oro,1030500000,Misamis Oriental
+1030500014,Barangay 18,Cagayan de Oro,1030500000,Misamis Oriental
+1030500015,Barangay 19,Cagayan de Oro,1030500000,Misamis Oriental
+1030500016,Barangay 2,Cagayan de Oro,1030500000,Misamis Oriental
+1030500017,Barangay 21,Cagayan de Oro,1030500000,Misamis Oriental
+1030500018,Barangay 22,Cagayan de Oro,1030500000,Misamis Oriental
+1030500019,Barangay 23,Cagayan de Oro,1030500000,Misamis Oriental
+1030500020,Barangay 24,Cagayan de Oro,1030500000,Misamis Oriental
+1030500021,Barangay 26,Cagayan de Oro,1030500000,Misamis Oriental
+1030500022,Barangay 27,Cagayan de Oro,1030500000,Misamis Oriental
+1030500023,Barangay 28,Cagayan de Oro,1030500000,Misamis Oriental
+1030500024,Barangay 3,Cagayan de Oro,1030500000,Misamis Oriental
+1030500025,Barangay 30,Cagayan de Oro,1030500000,Misamis Oriental
+1030500026,Barangay 32,Cagayan de Oro,1030500000,Misamis Oriental
+1030500027,Barangay 33,Cagayan de Oro,1030500000,Misamis Oriental
+1030500028,Barangay 34,Cagayan de Oro,1030500000,Misamis Oriental
+1030500029,Barangay 38,Cagayan de Oro,1030500000,Misamis Oriental
+1030500030,Barangay 39,Cagayan de Oro,1030500000,Misamis Oriental
+1030500031,Barangay 4,Cagayan de Oro,1030500000,Misamis Oriental
+1030500032,Barangay 40,Cagayan de Oro,1030500000,Misamis Oriental
+1030500033,Barangay 6,Cagayan de Oro,1030500000,Misamis Oriental
+1030500034,Barangay 8,Cagayan de Oro,1030500000,Misamis Oriental
+1030500035,Barangay 9,Cagayan de Oro,1030500000,Misamis Oriental
+1030500036,Barangay 5,Cagayan de Oro,1030500000,Misamis Oriental
+1030500037,Bayabas,Cagayan de Oro,1030500000,Misamis Oriental
+1030500038,Bayanga,Cagayan de Oro,1030500000,Misamis Oriental
+1030500039,Besigan,Cagayan de Oro,1030500000,Misamis Oriental
+1030500040,Bonbon,Cagayan de Oro,1030500000,Misamis Oriental
+1030500041,Bugo,Cagayan de Oro,1030500000,Misamis Oriental
+1030500042,Camaman-an,Cagayan de Oro,1030500000,Misamis Oriental
+1030500043,Canito-an,Cagayan de Oro,1030500000,Misamis Oriental
+1030500044,Carmen,Cagayan de Oro,1030500000,Misamis Oriental
+1030500045,Consolacion,Cagayan de Oro,1030500000,Misamis Oriental
+1030500046,Cugman,Cagayan de Oro,1030500000,Misamis Oriental
+1030500047,Dansolihon,Cagayan de Oro,1030500000,Misamis Oriental
+1030500048,F. S. Catanico,Cagayan de Oro,1030500000,Misamis Oriental
+1030500049,Gusa,Cagayan de Oro,1030500000,Misamis Oriental
+1030500050,Indahag,Cagayan de Oro,1030500000,Misamis Oriental
+1030500051,Iponan,Cagayan de Oro,1030500000,Misamis Oriental
+1030500052,Kauswagan,Cagayan de Oro,1030500000,Misamis Oriental
+1030500053,Lapasan,Cagayan de Oro,1030500000,Misamis Oriental
+1030500054,Lumbia,Cagayan de Oro,1030500000,Misamis Oriental
+1030500055,Macabalan,Cagayan de Oro,1030500000,Misamis Oriental
+1030500056,Macasandig,Cagayan de Oro,1030500000,Misamis Oriental
+1030500057,Mambuaya,Cagayan de Oro,1030500000,Misamis Oriental
+1030500058,Nazareth,Cagayan de Oro,1030500000,Misamis Oriental
+1030500059,Pagalungan,Cagayan de Oro,1030500000,Misamis Oriental
+1030500060,Pagatpat,Cagayan de Oro,1030500000,Misamis Oriental
+1030500061,Patag,Cagayan de Oro,1030500000,Misamis Oriental
+1030500062,Pigsag-an,Cagayan de Oro,1030500000,Misamis Oriental
+1030500063,Puerto,Cagayan de Oro,1030500000,Misamis Oriental
+1030500064,Puntod,Cagayan de Oro,1030500000,Misamis Oriental
+1030500065,San Simon,Cagayan de Oro,1030500000,Misamis Oriental
+1030500067,Tablon,Cagayan de Oro,1030500000,Misamis Oriental
+1030500068,Taglimao,Cagayan de Oro,1030500000,Misamis Oriental
+1030500069,Tagpangi,Cagayan de Oro,1030500000,Misamis Oriental
+1030500070,Tignapoloan,Cagayan de Oro,1030500000,Misamis Oriental
+1030500071,Tuburan,Cagayan de Oro,1030500000,Misamis Oriental
+1030500072,Tumpagon,Cagayan de Oro,1030500000,Misamis Oriental
+1030500073,Barangay 1,Cagayan de Oro,1030500000,Misamis Oriental
+1030500074,Barangay 7,Cagayan de Oro,1030500000,Misamis Oriental
+1030500075,Barangay 20,Cagayan de Oro,1030500000,Misamis Oriental
+1030500076,Barangay 25,Cagayan de Oro,1030500000,Misamis Oriental
+1030500077,Barangay 29,Cagayan de Oro,1030500000,Misamis Oriental
+1030500078,Barangay 31,Cagayan de Oro,1030500000,Misamis Oriental
+1030500079,Barangay 35,Cagayan de Oro,1030500000,Misamis Oriental
+1030500080,Barangay 36,Cagayan de Oro,1030500000,Misamis Oriental
+1030500081,Barangay 37,Cagayan de Oro,1030500000,Misamis Oriental
+1030900001,Abuno,Iligan,1030900000,
+1030900002,Bonbonon,Iligan,1030900000,
+1030900003,Bunawan,Iligan,1030900000,
+1030900005,Buru-un,Iligan,1030900000,
+1030900006,Dalipuga,Iligan,1030900000,
+1030900007,Digkilaan,Iligan,1030900000,
+1030900008,Hinaplanon,Iligan,1030900000,
+1030900010,Kabacsanan,Iligan,1030900000,
+1030900011,Kiwalan,Iligan,1030900000,
+1030900012,Mahayahay,Iligan,1030900000,
+1030900013,Mainit,Iligan,1030900000,
+1030900014,Mandulog,Iligan,1030900000,
+1030900015,Maria Cristina,Iligan,1030900000,
+1030900016,Palao,Iligan,1030900000,
+1030900017,Poblacion,Iligan,1030900000,
+1030900018,Puga-an,Iligan,1030900000,
+1030900019,Rogongon,Iligan,1030900000,
+1030900021,Santa Elena,Iligan,1030900000,
+1030900022,Santa Filomena,Iligan,1030900000,
+1030900024,Suarez,Iligan,1030900000,
+1030900025,Tambacan,Iligan,1030900000,
+1030900026,Saray,Iligan,1030900000,
+1030900027,Tipanoy,Iligan,1030900000,
+1030900028,Tomas L. Cabili,Iligan,1030900000,
+1030900029,Upper Tominobo,Iligan,1030900000,
+1030900030,Tubod,Iligan,1030900000,
+1030900031,Bagong Silang,Iligan,1030900000,
+1030900032,Del Carmen,Iligan,1030900000,
+1030900033,Dulag,Iligan,1030900000,
+1030900034,San Miguel,Iligan,1030900000,
+1030900035,Santiago,Iligan,1030900000,
+1030900036,Santo Rosario,Iligan,1030900000,
+1030900037,Tibanga,Iligan,1030900000,
+1030900038,Acmac-Mariano Badelles Sr.,Iligan,1030900000,
+1030900039,Ditucalan,Iligan,1030900000,
+1030900040,Hindang,Iligan,1030900000,
+1030900041,Kalilangan,Iligan,1030900000,
+1030900042,Lanipao,Iligan,1030900000,
+1030900043,Luinab,Iligan,1030900000,
+1030900044,Panoroganan,Iligan,1030900000,
+1030900045,San Roque,Iligan,1030900000,
+1030900046,Ubaldo Laya,Iligan,1030900000,
+1030900047,Upper Hinaplanon,Iligan,1030900000,
+1030900048,Villa Verde,Iligan,1030900000,

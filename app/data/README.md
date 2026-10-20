@@ -31,6 +31,37 @@ Bukidnon,Baungon,Imbatug,101301012,7487,Poblacion;Imbatug Poblacion,Sitio Mando
 
 Restart the backend after editing (the list is cached).
 
+**Imbatug's purok list (when Ralph gets it from the barangay hall):** add one row
+per purok as above (same first six columns as the Imbatug row, the purok name in
+the last column), then restart the backend. No code change is needed; the voice
+interview still works without it (the purok is taken as said and read back).
+
+## region10_barangays.csv
+
+All 2,022 barangays of Region X (Northern Mindanao) from the PSA PSGC (plan
+001.6), so an address in another town of the region (7 of the 10 speech-sample
+speakers live in Cagayan de Oro) is matched against **that town's** barangays and
+written with **that town's** province, never Baungon's. A barangay is matched only
+inside the town the applicant said: two barangays are named Imbatug in Bukidnon
+(Baungon `1001301012`, Cabanglasan `1001322004`).
+
+| Column | Meaning |
+|---|---|
+| psgc_code | PSGC code of the barangay |
+| barangay | Official name ("Barangay 10" for Cagayan de Oro's numbered barangays) |
+| town | City or municipality, written as in `ph_places.csv` ("Cagayan de Oro") |
+| town_psgc | PSGC code of the town (the voice interview sends it with the barangay question) |
+| province | The town's province. Cagayan de Oro (a highly urbanized city, no province in the PSGC) is set to Misamis Oriental; Iligan is left blank as in the PSGC |
+
+Checked counts: 2,022 rows, Cagayan de Oro 80, Baungon 16 (93 towns). Baungon's
+aliases (Imbatug = "Poblacion") and puroks stay in `baungon_bukidnon_barangays.csv`.
+
+Source: the MIT-licensed `barangay` package version **2026.10.12.0**
+(https://github.com/bendlikeabamboo/barangay), exported once, offline, with
+`scripts/export_region10_barangays.py`. That package needs Python 3.13 or newer, so
+it is **not** an app dependency: the script runs in a throwaway environment (steps
+at the top of the script) and refuses to write the CSV if the row counts change.
+
 ## ph_places.csv
 
 All 82 provinces, 150 cities and 1,493 municipalities of the Philippines (1,725

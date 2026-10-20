@@ -33,6 +33,8 @@ MAX_FILE_SIZE_MB = 25
 async def transcribe_audio(
     audio_file: UploadFile = File(..., description="Audio file (WAV, MP3, M4A, OGG)"),
     field_key: Optional[str] = Form(None, description="Interview field key, used to bias transcription"),
+    town: Optional[str] = Form(None, pattern=r"^\d{0,10}$",
+                               description="PSGC code of the town answered before ('address_barangay' hint)"),
     current_user=Depends(get_current_user),
 ):
     """
@@ -41,7 +43,8 @@ async def transcribe_audio(
     Accepts WAV, MP3, M4A, OGG. Max 25MB.
     `field_key` (optional, e.g. 'surname', 'sex', 'civil_status') tells
     Whisper what kind of answer to expect, which improves accuracy a lot
-    on short answers.
+    on short answers. `town` (with 'address_barangay') lists that town's
+    barangays in the hint.
     """
     if audio_file.content_type not in ALLOWED_AUDIO_TYPES:
         raise HTTPException(
@@ -69,7 +72,7 @@ async def transcribe_audio(
     ext = os.path.splitext(filename)[-1] or ".wav"
 
     try:
-        result = SpeechService.transcribe_bytes(audio_bytes, suffix=ext, field_key=field_key)
+        result = SpeechService.transcribe_bytes(audio_bytes, suffix=ext, field_key=field_key, town=town or None)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
