@@ -1310,6 +1310,19 @@ class TestPlaceOfBirth:
         assert not result.ok and "province" in result.message
         assert len(result.suggestions) == 3 and all(s["value"].startswith("San Jose, ") for s in result.suggestions)
 
+    def test_nothing_heard_still_gives_places_to_tap(self):
+        from app.services.answer_service import understand_answer
+        province = understand_answer("place_of_birth_province", "", spoken=True)
+        assert not province.ok and [s["value"] for s in province.suggestions][0] == "Bukidnon"
+        town = understand_answer("place_of_birth_town", "", spoken=True, province=BUKIDNON)
+        assert len(town.suggestions) == 3 and all(s["value"].endswith(", Bukidnon") for s in town.suggestions)
+
+    def test_typed_place_not_in_the_list_offers_list_entries(self):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("place_of_birth", "Okay okay")
+        assert result.ok and result.needs_confirmation and result.suggestions
+        assert all(", " in s["value"] or s["province"] for s in result.suggestions)
+
     def test_town_step_without_a_province_works_like_the_province_step(self):
         from app.services.answer_service import understand_answer
         assert understand_answer("place_of_birth_town", "Bokidnon", spoken=True).value == "Bukidnon"

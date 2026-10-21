@@ -1312,12 +1312,12 @@ def _handle_place_of_birth(key: str, text: str, spoken: bool = False) -> AnswerR
     place = place_gazetteer.find_place(cleaned, home_province=home_province)
     if place:                       # the same town name in several provinces, none said: the town only
         return _ok(key, place["value"], methods=methods, confidence=0.95)
+    pool = place_gazetteer.provinces() + place_gazetteer.places_without_province()
     if spoken:
         result = _fail(key, "Please say the town or city and the province where you were born, "
                             "for example: Malaybalay, Bukidnon.", methods=methods)
-        result.suggestions = _birth_suggestions(place_gazetteer.suggest(
-            cleaned, place_gazetteer.provinces() + place_gazetteer.places_without_province(),
-            fill=place_gazetteer.nearby(home_province)))
+        result.suggestions = _birth_suggestions(place_gazetteer.suggest(cleaned, pool,
+                                                                        fill=place_gazetteer.nearby(home_province)))
         return result
     entities = _ner_entities(_title(cleaned))
     locations = []
@@ -1329,10 +1329,13 @@ def _handle_place_of_birth(key: str, text: str, spoken: bool = False) -> AnswerR
     warning = "Typed place of birth, not in the list of Philippine places — please check it."
     if locations or barangay:
         return _ok(key, value, methods=methods, confidence=0.9, warnings=[warning])
-    # Typed, not recognized as a place: kept as typed, but asked to be checked.
-    return _ok(key, value, methods=methods, confidence=0.5, needs_confirmation=True,
-               message=f"{value} is not in the list of places. Is that the place where you were born?",
-               warnings=[warning])
+    # Typed, not recognized as a place: kept as typed, but asked to be checked; the closest list entries to tap.
+    result = _ok(key, value, methods=methods, confidence=0.5, needs_confirmation=True,
+                 message=f"{value} is not in the list of places. Is that the place where you were born?",
+                 warnings=[warning])
+    all_towns = tuple(p for ps in place_gazetteer._load()[0].values() for p in ps if p.type != "province")
+    result.suggestions = _birth_suggestions(place_gazetteer.suggest(cleaned, all_towns + pool))
+    return result
 
 
 OCCUPATION_ALIASES = {
@@ -1449,7 +1452,12 @@ def understand_answer(field_key: str, transcript: str, spoken: bool = False, tow
     if not text:
         if field_key in OPTIONAL_FIELDS:
             return _ok(field_key, "", display="none")
-        return _fail(field_key, f"I didn't hear an answer. Please tell me your {label}.", reason="empty")
+        result = _fail(field_key, f"I didn't hear an answer. Please tell me your {label}.", reason="empty")
+        if field_key == "place_of_birth_province":     # the likeliest places to tap (plan 001.8)
+            result.suggestions = _handle_birth_province(field_key, "").suggestions
+        elif field_key == "place_of_birth_town":
+            result.suggestions = _handle_birth_town(field_key, "", province=province).suggestions
+        return result
     if _is_unclear(text):
         return _fail(field_key, "No problem, let me ask again.", reason="unclear")
     try:
