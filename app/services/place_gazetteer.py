@@ -465,17 +465,47 @@ def places_named(text: str, home_province: str = "") -> List[Place]:
                                          p.region != REGION_X, p.province))
 
 
+@lru_cache(maxsize=1)
+def _entries() -> Dict[str, Place]:
+    """
+    Every city and town as the place of birth is written ("quezon, bukidnon", "iligan city"), lower case.
+    Not a town written without its own-named province ("Quezon", Quezon): that is also just a town name.
+    """
+    return {place_value(p).lower(): p for ps in _load()[0].values() for p in ps
+            if p.type != "province" and ("," in place_value(p) or not p.province)}
+
+
+def _list_entry(text: str) -> Optional[Place]:
+    return _entries().get(re.sub(r"\s*,\s*", ", ", (text or "").strip().rstrip(".")).lower())
+
+
 def find_birth_place(text: str, province_code: str = "", home_province: str = "",
                      province_said: bool = False) -> Optional[dict]:
     """
     A place-of-birth answer: {"place": Place} when a city or town is named (with its province), or
     {"province": Place} when only a province is said (the town question comes next).
     province_code: the province already answered; its towns are tried first, with near-misses.
-    province_said: the word "province" was said ("Cagayan province"): an exact province name wins.
+    province_said: the word "province" was said ("Cagayan province"): a province name wins, also misheard.
     Never anything for talk that names no place ("Sounds good").
     """
+    entry = _list_entry(text)
+    if entry:
+        return {"place": entry}         # written the list's way ("Quezon, Bukidnon"): checked again unchanged
     if province_code:
-        town = match_in(text, towns_in_province(province_code))
+        chosen = province_by_code(province_code)
+        towns = towns_in_province(province_code)
+        found = find_place(text, home_province=chosen.name if chosen else "")
+        if found and found["place"] and not found.get("ambiguous"):
+            # Another place named outright ("Valencia, Negros Oriental", "Quezon City") is a correction, not
+            # a near-miss of a town of the chosen province; the applicant still confirms it.
+            place = _by_display().get((found["place"], found["province"]))
+            said_other = (bool(found["province"]) and chosen is not None and found["province"] != chosen.name
+                          and _norm(found["province"]) in _norm(text))
+            city_outside = (place is not None and place.type == "city" and "city" in _norm(text).split()
+                            and place not in towns)
+            if place and (said_other or city_outside):
+                return {"place": place}
+        town = match_in(text, towns)
         if town:
             return {"place": town}
     if NCR_WORDS.search(_norm(text)):
@@ -487,12 +517,16 @@ def find_birth_place(text: str, province_code: str = "", home_province: str = ""
         place = _by_display().get((found["place"], found["province"]))
         if place:
             return {"place": place}
+    if province_said:
+        province = match_in(text, provinces())     # "Cagayan province", also misheard ("Kagayan province")
+        if province:
+            return {"province": province}
     # "Cebu", "Iloilo", "Cotabato" said alone: the province; "Cebu City" was found above as the city.
     # Not "Cagayan" near Baungon: a city of the home region without a province (Cagayan de Oro) is meant.
     words = [w for w in _norm(text).split() if w not in STOP]
     exact = _load()[1].get(" ".join(words)) if words else None
     home_cities = tuple(p for p in nearby(home_province) if p.type != "province")
-    if exact and (province_said or not match_in(text, home_cities)):
+    if exact and not match_in(text, home_cities):
         return {"province": next(p for p in provinces() if p.psgc == exact[0].psgc)}
     # A city with no province, also misheard ("Kagayan de Oro"), before "Cagayan" the province. Near Baungon
     # "Cagayan" alone means Cagayan de Oro too; the read-back catches the rare Cagayan (Luzon) birth.

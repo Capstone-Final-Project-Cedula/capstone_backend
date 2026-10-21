@@ -1172,6 +1172,8 @@ def _handle_address_barangay(key: str, text: str, town: Optional[str] = None) ->
 PUROK_LIST_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "office_puroks.csv")
 PUROK_PART = re.compile(r"^(?:Purok|Zone|Sitio|Prk|Block|Blk|Lot|Phase)\b\.?\s*\S", re.IGNORECASE)
 PUROK_EXAMPLE = "Please say it like: Purok 2, Zone 1 or Sitio Mahogany. Or say none."
+TALK_STARTS = {"i", "we", "you", "he", "she", "it", "they", "my", "ako", "the", "a"}
+COUNT_WORDS = {"years", "year", "old", "children", "kids", "pesos", "kilos", "times", "months", "days", "people"}
 
 
 def _purok_names() -> List[str]:
@@ -1206,8 +1208,13 @@ def _handle_address_purok(key: str, text: str) -> AnswerResult:
     words = {w.lower() for w in re.findall(r"[A-Za-z]+", value)}
     # A purok/zone/sitio, a street, or a house number with a short name ("123 Mahogany"); not any talk with a
     # number in it ("I have 2 children").
-    house = re.fullmatch(r"(?:No\.?\s*)?\d+[A-Za-z]?(?:\s+[A-Za-z]+){1,2}", value)
-    if PUROK_PART.match(value) or house or words & place_gazetteer.STREET_WORDS:
+    # A street needs a name before the street word and no "I ..." talk ("Rizal Street", not "I drive a car").
+    tokens = [w.lower() for w in re.findall(r"[A-Za-z]+", value)]
+    street = (len(tokens) <= 6 and bool(tokens) and tokens[0] not in TALK_STARTS
+              and any(w in place_gazetteer.STREET_WORDS for w in tokens[1:]))
+    house = (re.fullmatch(r"(?:No\.?\s*)?\d+[A-Za-z]?(?:\s+[A-Za-z]+){1,2}", value)
+             and not words & COUNT_WORDS)                          # "123 Mahogany", not "20 years old"
+    if PUROK_PART.match(value) or house or street:
         return _ok(key, value, methods=["regex"], confidence=0.9)
     names = _purok_names()
     if names:
@@ -1223,6 +1230,11 @@ BIRTH_LEAD_INS = [
     r"^(?:ipinanganak\s+ako\s+sa|pinanganak\s+ako\s+sa|natawo\s+ko\s+sa|taga|sa)\s+", r"^(?:in|at)\s+",
     r"^(?:the\s+)?(?:province|probinsya|city|town|municipality)\s+of\s+",
 ]
+
+
+def _province_said(text: str) -> bool:
+    """"Cagayan province", "the province of Cagayan": a province is meant, not a city named like it."""
+    return bool(re.search(r"\b(?:province|probinsya)\b", text or "", re.IGNORECASE))
 
 
 def _birth_cleaned(text: str) -> str:
@@ -1256,8 +1268,7 @@ def _handle_birth_province(key: str, text: str) -> AnswerResult:
         result = _fail(key, "Please tell me the province where you were born.")
         result.suggestions = _birth_suggestions(likely[:3])
         return result
-    province_said = bool(re.search(r"\b(?:province|probinsya)\b", text, re.IGNORECASE))
-    found = place_gazetteer.find_birth_place(cleaned, home_province=home, province_said=province_said)
+    found = place_gazetteer.find_birth_place(cleaned, home_province=home, province_said=_province_said(text))
     if found:
         return _birth_ok(key, found)
     same_name = place_gazetteer.places_named(cleaned, home_province=home)
@@ -1283,7 +1294,8 @@ def _handle_birth_town(key: str, text: str, province: Optional[str] = None) -> A
     towns = place_gazetteer.towns_in_province(prov.psgc)
     found = None
     if cleaned and len(re.sub(r"[^A-Za-z]", "", cleaned)) >= 3:
-        found = place_gazetteer.find_birth_place(cleaned, province_code=prov.psgc, home_province=prov.name)
+        found = place_gazetteer.find_birth_place(cleaned, province_code=prov.psgc, home_province=prov.name,
+                                                 province_said=_province_said(text))
     if found and found.get("province") == prov:
         found = None                       # only the province again: the town is still needed
     if found:
@@ -1310,7 +1322,7 @@ def _handle_place_of_birth(key: str, text: str, spoken: bool = False) -> AnswerR
     # Every Philippine province, city and municipality (PSGC): written the official way,
     # with its province ("polo molok" -> "Polomolok, South Cotabato").
     home_province = _office_location()[1]
-    found = place_gazetteer.find_birth_place(cleaned, home_province=home_province)
+    found = place_gazetteer.find_birth_place(cleaned, home_province=home_province, province_said=_province_said(text))
     if found:
         return _ok(key, _birth_ok(key, found).value, methods=methods, confidence=0.95)
     place = place_gazetteer.find_place(cleaned, home_province=home_province)

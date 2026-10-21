@@ -1271,6 +1271,32 @@ class TestPlaceOfBirth:
         result = understand_answer("place_of_birth_town", "Cagayan de Oro", spoken=True, province="1004300000")
         assert result.ok and result.value == "Cagayan de Oro City"
 
+    @pytest.mark.parametrize("value", [
+        "Quezon, Bukidnon", "Lantapan, Bukidnon", "Malaybalay City, Bukidnon", "Iligan City", "Cagayan de Oro City",
+    ])
+    def test_confirmed_place_survives_the_recheck_before_issuing(self, value):
+        from app.services.answer_service import understand_answers
+        assert understand_answers({"place_of_birth": value})["place_of_birth"].value == value
+
+    def test_town_step_quezon_is_the_town_of_the_province(self):
+        from app.services.answer_service import understand_answer
+        assert understand_answer("place_of_birth_town", "Quezon", spoken=True, province=BUKIDNON).value == "Quezon, Bukidnon"
+
+    @pytest.mark.parametrize("heard,province,value", [
+        ("Valencia, Negros Oriental", BUKIDNON, "Valencia, Negros Oriental"),
+        ("Quezon City", BUKIDNON, "Quezon City"),
+        ("San Jose, Batangas", "0306900000", "San Jose, Batangas"),      # chosen: Tarlac
+        ("Valencia", BUKIDNON, "Valencia City, Bukidnon"),                 # not named outright: the province's town
+    ])
+    def test_town_step_keeps_a_place_named_outright(self, heard, province, value):
+        from app.services.answer_service import understand_answer
+        assert understand_answer("place_of_birth_town", heard, spoken=True, province=province).value == value
+
+    @pytest.mark.parametrize("field", ["place_of_birth_province", "place_of_birth"])
+    def test_misheard_cagayan_province_is_the_province(self, field):
+        from app.services.answer_service import understand_answer
+        assert understand_answer(field, "Kagayan province", spoken=True).value == "Cagayan"
+
     def test_places_without_province_come_from_the_csv(self):
         import csv
         from app.services.place_gazetteer import DATA_FILE, places_without_province
@@ -1340,13 +1366,14 @@ class TestPlaceOfBirth:
         assert understand_answer("place_of_birth_town", "Bokidnon", spoken=True).value == "Bukidnon"
 
     @pytest.mark.parametrize("heard,value", [("Sitio Mahogany", "Sitio Mahogany"), ("Prk 3", "Prk 3"),
-                                             ("123 Mahogany", "123 Mahogany")])
+                                             ("123 Mahogany", "123 Mahogany"), ("Mahogany Drive", "Mahogany Drive")])
     def test_purok_parsed(self, heard, value):
         from app.services.answer_service import understand_answer
         result = understand_answer("address_purok", heard, spoken=True)
         assert result.ok and result.value == value
 
-    @pytest.mark.parametrize("junk", ["Sounds good", "Baby you are my sunshine", "I have 2 children", "I am 20 years old"])
+    @pytest.mark.parametrize("junk", ["Sounds good", "Baby you are my sunshine", "I have 2 children", "I am 20 years old",
+                                      "I drive a car", "20 years old"])
     def test_purok_talk_refused_with_an_example(self, junk):
         from app.services.answer_service import understand_answer
         result = understand_answer("address_purok", junk, spoken=True)
