@@ -10,10 +10,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.core.database import DATABASE_KIND, create_tables, missing_migration_message
+from app.core.database import (
+    DATABASE_KIND, create_tables, missing_migration_message, missing_practice_log_message,
+)
 from app.api.routes import auth, speech, extraction, qr, forms, citizen_auth
 from app.api.routes import settings as settings_routes
-from app.api.routes import sus
+from app.api.routes import sus, practice_log
 
 # ─── Logging Setup ─────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -50,10 +52,12 @@ async def lifespan(app: FastAPI):
 
     # Stop here if the database lacks a migration: otherwise every save at the
     # interview station would fail mid-interview (plan 001.4).
-    problem = missing_migration_message()
+    problem = missing_migration_message() or missing_practice_log_message()
     if problem:
         logger.error(problem)
         raise RuntimeError(problem)
+    if settings.PRACTICE_LOG_ENABLED:
+        logger.warning("Practice log is ON (temporary, plan 001.7): turn PRACTICE_LOG_ENABLED off before real residents.")
 
     # Create DB tables (includes citizen_users now)
     create_tables()
@@ -154,6 +158,7 @@ def create_app() -> FastAPI:
     app.include_router(citizen_auth.router, prefix="/api/citizen",    tags=["Citizen Auth (Mobile)"])
     app.include_router(settings_routes.router, prefix="/api/settings", tags=["Settings"])
     app.include_router(sus.router,          prefix="/api/sus",        tags=["SUS Survey"])
+    app.include_router(practice_log.router, prefix="/api/practice-log", tags=["Practice Log (temporary)"])
 
     # Generated PDFs are NOT served as public static files: they contain
     # citizens' personal data and have guessable names. Downloads go through

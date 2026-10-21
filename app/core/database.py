@@ -81,8 +81,32 @@ def missing_migration_message(bind=None):
     return None
 
 
+MISSING_PRACTICE_LOG_MIGRATION = (
+    "PRACTICE_LOG_ENABLED is on, but the database is missing migration 20261021090000_practice_log.sql. "
+    "Apply it in the Supabase SQL editor, or turn PRACTICE_LOG_ENABLED off (see capstone_docs/TESTING-LAPTOP.md)."
+)
+
+
+def missing_practice_log_message(bind=None):
+    """
+    The start-up message when the practice log is on but its tables are missing, else None.
+    Log off: never checked. Must run BEFORE create_tables() like missing_migration_message().
+    """
+    if not settings.PRACTICE_LOG_ENABLED:
+        return None
+    from app.models.practice_log import PRACTICE_LOG_TABLE_NAMES
+    inspector = inspect(bind if bind is not None else engine)
+    if all(inspector.has_table(name) for name in PRACTICE_LOG_TABLE_NAMES):
+        return None
+    return MISSING_PRACTICE_LOG_MIGRATION
+
+
 def create_tables():
     """Create any missing tables defined in models. Called on startup."""
     from app.models import applicant, issuance, mobile_submission, staff_user  # noqa: F401
     from app.models import citizen_user, app_settings, sus_response, record_access_log  # noqa: F401
-    Base.metadata.create_all(bind=engine)
+    from app.models import practice_log  # noqa: F401
+    # The temporary practice-log tables (plan 001.7) exist only through their migration:
+    # create_all() would make them without row level security.
+    tables = [t for t in Base.metadata.sorted_tables if not t.info.get("practice_log")]
+    Base.metadata.create_all(bind=engine, tables=tables)
