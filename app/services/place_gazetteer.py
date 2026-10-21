@@ -315,3 +315,227 @@ def find_town(text: str, exclude: frozenset = frozenset(), home_province: str = 
     unique = {p.psgc for p in places}
     return {"place": places[0], "span": (toks[start][1], toks[end - 1][2]), "province_said": province_said,
             "ambiguous": len(unique) > 1}
+
+
+# ─── Place of birth in two steps: province, then a town of it (plan 001.8) ───
+
+# Metro Manila is a region, not a province, but people say it like one: its cities are asked next.
+NCR_CODE = "1300000000"
+NCR_NAME = "Metro Manila"
+NCR_REGION = "National Capital Region (NCR)"
+NCR_WORDS = re.compile(r"\b(?:metro\s+manila|ncr|national\s+capital(?:\s+region)?)\b")
+# Words of a multi-word name too common to stand for the whole name ("San" Fernando, "Don" Carlos).
+WEAK_WORDS = STOP | {"san", "santa", "santo", "sta", "sto", "de", "del", "dela", "los", "las", "la", "don", "dona",
+                     "general", "norte", "sur", "oriental", "occidental", "island", "islands", "new", "old", "president"}
+
+
+def place_value(place: Place) -> str:
+    """How a place of birth is written on the form: "Malaybalay City, Bukidnon", or "Iligan City" (no province)."""
+    if place.type == "province" or not place.province or place.province == place.display:
+        return place.display
+    return f"{place.display}, {place.province}"
+
+
+@lru_cache(maxsize=1)
+def provinces() -> Tuple[Place, ...]:
+    """The 82 provinces plus Metro Manila, by name."""
+    seen = {p.psgc: p for ps in _load()[1].values() for p in ps}
+    ncr = Place(NCR_NAME, NCR_NAME, "province", NCR_NAME, NCR_REGION, NCR_CODE)
+    return tuple(sorted([*seen.values(), ncr], key=lambda p: p.name))
+
+
+def province_by_code(code: str) -> Optional[Place]:
+    return next((p for p in provinces() if p.psgc == code), None) if code else None
+
+
+@lru_cache(maxsize=None)
+def towns_in_province(code: str) -> Tuple[Place, ...]:
+    """The cities and municipalities of one province (or of Metro Manila), cities first."""
+    province = province_by_code(code)
+    if not province:
+        return ()
+    seen = {p.psgc: p for ps in _load()[0].values() for p in ps}
+    if code == NCR_CODE:
+        towns = [p for p in seen.values() if p.region == NCR_REGION]
+    else:
+        towns = [p for p in seen.values() if p.province == province.name]
+    return tuple(sorted(towns, key=lambda p: (p.type != "city", p.name)))
+
+
+@lru_cache(maxsize=1)
+def _by_display() -> Dict[Tuple[str, str], Place]:
+    """(display, province) -> the city or municipality, to turn a find_place() answer back into a Place."""
+    return {(p.display, p.province): p for ps in _load()[0].values() for p in ps}
+
+
+@lru_cache(maxsize=1)
+def places_without_province() -> Tuple[Place, ...]:
+    """Highly urbanized cities and a few towns (Pateros, BARMM) that belong to no province: said directly."""
+    seen = {p.psgc: p for ps in _load()[0].values() for p in ps}
+    return tuple(sorted((p for p in seen.values() if not p.province), key=lambda p: p.name))
+
+
+def _keys(place: Place) -> List[str]:
+    """What a place can be heard as: its whole name (no spaces), and each distinctive word of a longer name."""
+    words = _norm(place.name).split()
+    keys = ["".join(words)]
+    keys += [w for w in words if len(w) >= 5 and w not in WEAK_WORDS] if len(words) > 1 else []
+    return keys
+
+
+def _scores(text: str, places: Tuple[Place, ...]) -> List[Tuple[float, Place]]:
+    """Best match score (0-100) of each place against the words said, best first."""
+    t = _norm(text)
+    for alias, real in ALIASES.items():
+        t = re.sub(rf"\b{alias}\b", _norm(real), t)
+    words = [w for w in t.split() if w not in STOP]
+    grams = {gram.replace(" ", "") for _, _, gram in _ngrams(words, 4)}
+    if not grams:
+        return []
+    scored = []
+    for place in places:
+        best = 0.0
+        for key in _keys(place):
+            for gram in grams:
+                if gram == key:
+                    score = 100.0
+                elif len(gram) < 4 or len(key) < 4:
+                    continue
+                elif sound_key(gram) == sound_key(key):
+                    score = 95.0            # "Bokidnon", "Malaybalai": same sound, other spelling
+                else:
+                    score = fuzz.ratio(gram, key)
+                    if len(key) <= 6 and score < 90:
+                        continue            # short names: "a plan" is not Aklan (Codex, plan 001.8)
+                best = max(best, score)
+        if best:
+            scored.append((best, place))
+    return sorted(scored, key=lambda s: -s[0])
+
+
+def match_in(text: str, places: Tuple[Place, ...], cutoff: float = 80) -> Optional[Place]:
+    """
+    The one place of a short list the answer names, also when slightly misheard ("Lantap" -> Lantapan,
+    "Manulo" -> Manolo Fortich). None when nothing is close enough or two places are equally close.
+    """
+    scored = _scores(text, places)
+    if not scored or scored[0][0] < cutoff:
+        return None
+    if len(scored) > 1 and scored[1][0] == scored[0][0] and scored[1][1].psgc != scored[0][1].psgc:
+        return None
+    return scored[0][1]
+
+
+def suggest(text: str, places: Tuple[Place, ...], n: int = 3, cutoff: float = 70,
+            fill: Tuple[Place, ...] = ()) -> List[Place]:
+    """
+    The places of a list closest to what was heard, for the "tap one of these" screen; topped up from
+    `fill` (the likeliest places) when fewer are close.
+    """
+    out: List[Place] = []
+    for score, place in _scores(text, places):
+        if score < cutoff or len(out) == n:
+            break
+        if place not in out:
+            out.append(place)
+    for place in fill:
+        if len(out) == n:
+            break
+        if place not in out:
+            out.append(place)
+    return out
+
+
+def nearby(home_province: str) -> Tuple[Place, ...]:
+    """The home province, then the other provinces and province-less cities of its region (Region X here)."""
+    home = next((p for p in provinces() if p.name.lower() == (home_province or "").lower()), None)
+    if not home:
+        return ()
+    rest = [p for p in provinces() + places_without_province() if p.region == home.region and p != home]
+    return (home, *sorted(rest, key=lambda p: (p.type == "province", p.name)))
+
+
+def places_named(text: str, home_province: str = "") -> List[Place]:
+    """Every city or town with the name said ("San Jose": many), home province and Region X first."""
+    found = find_place(text, home_province=home_province)
+    if not found or not found.get("ambiguous"):
+        return []
+    places = [p for p in _load()[0].get(_norm(found["place"]), []) if p.type != "province"]
+    return sorted(places, key=lambda p: (p.province.lower() != (home_province or "").lower(),
+                                         p.region != REGION_X, p.province))
+
+
+@lru_cache(maxsize=1)
+def _entries() -> Dict[str, Place]:
+    """
+    Every city and town as the place of birth is written ("quezon, bukidnon", "iligan city"), lower case.
+    Not a town written without its own-named province ("Quezon", Quezon): that is also just a town name.
+    """
+    return {place_value(p).lower(): p for ps in _load()[0].values() for p in ps
+            if p.type != "province" and ("," in place_value(p) or not p.province)}
+
+
+def _list_entry(text: str) -> Optional[Place]:
+    return _entries().get(re.sub(r"\s*,\s*", ", ", (text or "").strip().rstrip(".")).lower())
+
+
+def find_birth_place(text: str, province_code: str = "", home_province: str = "",
+                     province_said: bool = False) -> Optional[dict]:
+    """
+    A place-of-birth answer: {"place": Place} when a city or town is named (with its province), or
+    {"province": Place} when only a province is said (the town question comes next).
+    province_code: the province already answered; its towns are tried first, with near-misses.
+    province_said: the word "province" was said ("Cagayan province"): a province name wins, also misheard.
+    Never anything for talk that names no place ("Sounds good").
+    """
+    entry = _list_entry(text)
+    if entry:
+        return {"place": entry}         # written the list's way ("Quezon, Bukidnon"): checked again unchanged
+    if province_code:
+        chosen = province_by_code(province_code)
+        towns = towns_in_province(province_code)
+        found = find_place(text, home_province=chosen.name if chosen else "")
+        if found and found["place"] and not found.get("ambiguous"):
+            # Another place named outright ("Valencia, Negros Oriental", "Quezon City") is a correction, not
+            # a near-miss of a town of the chosen province; the applicant still confirms it.
+            place = _by_display().get((found["place"], found["province"]))
+            said_other = (bool(found["province"]) and chosen is not None and found["province"] != chosen.name
+                          and _norm(found["province"]) in _norm(text))
+            city_outside = (place is not None and place.type == "city" and "city" in _norm(text).split()
+                            and place not in towns)
+            if place and (said_other or city_outside):
+                return {"place": place}
+        town = match_in(text, towns)
+        if town:
+            return {"place": town}
+    if NCR_WORDS.search(_norm(text)):
+        # "Metro Manila" alone is the region (its city is asked next); "Quezon City, Metro Manila" is the city.
+        city = match_in(NCR_WORDS.sub(" ", _norm(text)), towns_in_province(NCR_CODE))
+        return {"place": city} if city else {"province": province_by_code(NCR_CODE)}
+    found = find_place(text, home_province=home_province)
+    if found and found["place"] and not found.get("ambiguous"):
+        place = _by_display().get((found["place"], found["province"]))
+        if place:
+            return {"place": place}
+    if province_said:
+        province = match_in(text, provinces())     # "Cagayan province", also misheard ("Kagayan province")
+        if province:
+            return {"province": province}
+    # "Cebu", "Iloilo", "Cotabato" said alone: the province; "Cebu City" was found above as the city.
+    # Not "Cagayan" near Baungon: a city of the home region without a province (Cagayan de Oro) is meant.
+    words = [w for w in _norm(text).split() if w not in STOP]
+    exact = _load()[1].get(" ".join(words)) if words else None
+    home_cities = tuple(p for p in nearby(home_province) if p.type != "province")
+    if exact and not match_in(text, home_cities):
+        return {"province": next(p for p in provinces() if p.psgc == exact[0].psgc)}
+    # A city with no province, also misheard ("Kagayan de Oro"), before "Cagayan" the province. Near Baungon
+    # "Cagayan" alone means Cagayan de Oro too; the read-back catches the rare Cagayan (Luzon) birth.
+    city = match_in(text, places_without_province())
+    if city:
+        return {"place": city}
+    province = match_in(text, provinces())
+    if province:
+        return {"province": province}
+    if found and not found["place"] and found["province"]:
+        return {"province": next(p for p in provinces() if p.name == found["province"])}
+    return None

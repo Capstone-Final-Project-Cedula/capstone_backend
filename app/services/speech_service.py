@@ -24,6 +24,7 @@ from typing import Optional, Union
 from scipy.io import wavfile
 from scipy.signal import resample_poly
 from app.core.config import settings
+from app.services import place_gazetteer
 from app.services.barangay_gazetteer import get_barangay_list_for_prompt, region_town
 import logging
 
@@ -89,6 +90,11 @@ FIELD_PROMPTS = {
     "citizenship": "A citizenship, usually Filipino.",
     "icr_no": "An ICR number with letters and digits, or the word none.",
     "place_of_birth": f"A town or city and province, for example {BUKIDNON_PLACES}.",
+    # The place of birth in 2 steps (plan 001.8). The town hint is built per province: birth_town_prompt().
+    "place_of_birth_province": (
+        "The province, for example Bukidnon, Misamis Oriental, Lanao del Norte, Misamis Occidental, Cebu, "
+        "or a city: Cagayan de Oro, Iligan, Davao."
+    ),
     "height": "A height, for example 160 centimeters or 5 feet 4 inches.",
     "weight": "A weight, for example 60 kilos or 130 pounds.",
     "occupation": "An occupation. Examples: farmer, teacher, driver, vendor, housewife, student, laborer.",
@@ -119,6 +125,18 @@ def barangay_prompt(town_psgc: Optional[str]) -> str:
         return "The name of the barangay."          # outside Region X: no list, never the office's
     where = f"{town['town']}, {town['province']}".strip(", ")
     return f"Barangay in {where}. Barangays: {get_barangay_list_for_prompt(town_psgc)}."
+
+
+BIRTH_TOWN_HINT_MAX = 40   # a long prompt can backfire, and Whisper keeps only its last 223 tokens
+
+
+def birth_town_prompt(province_psgc: Optional[str]) -> str:
+    """Whisper hint for "Which town or city in <province>?": that province's cities and towns."""
+    province = place_gazetteer.province_by_code(province_psgc or "")
+    if not province:
+        return "The town or city where you were born."
+    names = ", ".join(p.name for p in place_gazetteer.towns_in_province(province.psgc)[:BIRTH_TOWN_HINT_MAX])
+    return f"A town or city in {province.display}: {names}."
 
 
 def _decode_options(initial_prompt: Optional[str]) -> dict:
@@ -185,16 +203,19 @@ class SpeechService:
             logger.warning(f"Whisper warm-up failed: {exc}")
 
     @classmethod
-    def _build_prompt(cls, field_key: Optional[str], town: Optional[str] = None) -> Optional[str]:
+    def _build_prompt(cls, field_key: Optional[str], town: Optional[str] = None,
+                      province: Optional[str] = None) -> Optional[str]:
         if not field_key:
             return None
         if field_key == "address_barangay":
             return barangay_prompt(town)
+        if field_key == "place_of_birth_town":
+            return birth_town_prompt(province)
         return FIELD_PROMPTS.get(field_key)
 
     @classmethod
     def transcribe_file(cls, audio_path: Union[str, np.ndarray], field_key: Optional[str] = None,
-                        town: Optional[str] = None) -> dict:
+                        town: Optional[str] = None, province: Optional[str] = None) -> dict:
         """
         Transcribe audio using Whisper.
 
@@ -204,6 +225,7 @@ class SpeechService:
             field_key: Optional interview field key, used to bias decoding
                        toward expected vocabulary via initial_prompt.
             town: PSGC code of the town already answered ("address_barangay" hint).
+            province: PSGC code of the province of birth already answered ("place_of_birth_town" hint).
 
         Returns:
             dict with keys: transcript, language, confidence, segments,
@@ -211,7 +233,7 @@ class SpeechService:
         """
         model = cls.get_model(cls.model_name_for(field_key))
         start_time = time.time()
-        initial_prompt = cls._build_prompt(field_key, town)
+        initial_prompt = cls._build_prompt(field_key, town, province)
 
         source = audio_path if isinstance(audio_path, str) else f"{len(audio_path) / WHISPER_SAMPLE_RATE:.1f}s of audio"
         logger.info(f"Transcribing {source} (field={field_key})")
@@ -253,7 +275,7 @@ class SpeechService:
 
     @classmethod
     def transcribe_bytes(cls, audio_bytes: bytes, suffix: str = ".wav", field_key: Optional[str] = None,
-                         town: Optional[str] = None) -> dict:
+                         town: Optional[str] = None, province: Optional[str] = None) -> dict:
         """
         Transcribe audio from raw bytes (e.g., uploaded file from API).
         WAV (what the web app uploads) is decoded here, so it works without
@@ -261,14 +283,14 @@ class SpeechService:
         """
         samples = _decode_wav(audio_bytes)
         if samples is not None:
-            return cls.transcribe_file(samples, field_key=field_key, town=town)
+            return cls.transcribe_file(samples, field_key=field_key, town=town, province=province)
 
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
             tmp.write(audio_bytes)
             tmp_path = tmp.name
 
         try:
-            result = cls.transcribe_file(tmp_path, field_key=field_key, town=town)
+            result = cls.transcribe_file(tmp_path, field_key=field_key, town=town, province=province)
         finally:
             os.unlink(tmp_path)  # Clean up temp file
 

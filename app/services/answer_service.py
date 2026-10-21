@@ -17,7 +17,9 @@ this module reuses its DistilBERT pipeline and barangay gazetteer.
 """
 from __future__ import annotations
 
+import csv
 import logging
+import os
 import re
 from dataclasses import dataclass, field
 from datetime import date
@@ -49,6 +51,9 @@ class AnswerResult:
     methods: List[str] = field(default_factory=list)  # "regex", "distilbert", "gazetteer"
     confidence: float = 0.0
     warnings: List[str] = field(default_factory=list)
+    # Place of birth (plan 001.8): the closest list entries, to tap. {"value", "province"}: province is a
+    # PSGC code when the entry is a province (its town is asked next), "" when it is a whole place.
+    suggestions: List[dict] = field(default_factory=list)
 
     def as_dict(self) -> dict:
         return self.__dict__.copy()
@@ -1164,8 +1169,27 @@ def _handle_address_barangay(key: str, text: str, town: Optional[str] = None) ->
                message=f"I heard {label}. Is that your barangay?", warnings=[warning])
 
 
+PUROK_LIST_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "office_puroks.csv")
+PUROK_PART = re.compile(r"^(?:Purok|Zone|Sitio|Prk|Block|Blk|Lot|Phase)\b\.?\s*\S", re.IGNORECASE)
+PUROK_EXAMPLE = "Please say it like: Purok 2, Zone 1 or Sitio Mahogany. Or say none."
+TALK_STARTS = {"i", "we", "you", "he", "she", "it", "they", "my", "ako", "the", "a"}
+COUNT_WORDS = {"years", "year", "old", "children", "kids", "pesos", "kilos", "times", "months", "days", "people"}
+
+
+def _purok_names() -> List[str]:
+    """The office barangay's puroks (optional app/data/office_puroks.csv, one `name` column); [] without it."""
+    try:
+        with open(PUROK_LIST_FILE, newline="", encoding="utf-8") as f:
+            return [r["name"].strip() for r in csv.DictReader(f) if (r.get("name") or "").strip()]
+    except (OSError, KeyError):
+        return []
+
+
 def _handle_address_purok(key: str, text: str) -> AnswerResult:
-    """"What is your purok, sitio or street?" Taken as said (purok numbers written as digits)."""
+    """
+    "What is your purok, sitio or street?" Purok / zone / sitio + a number or name, a street or house
+    number, or a purok of the office list. Other talk ("Sounds good") is refused (plan 001.8).
+    """
     if _is_blank_answer(text):
         return _ok(key, "", display="none")
     cleaned = _basic_clean(text)
@@ -1181,14 +1205,115 @@ def _handle_address_purok(key: str, text: str) -> AnswerResult:
     if not re.search(r"[A-Za-z0-9]", cleaned):
         return _fail(key, "Please tell me your purok, sitio or street, or say none.")
     value = re.sub(r"\b(?:Brgy|Bgy)\.?(?=\s|$)", "Barangay", _title(cleaned))
-    return _ok(key, value, methods=["regex"], confidence=0.9)
+    words = {w.lower() for w in re.findall(r"[A-Za-z]+", value)}
+    # A purok/zone/sitio, a street, or a house number with a short name ("123 Mahogany"); not any talk with a
+    # number in it ("I have 2 children").
+    # A street needs a name before the street word and no "I ..." talk ("Rizal Street", not "I drive a car").
+    tokens = [w.lower() for w in re.findall(r"[A-Za-z]+", value)]
+    street = (len(tokens) <= 6 and bool(tokens) and tokens[0] not in TALK_STARTS
+              and any(w in place_gazetteer.STREET_WORDS for w in tokens[1:]))
+    house = (re.fullmatch(r"(?:No\.?\s*)?\d+[A-Za-z]?(?:\s+[A-Za-z]+){1,2}", value)
+             and not words & COUNT_WORDS)                          # "123 Mahogany", not "20 years old"
+    if PUROK_PART.match(value) or house or street:
+        return _ok(key, value, methods=["regex"], confidence=0.9)
+    names = _purok_names()
+    if names:
+        found, _, _ = _find_barangay(cleaned, names, {})
+        if found:
+            name = found if PUROK_PART.match(found) else f"Purok {found}"
+            return _ok(key, name, methods=["regex", "gazetteer"], confidence=0.9)
+    return _fail(key, PUROK_EXAMPLE)
 
 
-def _handle_place_of_birth(key: str, text: str) -> AnswerResult:
-    cleaned = _strip_prefix(_basic_clean(text), [
-        r"^(?:i\s+was\s+)?born\s+(?:in|at)\s+", r"^(?:my\s+)?place\s+of\s+birth(?:\s+is)?\s*",
-        r"^(?:ipinanganak\s+ako\s+sa|pinanganak\s+ako\s+sa|sa)\s+", r"^(?:in|at)\s+",
-    ])
+BIRTH_LEAD_INS = [
+    r"^(?:i\s+was\s+)?born\s+(?:in|at)\s+", r"^(?:my\s+)?place\s+of\s+birth(?:\s+is)?\s*",
+    r"^(?:ipinanganak\s+ako\s+sa|pinanganak\s+ako\s+sa|natawo\s+ko\s+sa|taga|sa)\s+", r"^(?:in|at)\s+",
+    r"^(?:the\s+)?(?:province|probinsya|city|town|municipality)\s+of\s+",
+]
+
+
+def _province_said(text: str) -> bool:
+    """"Cagayan province", "the province of Cagayan": a province is meant, not a city named like it."""
+    return bool(re.search(r"\b(?:province|probinsya)\b", text or "", re.IGNORECASE))
+
+
+def _birth_cleaned(text: str) -> str:
+    return _strip_prefix(_basic_clean(text), BIRTH_LEAD_INS)
+
+
+def _birth_suggestions(places) -> List[dict]:
+    return [{"value": p.display, "province": p.psgc} if p.type == "province"
+            else {"value": place_gazetteer.place_value(p), "province": ""} for p in places]
+
+
+def _birth_ok(key: str, found: dict) -> AnswerResult:
+    """A whole place: "Malaybalay City, Bukidnon" (normalized ""). A province only: normalized = its PSGC code."""
+    methods = ["regex", "gazetteer"]
+    if "place" in found:
+        return _ok(key, place_gazetteer.place_value(found["place"]), normalized="", methods=methods, confidence=0.95)
+    province = found["province"]
+    return _ok(key, province.display, normalized=province.psgc, methods=methods, confidence=0.95)
+
+
+def _handle_birth_province(key: str, text: str) -> AnswerResult:
+    """
+    "Which province were you born in?" (plan 001.8). A province (the town is asked next), or a whole
+    place said at once: a city with no province ("Iligan"), or "Malaybalay, Bukidnon". Talk that names
+    no place is refused, never read back as one.
+    """
+    cleaned = _birth_cleaned(text)
+    home = _office_location()[1]
+    likely = place_gazetteer.nearby(home)
+    if not cleaned or len(re.sub(r"[^A-Za-z]", "", cleaned)) < 3:
+        result = _fail(key, "Please tell me the province where you were born.")
+        result.suggestions = _birth_suggestions(likely[:3])
+        return result
+    found = place_gazetteer.find_birth_place(cleaned, home_province=home, province_said=_province_said(text))
+    if found:
+        return _birth_ok(key, found)
+    same_name = place_gazetteer.places_named(cleaned, home_province=home)
+    if same_name:
+        # "San Jose": a town of that name in many provinces. The closest ones to tap; or say the province.
+        result = _fail(key, f"There is more than one {same_name[0].display}. Please say the province first.",
+                       methods=["regex", "gazetteer"])
+        result.suggestions = _birth_suggestions(same_name[:3])
+        return result
+    pool = place_gazetteer.provinces() + place_gazetteer.places_without_province()
+    result = _fail(key, "Please say the province where you were born. For example: Bukidnon. "
+                        "If you were born in a city like Cagayan de Oro, say the city.", methods=["regex", "gazetteer"])
+    result.suggestions = _birth_suggestions(place_gazetteer.suggest(cleaned, pool, fill=likely))
+    return result
+
+
+def _handle_birth_town(key: str, text: str, province: Optional[str] = None) -> AnswerResult:
+    """"Which town or city in Bukidnon?" Matched inside that province first (near-misses too), then anywhere."""
+    prov = place_gazetteer.province_by_code(province or "")
+    if not prov:
+        return _handle_birth_province(key, text)
+    cleaned = _birth_cleaned(text)
+    towns = place_gazetteer.towns_in_province(prov.psgc)
+    found = None
+    if cleaned and len(re.sub(r"[^A-Za-z]", "", cleaned)) >= 3:
+        found = place_gazetteer.find_birth_place(cleaned, province_code=prov.psgc, home_province=prov.name,
+                                                 province_said=_province_said(text))
+    if found and found.get("province") == prov:
+        found = None                       # only the province again: the town is still needed
+    if found:
+        return _birth_ok(key, found)
+    example = towns[0].name if towns else ""
+    result = _fail(key, f"Please say the town or city in {prov.display} where you were born."
+                        + (f" For example: {example}." if example else ""), methods=["regex", "gazetteer"])
+    result.suggestions = _birth_suggestions(place_gazetteer.suggest(cleaned, towns, fill=towns))
+    return result
+
+
+def _handle_place_of_birth(key: str, text: str, spoken: bool = False) -> AnswerResult:
+    """
+    The place of birth in one answer (the manual page, the review, the eval). Spoken: only a real place
+    (PSGC list) is taken; talk Whisper heard ("Sounds good") is refused. Typed: kept as typed if it is not
+    in the list, and marked so.
+    """
+    cleaned = _birth_cleaned(text)
     if not cleaned or len(re.sub(r"[^A-Za-z]", "", cleaned)) < 3:
         return _fail(key, "Please tell me the town or city where you were born.")
     if re.fullmatch(r"[\d\s.,/-]+", cleaned):
@@ -1196,9 +1321,20 @@ def _handle_place_of_birth(key: str, text: str) -> AnswerResult:
     methods = ["regex", "gazetteer"]
     # Every Philippine province, city and municipality (PSGC): written the official way,
     # with its province ("polo molok" -> "Polomolok, South Cotabato").
-    place = place_gazetteer.find_place(cleaned, home_province=_office_location()[1])
-    if place:
+    home_province = _office_location()[1]
+    found = place_gazetteer.find_birth_place(cleaned, home_province=home_province, province_said=_province_said(text))
+    if found:
+        return _ok(key, _birth_ok(key, found).value, methods=methods, confidence=0.95)
+    place = place_gazetteer.find_place(cleaned, home_province=home_province)
+    if place:                       # the same town name in several provinces, none said: the town only
         return _ok(key, place["value"], methods=methods, confidence=0.95)
+    pool = place_gazetteer.provinces() + place_gazetteer.places_without_province()
+    if spoken:
+        result = _fail(key, "Please say the town or city and the province where you were born, "
+                            "for example: Malaybalay, Bukidnon.", methods=methods)
+        result.suggestions = _birth_suggestions(place_gazetteer.suggest(cleaned, pool,
+                                                                        fill=place_gazetteer.nearby(home_province)))
+        return result
     entities = _ner_entities(_title(cleaned))
     locations = []
     if entities is not None:
@@ -1206,11 +1342,16 @@ def _handle_place_of_birth(key: str, text: str) -> AnswerResult:
         locations = [e.word for e in entities if e.label == "LOC" and e.score >= 0.5]
     barangay = _find_barangay(cleaned)[0]
     value = _title(cleaned)
+    warning = "Typed place of birth, not in the list of Philippine places — please check it."
     if locations or barangay:
-        return _ok(key, value, methods=methods, confidence=0.9)
-    # Plausible but not recognized as a place: keep it, but ask the applicant to confirm.
-    return _ok(key, value, methods=methods, confidence=0.5, needs_confirmation=True,
-               message=f"I heard {value}. Is that the place where you were born?")
+        return _ok(key, value, methods=methods, confidence=0.9, warnings=[warning])
+    # Typed, not recognized as a place: kept as typed, but asked to be checked; the closest list entries to tap.
+    result = _ok(key, value, methods=methods, confidence=0.5, needs_confirmation=True,
+                 message=f"{value} is not in the list of places. Is that the place where you were born?",
+                 warnings=[warning])
+    all_towns = tuple(p for ps in place_gazetteer._load()[0].values() for p in ps if p.type != "province")
+    result.suggestions = _birth_suggestions(place_gazetteer.suggest(cleaned, all_towns + pool))
+    return result
 
 
 OCCUPATION_ALIASES = {
@@ -1273,6 +1414,7 @@ FIELD_LABELS = {
     "height": "height", "weight": "weight", "occupation": "occupation",
     "gross_annual_income": "gross annual income",
     "address_town": "town or city", "address_barangay": "barangay", "address_purok": "purok or street",
+    "place_of_birth_province": "province of birth", "place_of_birth_town": "town or city of birth",
 }
 OPTIONAL_FIELDS = {"middle_name", "icr_no", "address_purok"}
 
@@ -1300,18 +1442,23 @@ ADDRESS_PART_HANDLERS: Dict[str, Callable[..., AnswerResult]] = {
     "address_town": _handle_address_town,
     "address_barangay": _handle_address_barangay,
     "address_purok": _handle_address_purok,
+    # The place of birth in 2 steps (plan 001.8); the web keeps the result as the one `place_of_birth`.
+    "place_of_birth_province": _handle_birth_province,
+    "place_of_birth_town": _handle_birth_town,
 }
 
 NAME_KEYS = {"surname", "given_name", "middle_name"}
 
 
-def understand_answer(field_key: str, transcript: str, spoken: bool = False, town: Optional[str] = None) -> AnswerResult:
+def understand_answer(field_key: str, transcript: str, spoken: bool = False, town: Optional[str] = None,
+                      province: Optional[str] = None) -> AnswerResult:
     """
     Interpret one interview answer for one field (see module docstring).
     spoken=True: the text is Whisper's transcript, so a name may also be rejoined
-    ("Da Gondon") and given its local spelling ("Bakulio" -> "Baculio"). Typed
-    text is kept as typed.
+    ("Da Gondon") and given its local spelling ("Bakulio" -> "Baculio"), and a
+    place of birth must be a real place. Typed text is kept as typed.
     town: the PSGC code of the town already answered, for "address_barangay".
+    province: the PSGC code of the province of birth already answered, for "place_of_birth_town".
     """
     handler = HANDLERS.get(field_key) or ADDRESS_PART_HANDLERS.get(field_key)
     if handler is None:
@@ -1321,14 +1468,21 @@ def understand_answer(field_key: str, transcript: str, spoken: bool = False, tow
     if not text:
         if field_key in OPTIONAL_FIELDS:
             return _ok(field_key, "", display="none")
-        return _fail(field_key, f"I didn't hear an answer. Please tell me your {label}.", reason="empty")
+        result = _fail(field_key, f"I didn't hear an answer. Please tell me your {label}.", reason="empty")
+        if field_key == "place_of_birth_province":     # the likeliest places to tap (plan 001.8)
+            result.suggestions = _handle_birth_province(field_key, "").suggestions
+        elif field_key == "place_of_birth_town":
+            result.suggestions = _handle_birth_town(field_key, "", province=province).suggestions
+        return result
     if _is_unclear(text):
         return _fail(field_key, "No problem, let me ask again.", reason="unclear")
     try:
-        if field_key in NAME_KEYS or field_key == "address_town":
+        if field_key in NAME_KEYS or field_key in ("address_town", "place_of_birth"):
             return handler(field_key, text, spoken=spoken)
         if field_key == "address_barangay":
             return handler(field_key, text, town=town)
+        if field_key == "place_of_birth_town":
+            return handler(field_key, text, province=province)
         return handler(field_key, text)
     except Exception as exc:  # never break the interview on a parsing bug
         logger.exception(f"Answer parsing failed for {field_key}: {exc}")
