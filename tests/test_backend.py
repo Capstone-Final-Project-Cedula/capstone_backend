@@ -1726,6 +1726,22 @@ def script_plan(plan):
     return _load_summary_script().plan_tuple(plan)
 
 
+class TestPracticeLogSessionLock:
+    def test_note_finish_and_issue_lock_the_session_row_on_postgres(self):
+        # Notes are not awaited by the browser, so they can overlap /forms/issue: the three
+        # lock the row first (SQLite has no row locks, so the statement is checked, not raced).
+        from sqlalchemy.dialects import postgresql
+        from app.api.routes.practice_log import _locked_session_query
+        statement = _locked_session_query(TestingSessionLocal(), 1).statement
+        assert "FOR UPDATE" in str(statement.compile(dialect=postgresql.dialect()))
+
+    def test_the_routes_use_the_locked_query(self):
+        import inspect
+        from app.api.routes import practice_log
+        assert "_locked_session_query" in inspect.getsource(practice_log._own_session)
+        assert "_locked_session_query" in inspect.getsource(practice_log.link_issuance)
+
+
 class TestPracticeLogStartup:
     def test_log_on_and_tables_missing_is_named(self, tmp_path):
         from app.core.database import missing_practice_log_message

@@ -139,9 +139,18 @@ def _issued_applicant(db: Session, session: PracticeLogSession) -> Optional[Appl
     return issuance.applicant if issuance else None
 
 
+def _locked_session_query(db: Session, session_id: int):
+    """The session row, locked until commit (Postgres; SQLite has no row locks and ignores it)."""
+    return db.query(PracticeLogSession).filter(PracticeLogSession.id == session_id).with_for_update()
+
+
 def _own_session(db: Session, session_id: int, user: StaffUser) -> PracticeLogSession:
-    """A staff account can write only to its own sessions."""
-    session = db.get(PracticeLogSession, session_id)
+    """
+    A staff account can write only to its own sessions. The row is locked, so a note, a finish and
+    /forms/issue on the same session run one after another: notes are sent without blocking and can
+    overlap the issue call.
+    """
+    session = _locked_session_query(db, session_id).populate_existing().first()
     if session is None or session.staff_user_id != user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Practice session not found.")
     return session
@@ -156,8 +165,9 @@ def link_issuance(db: Session, session_id: Optional[int], user: StaffUser, issua
     if not settings.PRACTICE_LOG_ENABLED or not session_id:
         return
     try:
-        session = db.get(PracticeLogSession, session_id)
+        session = _locked_session_query(db, session_id).populate_existing().first()
         if session is None or session.staff_user_id != user.id or session.outcome == "issued":
+            db.rollback()                                    # releases the lock
             return
         session.outcome = "issued"
         session.ended_at = datetime.now(timezone.utc)
