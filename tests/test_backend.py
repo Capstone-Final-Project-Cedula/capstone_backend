@@ -2016,7 +2016,8 @@ class TestWhisperEngine:
 
             def transcribe(self, audio, **kwargs):
                 calls.append(("transcribe", audio, kwargs))
-                segment = types.SimpleNamespace(id=0, start=0.0, end=1.2, text=" Dela Cruz po.", avg_logprob=-0.2)
+                segment = types.SimpleNamespace(id=0, start=0.0, end=1.2, text=" Dela Cruz po.", avg_logprob=-0.2,
+                                                compression_ratio=1.1)
                 return iter([segment]), types.SimpleNamespace(language="en")
 
         return types.SimpleNamespace(WhisperModel=WhisperModel)
@@ -2100,6 +2101,17 @@ class TestWhisperEngine:
         assert openai_options["beam_size"] == 5 and openai_options["temperature"] == 0.0
         assert faster_options["beam_size"] == 5 and faster_options["temperature"] == 0.0
         assert speech_service._decode_options(None)["temperature"] == speech_service.FALLBACK_TEMPERATURES
+
+    def test_answer_length_capped_and_repetition_dropped(self):
+        from app.services import speech_service
+        from app.services.speech_service import MAX_ANSWER_TOKENS, _clean_transcript
+        # The bake-off's small/beam-5 loop: one address became 157 words, 7 distinct.
+        assert speech_service._decode_options(None)["sample_len"] == MAX_ANSWER_TOKENS
+        assert speech_service._faster_options(None)["max_new_tokens"] == MAX_ANSWER_TOKENS
+        loop = "Purok 3, Barangay Uno, " * 20
+        assert _clean_transcript(loop, [{"compression_ratio": 9.5}]) == ""
+        assert _clean_transcript("Purok 3, Barangay Uno.", [{"compression_ratio": 1.1}]) == "Purok 3, Barangay Uno."
+        assert _clean_transcript("Female.") == "Female."   # no segments: only the silence phrases are dropped
 
     def test_models_are_cached_per_engine(self):
         import sys

@@ -144,6 +144,10 @@ def birth_town_prompt(province_psgc: Optional[str]) -> str:
 
 
 FALLBACK_TEMPERATURES = (0.0, 0.4, 0.8)   # greedy only: retried when the first pass looks unreliable
+# One interview answer (even a spelled name) is far below this; the cap keeps a decode that loops on
+# the same words short (plan 002: small/beam-5 turned one address into 157 words, 7 of them distinct).
+MAX_ANSWER_TOKENS = 128
+REPETITIVE_RATIO = 2.4   # Whisper's own compression-ratio limit: above it the text is a repetition loop
 
 
 def _beam() -> int:
@@ -169,6 +173,7 @@ def _decode_options(initial_prompt: Optional[str]) -> dict:
         logprob_threshold=settings.WHISPER_LOGPROB_THRESHOLD,
         initial_prompt=initial_prompt,
         temperature=_temperatures(beam),
+        sample_len=MAX_ANSWER_TOKENS,
     )
     if beam > 1:
         options.update(beam_size=beam, best_of=beam)
@@ -189,6 +194,7 @@ def _faster_options(initial_prompt: Optional[str]) -> dict:
         log_prob_threshold=settings.WHISPER_LOGPROB_THRESHOLD,
         initial_prompt=initial_prompt,
         temperature=_temperatures(beam),
+        max_new_tokens=MAX_ANSWER_TOKENS,
         vad_filter=settings.WHISPER_VAD,   # Silero VAD (onnxruntime): silence is cut before decoding
     )
 
@@ -236,13 +242,17 @@ def _run(engine: str, model, audio: Union[str, np.ndarray], initial_prompt: Opti
             "text": "".join(s.text for s in segments),
             "language": info.language,
             "segments": [{"id": s.id, "start": s.start, "end": s.end, "text": s.text,
-                          "avg_logprob": s.avg_logprob} for s in segments],
+                          "avg_logprob": s.avg_logprob, "compression_ratio": s.compression_ratio} for s in segments],
         }
     return model.transcribe(audio, **_decode_options(initial_prompt))
 
 
-def _clean_transcript(text: str) -> str:
+def _clean_transcript(text: str, segments: Optional[list] = None) -> str:
+    """Drop what Whisper invents: silence phrases, and a decode stuck repeating the same words."""
     text = (text or "").strip()
+    if any(s.get("compression_ratio", 0) > REPETITIVE_RATIO for s in segments or []):
+        logger.info("Repetitive transcript dropped (a decoding loop, not an answer).")
+        return ""
     return "" if HALLUCINATIONS.match(text) else text
 
 
@@ -334,7 +344,7 @@ class SpeechService:
         else:
             confidence = 0.0
 
-        transcript = _clean_transcript(result.get("text", ""))
+        transcript = _clean_transcript(result.get("text", ""), segments)
 
         # Only the length is logged: transcripts are applicants' personal data (Data Privacy Act).
         logger.info(f"Transcription complete in {processing_time:.2f}s | Confidence: {confidence:.2f} | "
@@ -404,7 +414,7 @@ class SpeechService:
         )
 
         return {
-            "transcript": _clean_transcript(result.get("text", "")),
+            "transcript": _clean_transcript(result.get("text", ""), segments),
             "language": result.get("language", "en"),
             "confidence": confidence,
             "segments": segments,
