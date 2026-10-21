@@ -1462,6 +1462,15 @@ class TestPracticeLogSessions:
         assert detail["mode"] == "test" and detail["staff_username"] == "test_staff"
         assert detail["outcome"] == "open" and detail["input_method"] == "voice"
 
+    def test_a_session_started_before_voice_is_chosen_becomes_voice_on_the_first_heard_note(self, client, staff_token, admin_token):
+        with _log():
+            sid = client.post("/api/practice-log/sessions", json={"input_method": "manual"}, headers=_auth(staff_token)).json()["session_id"]
+            assert _session_detail(client, admin_token, sid)[0]["input_method"] == "manual"
+            _note(client, staff_token, sid, "surname", accepted_value="Reyes", accepted_engine="typed")
+            assert _session_detail(client, admin_token, sid)[0]["input_method"] == "manual"
+            _note(client, staff_token, sid, "given_name", accepted_value="Maria", accepted_engine="whisper")
+            assert _session_detail(client, admin_token, sid)[0]["input_method"] == "voice"
+
     def test_mode_switch_applies_to_new_sessions(self, client, staff_token, admin_token):
         with _log():
             resp = client.put("/api/practice-log/mode", json={"mode": "real"}, headers=_auth(admin_token))

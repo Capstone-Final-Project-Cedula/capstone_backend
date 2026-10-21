@@ -86,7 +86,8 @@ def _canon(field: str, value) -> str:
     if isinstance(value, bool):
         return str(value)
     if isinstance(value, (int, float)):
-        text = f"{float(value):g}"
+        number = float(value)
+        text = str(int(number)) if number.is_integer() else repr(number)   # 158.0 and 158 are the same value
     else:
         text = str(value).strip()
     # A blank height / weight is saved as nothing, though the form sends 0.
@@ -252,6 +253,13 @@ def add_answer_note(
         if row is None:
             row = PracticeLogAnswer(session_id=session.id, field=note.field)
             db.add(row)
+        # The session starts at the consent screen, before voice or typing is chosen: the first
+        # note heard by an engine makes it a voice session.
+        heard_by_engine = note.accepted_engine in ("whisper", "browser") or any(
+            a.engine in ("whisper", "browser") for a in note.attempt_details
+        )
+        if heard_by_engine and session.input_method != "voice":
+            session.input_method = "voice"
         # A question asked again (go back, a fix on the review page) replaces the earlier note.
         row.attempts = note.attempts
         row.attempt_details = [a.model_dump() for a in note.attempt_details]
