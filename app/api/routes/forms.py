@@ -14,6 +14,7 @@ from collections import Counter
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import require_admin, require_staff
+from app.api.routes import practice_log
 from app.models.applicant import ApplicantRecord
 from app.models.issuance import CTCIssuance, InputMethodEnum
 from app.models.record_access_log import RecordAccessLog
@@ -344,6 +345,9 @@ def issue_ctc(
         name_lexicon.refresh_records()   # the next interview knows this applicant's names
 
         logger.info(f"CTC {ctc_number} issued successfully")
+
+        # Temporary practice log (plan 001.7): never raises, never blocks the CTC.
+        practice_log.link_issuance(db, payload.practice_session_id, current_user, issuance)
 
         # ── 7. Build Response ──────────────────────────────────────────────────
         applicant_response = ApplicantResponse(
