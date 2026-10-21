@@ -223,10 +223,14 @@ def _load_model(engine: str, name: str):
     return whisper.load_model(name)
 
 
-def _run(engine: str, model, audio: Union[str, np.ndarray], initial_prompt: Optional[str]) -> dict:
+def _run(engine: str, model, audio: Union[str, np.ndarray], initial_prompt: Optional[str],
+         warm_up: bool = False) -> dict:
     """One decode on either engine, returned in openai-whisper's shape: text, language, segments."""
     if engine == "faster":
-        segments, info = model.transcribe(audio, **_faster_options(initial_prompt))
+        options = _faster_options(initial_prompt)
+        if warm_up:
+            options["vad_filter"] = False  # the VAD cuts the silent warm-up clip away: the model would never run
+        segments, info = model.transcribe(audio, **options)
         segments = list(segments)          # a lazy generator: decoding happens here
         return {
             "text": "".join(s.text for s in segments),
@@ -277,7 +281,7 @@ class SpeechService:
             for name in {settings.WHISPER_MODEL, cls.model_name_for("confirm")}:
                 model = cls.get_model(name)
                 with _model_lock:
-                    _run(_engine(), model, np.zeros(WHISPER_SAMPLE_RATE // 2, dtype=np.float32), None)
+                    _run(_engine(), model, np.zeros(WHISPER_SAMPLE_RATE // 2, dtype=np.float32), None, warm_up=True)
             logger.info("Whisper warmed up.")
         except Exception as exc:  # never block startup on this
             logger.warning(f"Whisper warm-up failed: {exc}")

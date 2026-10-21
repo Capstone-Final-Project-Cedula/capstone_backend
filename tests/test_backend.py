@@ -2059,6 +2059,19 @@ class TestWhisperEngine:
             SpeechService.transcribe_file(np.zeros(16000, dtype=np.float32), "confirm")
         assert calls[0][1] == "tiny"
 
+    def test_faster_warm_up_runs_the_model(self):
+        import sys
+        from app.services import speech_service
+        from app.services.speech_service import SpeechService
+        calls = []
+        with patch.dict(sys.modules, {"faster_whisper": self._fake_faster(calls)}), \
+                patch.object(speech_service.settings, "WHISPER_ENGINE", "faster"), \
+                patch.dict(SpeechService._models, clear=True):
+            SpeechService.warm_up()
+        decodes = [kwargs for kind, _, kwargs in calls if kind == "transcribe"]
+        # base and tiny each decode once, with the VAD off: it would cut the silent clip away entirely.
+        assert len(decodes) == 2 and all(kwargs["vad_filter"] is False for kwargs in decodes)
+
     def test_faster_missing_falls_back_to_openai(self, caplog):
         import sys
         import numpy as np
