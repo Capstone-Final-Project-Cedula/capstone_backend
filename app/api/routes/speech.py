@@ -35,6 +35,8 @@ async def transcribe_audio(
     field_key: Optional[str] = Form(None, description="Interview field key, used to bias transcription"),
     town: Optional[str] = Form(None, pattern=r"^\d{0,10}$",
                                description="PSGC code of the town answered before ('address_barangay' hint)"),
+    province: Optional[str] = Form(None, pattern=r"^\d{0,10}$",
+                                   description="PSGC code of the province of birth ('place_of_birth_town' hint)"),
     current_user=Depends(get_current_user),
 ):
     """
@@ -44,7 +46,8 @@ async def transcribe_audio(
     `field_key` (optional, e.g. 'surname', 'sex', 'civil_status') tells
     Whisper what kind of answer to expect, which improves accuracy a lot
     on short answers. `town` (with 'address_barangay') lists that town's
-    barangays in the hint.
+    barangays in the hint; `province` (with 'place_of_birth_town') lists that
+    province's towns and cities.
     """
     if audio_file.content_type not in ALLOWED_AUDIO_TYPES:
         raise HTTPException(
@@ -72,7 +75,8 @@ async def transcribe_audio(
     ext = os.path.splitext(filename)[-1] or ".wav"
 
     try:
-        result = SpeechService.transcribe_bytes(audio_bytes, suffix=ext, field_key=field_key, town=town or None)
+        result = SpeechService.transcribe_bytes(audio_bytes, suffix=ext, field_key=field_key, town=town or None,
+                                                province=province or None)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

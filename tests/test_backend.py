@@ -24,6 +24,7 @@ os.environ["SUPABASE_URL"] = ""
 os.environ["SUPABASE_SECRET_KEY"] = ""
 os.environ["NER_ENABLED"] = "false"   # don't load DistilBERT in unit tests
 os.environ["WHISPER_PRELOAD"] = "false"
+os.environ["PRACTICE_LOG_ENABLED"] = "false"   # off like its default, even when .env turns it on for a live run
 os.environ["BARANGAY_NAME"] = "Barangay Imbatug"
 os.environ["MUNICIPALITY"] = "Baungon"
 os.environ["PROVINCE"] = "Bukidnon"
@@ -1230,6 +1231,141 @@ class TestSpeechAccuracy:
         assert r.status_code == 200 and r.json()["value"] == "Lapasan" and r.json()["display"] == "Barangay Lapasan"
         r = client.post("/api/extraction/answer", headers=headers, json={
             "field_key": "address_barangay", "transcript": "x", "town": "not-a-code"})
+        assert r.status_code == 422
+
+
+BUKIDNON = "1001300000"
+
+
+class TestPlaceOfBirth:
+    """Plan 001.8: province first, then a town of it; talk that is not a place is never taken as one."""
+
+    @pytest.mark.parametrize("heard,value", [
+        ("Bokidnon", "Bukidnon"), ("Misamis Orienthal", "Misamis Oriental"), ("Lanao del Norteh", "Lanao del Norte"),
+        ("I was born in the province of Bukidnon", "Bukidnon"), ("Cebu", "Cebu"), ("Metro Manila", "Metro Manila"),
+    ])
+    def test_province_also_misheard(self, heard, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("place_of_birth_province", heard, spoken=True)
+        assert result.ok and result.value == value
+        assert result.normalized.isdigit()           # the province's PSGC code: its town is asked next
+
+    @pytest.mark.parametrize("heard,value", [
+        ("Iligan", "Iligan City"), ("Kagayan de Oro", "Cagayan de Oro City"), ("Cagayan", "Cagayan de Oro City"),
+        ("Pateros", "Pateros"), ("Cebu City", "Cebu City"), ("Malaybalay, Bukidnon", "Malaybalay City, Bukidnon"),
+    ])
+    def test_province_step_takes_a_whole_place(self, heard, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("place_of_birth_province", heard, spoken=True)
+        assert result.ok and result.value == value and result.normalized == ""   # done: no town question
+
+    def test_places_without_province_come_from_the_csv(self):
+        import csv
+        from app.services.place_gazetteer import DATA_FILE, places_without_province
+        with open(DATA_FILE, newline="", encoding="utf-8") as f:
+            blank = [r for r in csv.DictReader(f) if r["type"] != "province" and not r["province"]]
+        assert len(places_without_province()) == len(blank) == 44
+        assert sum(p.type == "city" for p in places_without_province()) == 35
+
+    @pytest.mark.parametrize("heard,value", [
+        ("Malaybalai", "Malaybalay City, Bukidnon"), ("Lantap", "Lantapan, Bukidnon"),
+        ("Manulo", "Manolo Fortich, Bukidnon"), ("Valensya", "Valencia City, Bukidnon"),
+        ("Impasugong", "Impasug-ong, Bukidnon"), ("Talakag", "Talakag, Bukidnon"),
+    ])
+    def test_town_near_miss_inside_the_province(self, heard, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("place_of_birth_town", heard, spoken=True, province=BUKIDNON)
+        assert result.ok and result.value == value
+
+    def test_town_step_refuses_the_province_again(self):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("place_of_birth_town", "Bukidnon", spoken=True, province=BUKIDNON)
+        assert not result.ok and "Bukidnon" in result.message and "For example" in result.message
+        assert len(result.suggestions) == 3
+        assert all(s["value"].endswith(", Bukidnon") and s["province"] == "" for s in result.suggestions)
+
+    @pytest.mark.parametrize("field,kwargs", [
+        ("place_of_birth_province", {}), ("place_of_birth_town", {"province": BUKIDNON}),
+        ("place_of_birth", {}),
+    ])
+    @pytest.mark.parametrize("junk", ["Sounds good", "Baby you are my sunshine tonight", "Okay okay"])
+    def test_talk_is_never_a_spoken_place(self, field, kwargs, junk):
+        from app.services.answer_service import understand_answer
+        from app.services.place_gazetteer import place_value, provinces, towns_in_province, places_without_province
+        result = understand_answer(field, junk, spoken=True, **kwargs)
+        assert not result.ok and not result.value
+        real = ({p.display for p in provinces()} | {place_value(p) for p in places_without_province()}
+                | {place_value(p) for p in towns_in_province(BUKIDNON)})
+        assert result.suggestions and all(s["value"] in real for s in result.suggestions)
+
+    def test_typed_place_not_in_the_list_is_kept_and_marked(self):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("place_of_birth", "Sitio Somewhere Far")
+        assert result.ok and result.value == "Sitio Somewhere Far" and result.needs_confirmation
+        assert "not in the list" in result.warnings[0]
+
+    def test_same_town_name_in_many_provinces_asks_the_province(self):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("place_of_birth_province", "San Jose", spoken=True)
+        assert not result.ok and "province" in result.message
+        assert len(result.suggestions) == 3 and all(s["value"].startswith("San Jose, ") for s in result.suggestions)
+
+    def test_town_step_without_a_province_works_like_the_province_step(self):
+        from app.services.answer_service import understand_answer
+        assert understand_answer("place_of_birth_town", "Bokidnon", spoken=True).value == "Bukidnon"
+
+    @pytest.mark.parametrize("heard,value", [("Sitio Mahogany", "Sitio Mahogany"), ("Prk 3", "Prk 3")])
+    def test_purok_parsed(self, heard, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("address_purok", heard, spoken=True)
+        assert result.ok and result.value == value
+
+    @pytest.mark.parametrize("junk", ["Sounds good", "Baby you are my sunshine"])
+    def test_purok_talk_refused_with_an_example(self, junk):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("address_purok", junk, spoken=True)
+        assert not result.ok and "Purok 2" in result.message
+
+    def test_purok_from_the_office_list(self, tmp_path):
+        from app.services import answer_service
+        purok_file = tmp_path / "office_puroks.csv"
+        purok_file.write_text("name\nMahogany\nSampaguita\n", encoding="utf-8")
+        with patch.object(answer_service, "PUROK_LIST_FILE", str(purok_file)):
+            result = answer_service.understand_answer("address_purok", "Sampagita", spoken=True)
+            assert result.ok and result.value == "Purok Sampaguita"
+            assert not answer_service.understand_answer("address_purok", "Sounds good", spoken=True).ok
+
+    def test_town_hint_lists_the_province_towns(self):
+        from app.services.speech_service import SpeechService
+        hint = SpeechService._build_prompt("place_of_birth_town", province=BUKIDNON)
+        assert "Malaybalay" in hint and "Lantapan" in hint and "Iligan" not in hint
+        assert SpeechService._build_prompt("place_of_birth_town") == "The town or city where you were born."
+        assert "Bukidnon" in SpeechService._build_prompt("place_of_birth_province")
+
+    def test_transcribe_sends_the_province_to_the_hint(self, client, staff_token):
+        from app.services.speech_service import SpeechService
+        with patch.object(SpeechService, "transcribe_bytes", return_value={
+                "transcript": "Lantapan", "language": "en", "confidence": 0.9, "segments": [],
+                "processing_time_seconds": 0.1}) as fake:
+            r = client.post("/api/speech/transcribe", headers={"Authorization": f"Bearer {staff_token}"},
+                            files={"audio_file": ("a.wav", b"RIFF0000", "audio/wav")},
+                            data={"field_key": "place_of_birth_town", "province": BUKIDNON})
+        assert r.status_code == 200
+        assert fake.call_args.kwargs["province"] == BUKIDNON
+
+    def test_answer_endpoint_birth_steps(self, client, staff_token):
+        headers = {"Authorization": f"Bearer {staff_token}"}
+        r = client.post("/api/extraction/answer", headers=headers, json={
+            "field_key": "place_of_birth_province", "transcript": "Bokidnon", "spoken": True})
+        assert r.status_code == 200 and r.json()["normalized"] == BUKIDNON
+        r = client.post("/api/extraction/answer", headers=headers, json={
+            "field_key": "place_of_birth_town", "transcript": "Sounds good", "spoken": True, "province": BUKIDNON})
+        assert r.json()["ok"] is False and len(r.json()["suggestions"]) == 3
+        r = client.post("/api/extraction/answer", headers=headers, json={
+            "field_key": "place_of_birth_town", "transcript": "Lantap", "spoken": True, "province": BUKIDNON})
+        assert r.json()["value"] == "Lantapan, Bukidnon"
+        r = client.post("/api/extraction/answer", headers=headers, json={
+            "field_key": "place_of_birth_town", "transcript": "x", "province": "not-a-code"})
         assert r.status_code == 422
 
 

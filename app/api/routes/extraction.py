@@ -27,6 +27,7 @@ InterviewField = Literal[
     "surname", "given_name", "middle_name", "address", "date", "sex", "civil_status",
     "citizenship", "icr_no", "place_of_birth", "height", "weight", "occupation", "gross_annual_income",
     "address_town", "address_barangay", "address_purok",   # the address in 3 questions (plan 001.6)
+    "place_of_birth_province", "place_of_birth_town",      # the place of birth in 2 steps (plan 001.8)
 ]
 
 
@@ -35,6 +36,7 @@ class AnswerRequest(BaseModel):
     transcript: str = Field("", max_length=500)
     spoken: bool = False   # True: Whisper's transcript in the voice interview (names may be respelled)
     town: Optional[str] = Field(None, pattern=r"^\d{0,10}$")   # PSGC code of the town, for "address_barangay"
+    province: Optional[str] = Field(None, pattern=r"^\d{0,10}$")   # PSGC code of the province, "place_of_birth_town"
 
 
 class AnswerResponse(BaseModel):
@@ -49,6 +51,7 @@ class AnswerResponse(BaseModel):
     methods: List[str] = []
     confidence: float = 0.0
     warnings: List[str] = []
+    suggestions: List[Dict[str, str]] = []   # place of birth: the closest list entries to tap (plan 001.8)
 
 
 class AnswersRequest(BaseModel):
@@ -68,7 +71,8 @@ def understand_interview_answer(payload: AnswerRequest, current_user=Depends(get
     normalized value, or ok=false with a short message to say before asking
     again — e.g. "nails" for sex is rejected instead of saved.
     """
-    result = understand_answer(payload.field_key, payload.transcript, spoken=payload.spoken, town=payload.town or None)
+    result = understand_answer(payload.field_key, payload.transcript, spoken=payload.spoken, town=payload.town or None,
+                               province=payload.province or None)
     return AnswerResponse(**result.as_dict())
 
 
