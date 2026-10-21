@@ -405,6 +405,8 @@ def _scores(text: str, places: Tuple[Place, ...]) -> List[Tuple[float, Place]]:
                     score = 95.0            # "Bokidnon", "Malaybalai": same sound, other spelling
                 else:
                     score = fuzz.ratio(gram, key)
+                    if len(key) <= 6 and score < 90:
+                        continue            # short names: "a plan" is not Aklan (Codex, plan 001.8)
                 best = max(best, score)
         if best:
             scored.append((best, place))
@@ -463,11 +465,13 @@ def places_named(text: str, home_province: str = "") -> List[Place]:
                                          p.region != REGION_X, p.province))
 
 
-def find_birth_place(text: str, province_code: str = "", home_province: str = "") -> Optional[dict]:
+def find_birth_place(text: str, province_code: str = "", home_province: str = "",
+                     province_said: bool = False) -> Optional[dict]:
     """
     A place-of-birth answer: {"place": Place} when a city or town is named (with its province), or
     {"province": Place} when only a province is said (the town question comes next).
     province_code: the province already answered; its towns are tried first, with near-misses.
+    province_said: the word "province" was said ("Cagayan province"): an exact province name wins.
     Never anything for talk that names no place ("Sounds good").
     """
     if province_code:
@@ -488,7 +492,7 @@ def find_birth_place(text: str, province_code: str = "", home_province: str = ""
     words = [w for w in _norm(text).split() if w not in STOP]
     exact = _load()[1].get(" ".join(words)) if words else None
     home_cities = tuple(p for p in nearby(home_province) if p.type != "province")
-    if exact and not match_in(text, home_cities):
+    if exact and (province_said or not match_in(text, home_cities)):
         return {"province": next(p for p in provinces() if p.psgc == exact[0].psgc)}
     # A city with no province, also misheard ("Kagayan de Oro"), before "Cagayan" the province. Near Baungon
     # "Cagayan" alone means Cagayan de Oro too; the read-back catches the rare Cagayan (Luzon) birth.

@@ -1204,7 +1204,10 @@ def _handle_address_purok(key: str, text: str) -> AnswerResult:
         return _fail(key, "Please tell me your purok, sitio or street, or say none.")
     value = re.sub(r"\b(?:Brgy|Bgy)\.?(?=\s|$)", "Barangay", _title(cleaned))
     words = {w.lower() for w in re.findall(r"[A-Za-z]+", value)}
-    if PUROK_PART.match(value) or re.search(r"\d", value) or words & place_gazetteer.STREET_WORDS:
+    # A purok/zone/sitio, a street, or a house number with a short name ("123 Mahogany"); not any talk with a
+    # number in it ("I have 2 children").
+    house = re.fullmatch(r"(?:No\.?\s*)?\d+[A-Za-z]?(?:\s+[A-Za-z]+){1,2}", value)
+    if PUROK_PART.match(value) or house or words & place_gazetteer.STREET_WORDS:
         return _ok(key, value, methods=["regex"], confidence=0.9)
     names = _purok_names()
     if names:
@@ -1253,7 +1256,8 @@ def _handle_birth_province(key: str, text: str) -> AnswerResult:
         result = _fail(key, "Please tell me the province where you were born.")
         result.suggestions = _birth_suggestions(likely[:3])
         return result
-    found = place_gazetteer.find_birth_place(cleaned, home_province=home)
+    province_said = bool(re.search(r"\b(?:province|probinsya)\b", text, re.IGNORECASE))
+    found = place_gazetteer.find_birth_place(cleaned, home_province=home, province_said=province_said)
     if found:
         return _birth_ok(key, found)
     same_name = place_gazetteer.places_named(cleaned, home_province=home)
