@@ -1602,6 +1602,130 @@ class TestPracticeLogSessions:
             Base.metadata.create_all(bind=engine, tables=practice_log_tables())
 
 
+def _load_summary_script():
+    import importlib.util
+    from pathlib import Path
+    path = Path(__file__).resolve().parents[1] / "scripts" / "practice_log_summary.py"
+    spec = importlib.util.spec_from_file_location("practice_log_summary", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class TestPracticeLogSummaryScript:
+    """The summary on fake rows (a dedicated staff account keeps other tests' sessions out)."""
+
+    @pytest.fixture(scope="class")
+    def seeded(self, db):
+        from app.models.practice_log import PracticeLogAnswer, PracticeLogSession
+        from app.models.staff_user import RoleEnum, StaffUser
+        user = StaffUser(username="summary_user", hashed_password=hash_password("testpass123"),
+                         full_name="Summary User", role=RoleEnum.STAFF)
+        db.add(user)
+        db.commit()
+
+        def session(build, mode="test", method="voice", outcome="issued"):
+            row = PracticeLogSession(build_label=build, backend_commit="abc1234", mode=mode,
+                                     staff_user_id=user.id, input_method=method, outcome=outcome)
+            db.add(row)
+            db.commit()
+            return row.id
+
+        def answer(sid, field, attempts, engine, seconds, first, final, changed, heard):
+            db.add(PracticeLogAnswer(
+                session_id=sid, field=field, attempts=attempts, accepted_engine=engine, seconds=seconds,
+                first_value=first, accepted_value=final, final_value=final, changed_after_voice=changed,
+                attempt_details=[{"heard": heard, "engine": "whisper", "seconds": 0.8, "parsed": first, "ok": True, "reason": None}],
+            ))
+            db.commit()
+
+        a = session("version-2.2+001.7")
+        answer(a, "surname", 1, "whisper", 3.0, "Reyes", "Reyes", False, "reyes")
+        answer(a, "given_name", 1, "whisper", 5.0, "Maria", "Maria", False, "maria")
+        b = session("version-2.2+001.7")
+        answer(b, "surname", 2, "spelled", 20.0, "Bakus", "Bacus", True, "bakus")
+        c = session("version-2.2+001.7", mode="real")
+        answer(c, "surname", 1, "whisper", 4.0, "Cruz", "Cruz", False, "cruz")
+        d = session("version-2.2+001.6.1")
+        answer(d, "surname", 1, "whisper", 4.0, "Old", "Old", False, "old")
+        e = session("version-2.2+001.7", method="manual")
+        answer(e, "surname", 1, "typed", 4.0, None, "Typed", None, "typed")
+        return user
+
+    def _summary(self, db, **filters):
+        script = _load_summary_script()
+        return script, script.summarize(script.load_sessions(db, staff="summary_user", **filters))
+
+    def test_default_reads_test_voice_sessions_since_the_plan(self, db, seeded):
+        script, summary = self._summary(db, since_plan=script_plan("001.7"))
+        assert summary["sessions_read"] == 2 and summary["answers_read"] == 3
+        fields = {f["field"]: f for f in summary["fields"]}
+        surname = fields["surname"]
+        assert surname["answers"] == 2
+        assert surname["changed_rate"] == 0.5 and surname["changed_known"] == 2
+        assert surname["average_tries"] == 1.5 and surname["first_try_rate"] == 0.5
+        assert (surname["seconds_median"], surname["seconds_max"]) == (11.5, 20.0)
+        assert surname["engines"] == {"whisper": 1, "spelled": 1}
+        assert surname["common_mishearings"] == [{"heard": "bakus", "final": "Bacus", "count": 1}]
+        assert fields["given_name"]["common_mishearings"] == []          # heard == saved is no mis-hearing
+        # A longer written form, and spoken numbers, are not mis-hearings.
+        pairs = script.summarize([{"outcome": "issued", "build_label": None, "answers": [
+            {"field": "address_town", "attempts": 1, "attempt_details": [{"engine": "whisper", "heard": "baungon"}],
+             "first_value": None, "accepted_value": "Baungon, Bukidnon", "accepted_engine": "whisper", "seconds": 1,
+             "final_value": "Baungon, Bukidnon", "changed_after_voice": False},
+            {"field": "date", "attempts": 1, "attempt_details": [{"engine": "whisper", "heard": "june 20 1995"}],
+             "first_value": None, "accepted_value": "June 20, 1995", "accepted_engine": "whisper", "seconds": 1,
+             "final_value": "1995-06-20", "changed_after_voice": False},
+        ]}])
+        assert all(f["common_mishearings"] == [] for f in pairs["fields"])
+        assert [f["field"] for f in summary["fields"]] == ["surname", "given_name"]    # interview order
+
+    def test_include_real_adds_real_sessions(self, db, seeded):
+        _, summary = self._summary(db, since_plan=script_plan("001.7"), include_real=True)
+        assert summary["sessions_read"] == 3
+
+    def test_a_later_plan_or_date_filters_older_sessions_out(self, db, seeded):
+        from datetime import date
+        _, later = self._summary(db, since_plan=script_plan("001.8"))
+        assert later["sessions_read"] == 0
+        _, earlier = self._summary(db, since_plan=script_plan("001.6"))
+        assert earlier["sessions_read"] == 3                              # 001.6.1 counts as since 001.6
+        _, by_date = self._summary(db, since_date=date(2999, 1, 1))
+        assert by_date["sessions_read"] == 0
+
+    def test_markdown_opens_with_the_disclaimer(self, db, seeded):
+        script, summary = self._summary(db, since_plan=script_plan("001.7"))
+        text = script.render_markdown(summary, "plan 001.7 or later")
+        assert text.splitlines()[1] == "_Practice data from live use. Not an accuracy measurement; never used in the paper._"
+        assert "| surname | 2 | 50% of 2 |" in text and "bakus -> Bacus (x1)" in text
+
+    def test_command_writes_the_summary_and_changes_nothing(self, db, seeded, tmp_path):
+        script = _load_summary_script()
+        before = _practice_rows()
+        with patch.object(script, "OUT_DIR", tmp_path / "practice-log"):
+            assert script.main(["--since-plan", "001.7", "--staff", "summary_user"]) == 0
+        md = list((tmp_path / "practice-log").glob("*-since-001.7-summary.md"))
+        js = list((tmp_path / "practice-log").glob("*-since-001.7-summary.json"))
+        assert len(md) == 1 and len(js) == 1
+        assert json.loads(js[0].read_text(encoding="utf-8"))["sessions_read"] == 2
+        assert _practice_rows() == before                                  # read-only
+
+    def test_output_goes_to_the_ignored_practice_log_folder_never_eval_results(self):
+        script = _load_summary_script()
+        md, js = script.output_paths("001.7")
+        assert md.parent.name == "practice-log" and md.parent.parent.name == "capstone_docs"
+        assert "eval" not in md.parts and js.name.endswith("-since-001.7-summary.json")
+
+    def test_a_bad_plan_number_is_refused(self):
+        script = _load_summary_script()
+        with pytest.raises(SystemExit):
+            script.main(["--since-plan", "seven"])
+
+
+def script_plan(plan):
+    return _load_summary_script().plan_tuple(plan)
+
+
 class TestPracticeLogStartup:
     def test_log_on_and_tables_missing_is_named(self, tmp_path):
         from app.core.database import missing_practice_log_message
