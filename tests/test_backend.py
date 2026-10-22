@@ -2424,6 +2424,24 @@ class TestPickers:
                      address_town_code=CDO, address_barangay="Barangay 10")
         assert cdo.status_code == 201, cdo.json()
 
+    def test_a_barangay_name_with_a_comma(self, client, staff_token):
+        """Codex verify round 2 (plan 002.1): "Agapito Yap, Sr." is one barangay (Sapang Dalaga)."""
+        from app.services.barangay_gazetteer import town_barangays
+        from app.api.routes.places import town_option_value
+        from app.services.barangay_gazetteer import region_town
+        code = "1004213000"
+        names = town_barangays(code)[0]
+        town = town_option_value(code, region_town(code))
+        for name in ("Agapito Yap, Sr.", "Sixto Velez, Sr."):
+            assert name in names
+            for address in (f"Barangay {name}, {town}", f"Purok 2, Barangay {name}, {town}"):
+                r = _issue(client, staff_token, address=address, address_town_code=code, address_barangay=name)
+                assert r.status_code == 201, (address, r.json())
+        # Still never a substring of another label.
+        wrong = _issue(client, staff_token, address=f"Barangay Agapito Yap, Sr., {town}", address_town_code=code,
+                       address_barangay="Sixto Velez, Sr.")
+        assert wrong.status_code == 422
+
     def test_list_codes_are_request_only(self):
         # Never stored with a phone's QR form, never sent back in a scan (plan 002.1).
         from app.schemas.schemas import ApplicantCreate

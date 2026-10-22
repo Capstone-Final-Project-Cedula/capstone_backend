@@ -222,13 +222,15 @@ def picked_and_range_problems(applicant_data: dict) -> List[dict]:
         names = {name.lower() for name in town_barangays(town_code)[0]} if town else set()
         town_text = town_option_value(town_code, town).lower() if town else ""
         address = address.strip()
-        # Whole parts, never a substring ("Barangay 1" is not "Barangay 10", Imbatug is not Imbatugon):
-        # "<purok>, <barangay label>, <town, province>" as the picker joins it.
-        before = [part.strip() for part in address[:-len(town_text)].split(",") if part.strip()] if town_text else []
+        # "<purok>, <barangay label>, <town, province>" as the picker joins it. The whole label right before the
+        # town, never a substring ("Barangay 1" is not "Barangay 10", Imbatug is not Imbatugon), and a label
+        # may hold a comma itself ("Agapito Yap, Sr.").
+        before = address[:-len(town_text)].rstrip().rstrip(",").strip() if town_text else ""
+        label = barangay_label(barangay).lower() if barangay else ""
         if not town or not address.endswith(town_text):
             add("address", "Address does not match the town picked from the list.")
-        elif barangay and (barangay.lower() not in names or not before
-                           or before[-1] != barangay_label(barangay).lower()):
+        elif barangay and (barangay.lower() not in names
+                           or not (before == label or before.endswith(f", {label}"))):
             add("address", "That barangay is not in the town picked.")
     return errors
 
