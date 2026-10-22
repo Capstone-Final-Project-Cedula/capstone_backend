@@ -2080,7 +2080,7 @@ class TestWhisperEngine:
         assert sorted(name for kind, name, _ in calls if kind == "load") == ["base", "large-v3-turbo", "tiny"]
         assert len(decodes) == 3 and all(kwargs["vad_filter"] is False for kwargs in decodes)
 
-    def test_warm_up_with_the_table_off_loads_only_the_main_and_confirm_models(self):
+    def test_warm_up_with_the_table_off_loads_only_the_main_model(self):
         import sys
         from app.services import speech_service
         from app.services.speech_service import SpeechService
@@ -2090,7 +2090,14 @@ class TestWhisperEngine:
                 patch.object(speech_service.settings, "WHISPER_FIELD_MODELS", False), \
                 patch.dict(SpeechService._models, clear=True):
             SpeechService.warm_up()
-        assert sorted(name for kind, name, _ in calls if kind == "load") == ["base", "tiny"]
+        assert [name for kind, name, _ in calls if kind == "load"] == ["base"]
+
+    def test_with_the_table_off_every_question_uses_the_global_model_and_beam(self):
+        from app.services import speech_service
+        from app.services.speech_service import SpeechService
+        with patch.object(speech_service.settings, "WHISPER_FIELD_MODELS", False),                 patch.object(speech_service.settings, "WHISPER_MODEL", "base"),                 patch.object(speech_service.settings, "WHISPER_BEAM_SIZE", 1):
+            for key in ("confirm", "surname", "review", "spelling", None):
+                assert SpeechService.model_and_beam_for(key) == ("base", 1)
 
     # ── Plan 006: one model and beam per question (Ralph's PLAN 4 table) ──
     TABLE = [
@@ -2588,6 +2595,14 @@ class TestPickers:
 
 class TestPlan006Answers:
     """Plan 006: fillers are never answers, sex by sound, a town in several provinces lists them all."""
+
+    @pytest.mark.parametrize("text,key,value", [
+        ("Um, 60", "weight", "60"), ("Uh, 165", "height", "165"), ("Hmm, 20000", "gross_annual_income", "20000"),
+    ])
+    def test_a_filler_before_a_number_keeps_the_number(self, text, key, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer(key, text, spoken=True)
+        assert result.ok is True and value in result.value
 
     @pytest.mark.parametrize("filler", ["Um.", "Uh", "Uhm", "Hmm", "Mm", "Ah", "Eh", "Er", "UM!", "um... uh", "Mm-hmm."])
     @pytest.mark.parametrize("key", ["surname", "given_name", "middle_name", "address_purok", "sex", "civil_status",

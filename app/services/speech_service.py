@@ -372,10 +372,8 @@ class SpeechService:
     @classmethod
     def model_and_beam_for(cls, field_key: Optional[str], second_pass: bool = False) -> tuple:
         """(model name, beam) for a question. With WHISPER_FIELD_MODELS off, every question uses
-        WHISPER_MODEL + WHISPER_BEAM_SIZE (yes/no still the small WHISPER_CONFIRM_MODEL), as before plan 006."""
+        WHISPER_MODEL + WHISPER_BEAM_SIZE, and only that model is loaded (plan 006, Codex verify)."""
         if not settings.WHISPER_FIELD_MODELS:
-            if field_key == "confirm" and settings.WHISPER_CONFIRM_MODEL:
-                return settings.WHISPER_CONFIRM_MODEL, _beam()
             return settings.WHISPER_MODEL, _beam()
         if second_pass:
             return REVIEW_SECOND
@@ -424,7 +422,7 @@ class SpeechService:
             if settings.WHISPER_FIELD_MODELS:
                 names = {name for name, _ in FIELD_MODELS.values()} | {REVIEW_SECOND[0]}
             else:
-                names = {settings.WHISPER_MODEL, cls.model_name_for("confirm")}
+                names = {settings.WHISPER_MODEL}
             for name in sorted(names):
                 model = cls.get_model(name)
                 with _model_lock:

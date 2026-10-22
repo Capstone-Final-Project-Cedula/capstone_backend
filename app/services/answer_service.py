@@ -124,6 +124,8 @@ FILLER_ONLY = re.compile(r"(?:uh+m*|um+|ah+m*|eh+|er+m*|hm+|mm+|mh+m*)", re.IGNO
 
 
 def _is_filler_only(text: str) -> bool:
+    if re.search(r"\d", text or ""):      # "Um, 60": a number is an answer
+        return False
     words = re.findall(r"[A-Za-zñÑ']+", text or "")
     return bool(words) and all(FILLER_ONLY.fullmatch(w) for w in words)
 
