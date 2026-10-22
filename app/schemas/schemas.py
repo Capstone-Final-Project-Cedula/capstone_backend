@@ -107,11 +107,13 @@ class ApplicantCreate(BaseModel):
     occupation: Optional[str] = None
     gross_annual_income: Optional[float] = Field(None, ge=0)
     tax_classification: str = "A"
-    # Request only, never saved (plan 002.1): sent when the value was picked from a list, so /forms/issue
-    # can check it is that list entry. Typed text, the voice path and older phones leave them out.
-    place_of_birth_code: Optional[str] = Field(None, max_length=20)
-    address_town_code: Optional[str] = Field(None, max_length=20)
-    address_barangay: Optional[str] = Field(None, max_length=100)
+    # Request only (plan 002.1): sent when the value was picked from a list, so /forms/issue can check it is
+    # that list entry. Typed text, the voice path and older phones leave them out. exclude=True: never in a
+    # model_dump or a response (the QR form stored and sent back, the extraction result).
+    place_of_birth_code: Optional[str] = Field(None, max_length=20, exclude=True)
+    address_town_code: Optional[str] = Field(None, max_length=20, exclude=True)
+    address_barangay: Optional[str] = Field(None, max_length=100, exclude=True)
+
 
     @validator('sex', pre=True)
     def validate_sex(cls, v):
@@ -171,6 +173,10 @@ class ApplicantCreate(BaseModel):
             except:
                 return None
         return v
+
+
+# The request-only list codes of ApplicantCreate (plan 002.1).
+APPLICANT_PICKED_KEYS = ("place_of_birth_code", "address_town_code", "address_barangay")
 
 
 class ApplicantResponse(BaseModel):

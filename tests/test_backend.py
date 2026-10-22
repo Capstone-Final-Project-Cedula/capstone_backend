@@ -2378,3 +2378,13 @@ class TestPickers:
                             address_town_code=BAUNGON, address_barangay="Imbatug")
         assert other_text.status_code == 422
         assert _issue(client, staff_token, address=good, address_town_code="0304926000").status_code == 422
+
+    def test_list_codes_are_request_only(self):
+        # Never stored with a phone's QR form, never sent back in a scan (plan 002.1).
+        from app.schemas.schemas import ApplicantCreate
+        a = ApplicantCreate(**TestIssuance.SAMPLE_APPLICANT, place_of_birth_code="1", address_town_code="2",
+                            address_barangay="Imbatug")
+        assert a.place_of_birth_code == "1"
+        dumped = a.model_dump()
+        assert not {"place_of_birth_code", "address_town_code", "address_barangay"} & set(dumped)
+        assert "place_of_birth_code" not in a.model_dump_json()

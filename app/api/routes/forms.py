@@ -26,6 +26,7 @@ from app.api.routes.places import town_option_value
 from app.services.pdf_service import generate_cedula_pdf, generate_receipt_pdf
 from app.services.tax_service import compute_tax
 from app.schemas.schemas import (
+    APPLICANT_PICKED_KEYS,
     IssuanceCreate,
     IssuanceResponse,
     DashboardStats,
@@ -293,6 +294,8 @@ def issue_ctc(
         applicant_data = payload.applicant_data
     else:
         applicant_data = payload.applicant_data.model_dump()
+        # The list codes are request-only (excluded from model_dump): read them for the checks below.
+        applicant_data.update({key: getattr(payload.applicant_data, key) for key in APPLICANT_PICKED_KEYS})
 
     # Checked before anything is written: on 422 no row and no PDF exist.
     # (Outside the try below, which would turn the 422 into a 500.)
