@@ -55,7 +55,7 @@ class AnswerResult:
     # PSGC code when the entry is a province (its town is asked next), "" when it is a whole place.
     suggestions: List[dict] = field(default_factory=list)
     # Plan 006: reason "ambiguous_town" lists EVERY province that has the town said: {"value": "San Jose, Bohol",
-    # "province": "Bohol", "province_psgc": "..."}. The web asks "Which province is San Jose in?".
+    # "town": "San Jose", "province": "Bohol", "province_psgc": "..."}. The web asks "Which province is San Jose in?".
     candidates: List[dict] = field(default_factory=list)
 
     def as_dict(self) -> dict:
@@ -1303,7 +1303,7 @@ def _birth_ok(key: str, found: dict) -> AnswerResult:
 def _birth_candidates(places) -> List[dict]:
     """Every province that has this town: the complete list, not only the closest three."""
     codes = {p.name.lower(): p.psgc for p in place_gazetteer.provinces()}
-    return [{"value": place_gazetteer.place_value(p), "province": p.province,
+    return [{"value": place_gazetteer.place_value(p), "town": p.name, "province": p.province,
              "province_psgc": codes.get(p.province.lower(), "")} for p in places if p.province]
 
 
