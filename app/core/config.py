@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     # Yes/no replies ("is that correct?") use a smaller model: 0.28 s instead of 0.64 s per
     # reply with the same accuracy on Philippine voices (benchmark, October 2026). "" = WHISPER_MODEL.
     WHISPER_CONFIRM_MODEL: str = "tiny"
+    # One model + beam per interview question (plan 006). False = every question uses WHISPER_MODEL +
+    # WHISPER_BEAM_SIZE again (for a laptop that cannot hold or run large-v3-turbo). Edit .env, restart.
+    WHISPER_FIELD_MODELS: bool = True
     WHISPER_BEAM_SIZE: int = 1                     # 1 = greedy (fast); 5 = thorough but ~2x slower
     WHISPER_PRELOAD: bool = True                   # load at startup so the first applicant doesn't wait
     WHISPER_NO_SPEECH_THRESHOLD: float = 0.35
@@ -77,7 +80,7 @@ class Settings(BaseSettings):
     PRACTICE_LOG_ENABLED: bool = False
     # Stamped on every practice session so the summary can group by build; the Builder bumps it
     # as the last build step of every later plan.
-    PRACTICE_LOG_BUILD: str = "version-2.2+002.2"
+    PRACTICE_LOG_BUILD: str = "version-2.2+006"
 
     # QR Code
     QR_EXPIRY_MINUTES: int = 60

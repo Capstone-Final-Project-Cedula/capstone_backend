@@ -24,6 +24,11 @@ os.environ["SUPABASE_URL"] = ""
 os.environ["SUPABASE_SECRET_KEY"] = ""
 os.environ["NER_ENABLED"] = "false"   # don't load DistilBERT in unit tests
 os.environ["WHISPER_PRELOAD"] = "false"
+os.environ["WHISPER_BEAM_SIZE"] = "1"          # pinned: a local settings file may choose another beam, engine or table
+os.environ["WHISPER_ENGINE"] = "openai"
+os.environ["WHISPER_MODEL"] = "base"
+os.environ["WHISPER_CONFIRM_MODEL"] = "tiny"
+os.environ["WHISPER_FIELD_MODELS"] = "true"
 os.environ["PRACTICE_LOG_ENABLED"] = "false"   # off like its default, even when .env turns it on for a live run
 os.environ["BARANGAY_NAME"] = "Barangay Imbatug"
 os.environ["MUNICIPALITY"] = "Baungon"
@@ -2035,6 +2040,7 @@ class TestWhisperEngine:
         calls = []
         with patch.dict(sys.modules, {"faster_whisper": self._fake_faster(calls)}), \
                 patch.object(speech_service.settings, "WHISPER_ENGINE", "faster"), \
+                patch.object(speech_service.settings, "WHISPER_FIELD_MODELS", False), \
                 patch.dict(SpeechService._models, clear=True):
             out = SpeechService.transcribe_file(np.zeros(16000, dtype=np.float32), "surname")
         assert set(out) == {"transcript", "dropped", "language", "confidence", "segments", "processing_time_seconds"}
@@ -2070,8 +2076,135 @@ class TestWhisperEngine:
                 patch.dict(SpeechService._models, clear=True):
             SpeechService.warm_up()
         decodes = [kwargs for kind, _, kwargs in calls if kind == "transcribe"]
-        # base and tiny each decode once, with the VAD off: it would cut the silent clip away entirely.
-        assert len(decodes) == 2 and all(kwargs["vad_filter"] is False for kwargs in decodes)
+        # tiny, base and turbo each load and decode once, with the VAD off: it would cut the silent clip away.
+        assert sorted(name for kind, name, _ in calls if kind == "load") == ["base", "large-v3-turbo", "tiny"]
+        assert len(decodes) == 3 and all(kwargs["vad_filter"] is False for kwargs in decodes)
+
+    def test_warm_up_with_the_table_off_loads_only_the_main_and_confirm_models(self):
+        import sys
+        from app.services import speech_service
+        from app.services.speech_service import SpeechService
+        calls = []
+        with patch.dict(sys.modules, {"faster_whisper": self._fake_faster(calls)}), \
+                patch.object(speech_service.settings, "WHISPER_ENGINE", "faster"), \
+                patch.object(speech_service.settings, "WHISPER_FIELD_MODELS", False), \
+                patch.dict(SpeechService._models, clear=True):
+            SpeechService.warm_up()
+        assert sorted(name for kind, name, _ in calls if kind == "load") == ["base", "tiny"]
+
+    # ── Plan 006: one model and beam per question (Ralph's PLAN 4 table) ──
+    TABLE = [
+        ("surname", "large-v3-turbo", 5), ("given_name", "large-v3-turbo", 5), ("middle_name", "large-v3-turbo", 5),
+        ("address", "large-v3-turbo", 5), ("address_town", "large-v3-turbo", 5),
+        ("address_barangay", "large-v3-turbo", 5), ("address_purok", "large-v3-turbo", 5),
+        ("date", "base", 1), ("sex", "base", 1), ("civil_status", "base", 1), ("citizenship", "base", 1),
+        ("place_of_birth", "large-v3-turbo", 5), ("place_of_birth_province", "large-v3-turbo", 5),
+        ("place_of_birth_town", "large-v3-turbo", 5),
+        ("height", "base", 1), ("weight", "base", 1), ("occupation", "large-v3-turbo", 5),
+        ("confirm", "tiny", 5), ("gross_annual_income", "base", 1), ("icr_no", "base", 1),
+        ("review", "tiny", 5), ("spelling", "large-v3-turbo", 5), ("missing_choice", "base", 1),
+        (None, "base", 1), ("unknown_key", "base", 1),
+    ]
+
+    @staticmethod
+    def _fake_openai(calls):
+        def load_model(name):
+            model = MagicMock()
+
+            def transcribe(audio, **kwargs):
+                calls.append(("transcribe", name, kwargs))
+                return {"text": " Dela Cruz po.", "language": "en", "segments": []}
+            model.transcribe.side_effect = transcribe
+            calls.append(("load", name, {}))
+            return model
+        return load_model
+
+    @pytest.mark.parametrize("engine", ["faster", "openai"])
+    @pytest.mark.parametrize("capture", ["file", "bytes", "numpy"])
+    @pytest.mark.parametrize("field_key,model,beam", TABLE)
+    def test_each_question_uses_its_models_row(self, field_key, model, beam, capture, engine):
+        import sys
+        import numpy as np
+        from app.services import speech_service
+        from app.services.speech_service import SpeechService
+        calls = []
+        samples = np.zeros(16000, dtype=np.float32)
+        with patch.dict(sys.modules, {"faster_whisper": self._fake_faster(calls)}), \
+                patch.object(speech_service.settings, "WHISPER_ENGINE", engine), \
+                patch.object(speech_service.settings, "WHISPER_MODEL", "base"), \
+                patch.object(speech_service.settings, "WHISPER_BEAM_SIZE", 1), \
+                patch.object(speech_service.whisper, "load_model", side_effect=self._fake_openai(calls)), \
+                patch.object(speech_service, "_decode_wav", return_value=samples), \
+                patch.dict(SpeechService._models, clear=True):
+            if capture == "numpy":
+                SpeechService.transcribe_numpy(samples, field_key=field_key)
+            elif capture == "bytes":
+                SpeechService.transcribe_bytes(b"test-audio", field_key=field_key)
+            else:
+                SpeechService.transcribe_file(samples, field_key=field_key)
+        loads = [c for c in calls if c[0] == "load"]
+        decodes = [c for c in calls if c[0] == "transcribe"]
+        # "Dela Cruz po." is not a plain yes, so `review` is decoded a second time (Turbo); the others once.
+        assert loads[0][1] == model and len(decodes) == (2 if field_key == "review" else 1)
+        options = decodes[0][2]   # the question's own row (first pass)
+        if engine == "faster":
+            assert options["beam_size"] == beam and options["max_new_tokens"] == speech_service.MAX_ANSWER_TOKENS
+        else:
+            assert options.get("beam_size", 1) == beam and options["sample_len"] == speech_service.MAX_ANSWER_TOKENS
+        assert (options["temperature"] == 0.0) == (beam > 1)   # beam search decodes once, no ladder
+
+    def _review(self, texts, field_enabled=True):
+        """Run a `review` answer whose decodes return `texts` in turn; returns (result, models decoded)."""
+        import sys
+        import types
+        import numpy as np
+        from app.services import speech_service
+        from app.services.speech_service import SpeechService
+        decoded, queue = [], list(texts)
+
+        class WhisperModel:
+            def __init__(self, name, **kwargs):
+                self.name = name
+
+            def transcribe(self, audio, **kwargs):
+                decoded.append((self.name, kwargs["beam_size"]))
+                text = queue.pop(0)
+                segments = [types.SimpleNamespace(id=0, start=0.0, end=1.0, text=text, avg_logprob=-0.2,
+                                                  compression_ratio=1.1)] if text else []
+                return iter(segments), types.SimpleNamespace(language="en")
+
+        with patch.dict(sys.modules, {"faster_whisper": types.SimpleNamespace(WhisperModel=WhisperModel)}), \
+                patch.object(speech_service.settings, "WHISPER_ENGINE", "faster"), \
+                patch.object(speech_service.settings, "WHISPER_FIELD_MODELS", field_enabled), \
+                patch.dict(SpeechService._models, clear=True):
+            out = SpeechService.transcribe_file(np.zeros(16000, dtype=np.float32), "review")
+        return out, decoded
+
+    def test_review_plain_yes_is_one_tiny_decode(self):
+        out, decoded = self._review([" Yes."])
+        assert out["transcript"] == "Yes." and decoded == [("tiny", 5)]
+
+    def test_review_correction_is_decoded_again_with_turbo(self):
+        out, decoded = self._review([" Yes my surname is Cruz.", " Yes, my surname is Cruz."])
+        assert out["transcript"] == "Yes, my surname is Cruz."
+        assert decoded == [("tiny", 5), ("large-v3-turbo", 5)]
+
+    def test_review_silence_is_one_decode(self):
+        out, decoded = self._review([""])
+        assert out["transcript"] == "" and decoded == [("tiny", 5)]
+
+    def test_review_with_the_table_off_is_one_decode_and_never_loads_turbo(self):
+        out, decoded = self._review([" Change surname to Cruz."], field_enabled=False)
+        assert decoded == [("base", 1)]
+
+    @pytest.mark.parametrize("text,expected", [
+        ("Yes.", True), ("yes po", True), ("Opo", True), ("Okay", True), ("Correct.", True),
+        ("Yes, my surname is Cruz.", False), ("Yes but change the address", False), ("No", False),
+        ("Yes male", False), ("", False), ("Yes yes yes yes", False),
+    ])
+    def test_is_plain_yes_is_a_whole_reply(self, text, expected):
+        from app.services.speech_service import is_plain_yes
+        assert is_plain_yes(text) is expected
 
     def test_faster_missing_falls_back_to_openai(self, caplog):
         import sys
