@@ -263,43 +263,77 @@ def _sentences(text: str) -> list:
     return [s for s in re.split(r"(?<=[.!?])\s+", (text or "").strip()) if _normalize(s)]
 
 
-def _is_hint_echo(text: str, prompt: Optional[str], field_key: Optional[str], any_part: bool = False) -> bool:
-    """True when the text is the hint itself, or a run of its sentences, read back by Whisper.
-    any_part: also a single sentence or word of the hint (the tail left after a read-back hint)."""
-    said = _normalize(text)
-    parts = _sentences(prompt or "")
-    if not said or not parts:
+def _sentence_words(text: str) -> str:
+    """A sentence compared with the hint: normalized, without the polite "po" ("Tagaylo po." = "Tagaylo.")."""
+    return " ".join(w for w in _normalize(text).split() if w != "po")
+
+
+def _same_sentence(said: str, hint: str, cutoff: float = ECHO_SIMILARITY) -> bool:
+    """One sentence read back from the hint: equal, or close with the same numbers ("Purok 5." is not "Purok 2.")."""
+    if not said or not hint:
         return False
-    shortest = 1 if any_part else min(2 if field_key in ANSWER_LIKE_HINTS else 1, len(parts))
-    for size in range(shortest, len(parts) + 1):
-        for start in range(len(parts) - size + 1):
-            run = _normalize(" ".join(parts[start:start + size]))
-            if (any_part or len(run.split()) >= 2) and SequenceMatcher(None, said, run).ratio() >= ECHO_SIMILARITY:
-                return True
-    return False
+    if said == hint:
+        return True
+    return (re.findall(r"\d+", said) == re.findall(r"\d+", hint)
+            and SequenceMatcher(None, said, hint).ratio() >= cutoff)
+
+
+def _echo_prefix(said: list, hint: list) -> int:
+    """How many leading sentences of the transcript are a run of the hint's sentences, in the hint's order."""
+    best = 0
+    for start in range(len(hint)):
+        k = 0
+        while k < len(said) and start + k < len(hint) and _same_sentence(said[k], hint[start + k]):
+            k += 1
+        best = max(best, k)
+    return best
+
+
+def _flat_run(words: list, run: list) -> bool:
+    """True when the words are exactly these hint sentences in order (each matched on its own words)."""
+    at = 0
+    for sentence in run:
+        size = len(sentence.split())
+        if not size or not _same_sentence(" ".join(words[at:at + size]), sentence):
+            return False
+        at += size
+    return at == len(words)
 
 
 def _clean_answer(text: str, segments: Optional[list] = None, prompt: Optional[str] = None,
                   field_key: Optional[str] = None) -> tuple:
     """(transcript, why it was dropped or None). Drops a decoding loop, a silence phrase and the hint read
-    back; a reply that starts with the hint and then answers keeps only the answer."""
+    back; a reply that starts with the hint and then answers keeps only the answer (plan 002.2).
+    Matched sentence by sentence: for the answer-like hints (names, purok, the end-step commands) an echo is
+    two or more hint sentences in a row, so one hint example said alone ("Lagbas po.") stays an answer."""
     text = (text or "").strip()
     if any(s.get("compression_ratio", 0) > REPETITIVE_RATIO for s in segments or []):
         logger.info("Repetitive transcript dropped (a decoding loop, not an answer).")
         return "", "repetition"
     if HALLUCINATIONS.match(text):
         return "", "silence-phrase"
-    # Hint first, then the answer ("Male or female. Lalaki or babae. Female."): checked before the whole text,
-    # which is still close enough to the hint to count as an echo.
-    said = _sentences(text)
-    for cut in range(len(said) - 1, 0, -1):
-        rest = " ".join(said[cut:])
-        if (_is_hint_echo(" ".join(said[:cut]), prompt, field_key)
-                and not _is_hint_echo(rest, prompt, field_key, any_part=True)):
-            return rest, None
-    if _is_hint_echo(text, prompt, field_key):
-        logger.info("Transcript dropped: it repeats the question's hint (field=%s).", field_key)
-        return "", "echo"
+    hint = [_sentence_words(s) for s in _sentences(prompt or "")]
+    pieces = _sentences(text)
+    said = [_sentence_words(s) for s in pieces]
+    if not hint or not said:
+        return text, None
+    shortest = min(2 if field_key in ANSWER_LIKE_HINTS else 1, len(hint))
+    k = _echo_prefix(said, hint)
+    if k >= shortest:
+        if k == len(said):
+            logger.info("Transcript dropped: it repeats the question's hint (field=%s).", field_key)
+            return "", "echo"
+        return " ".join(pieces[k:]), None
+    # Read back without sentence breaks ("male or female lalaki or babae"): the words, from start to end,
+    # are a run of at least `shortest` (and 2) hint sentences, one after another.
+    if len(said) == 1:
+        words = said[0].split()
+        size = max(shortest, 2)
+        for start in range(len(hint) - size + 1):
+            for end in range(start + size, len(hint) + 1):
+                if _flat_run(words, hint[start:end]):
+                    logger.info("Transcript dropped: it repeats the question's hint (field=%s).", field_key)
+                    return "", "echo"
     return text, None
 
 
