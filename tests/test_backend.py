@@ -2404,6 +2404,26 @@ class TestPickers:
         assert other_text.status_code == 422
         assert _issue(client, staff_token, address=good, address_town_code="0304926000").status_code == 422
 
+    def test_the_picked_barangay_is_a_whole_part_of_the_address(self, client, staff_token):
+        """Codex verify (plan 002.1): never a substring match."""
+        r = _issue(client, staff_token, address="Barangay 10, Cagayan de Oro City, Misamis Oriental",
+                   address_town_code=CDO, address_barangay="Barangay 1")
+        assert r.status_code == 422 and r.json()["detail"][0]["loc"][-1] == "address"
+        r = _issue(client, staff_token, address="Barangay Imbatugon, Baungon, Bukidnon",
+                   address_town_code=BAUNGON, address_barangay="Imbatug")
+        assert r.status_code == 422
+        # The town must be the end of the address, not just somewhere in it.
+        r = _issue(client, staff_token, address="Barangay Imbatug, Baungon, Bukidnon, Some Other Place",
+                   address_town_code=BAUNGON, address_barangay="Imbatug")
+        assert r.status_code == 422
+        # Title-cased by the web, with or without a purok: still the pick.
+        for address in ("Barangay Imbatug, Baungon, Bukidnon", "Purok 7, Barangay Imbatug, Baungon, Bukidnon"):
+            assert _issue(client, staff_token, address=address, address_town_code=BAUNGON,
+                          address_barangay="Imbatug").status_code == 201
+        cdo = _issue(client, staff_token, address="Purok 1, Barangay 10, Cagayan De Oro City, Misamis Oriental",
+                     address_town_code=CDO, address_barangay="Barangay 10")
+        assert cdo.status_code == 201, cdo.json()
+
     def test_list_codes_are_request_only(self):
         # Never stored with a phone's QR form, never sent back in a scan (plan 002.1).
         from app.schemas.schemas import ApplicantCreate
