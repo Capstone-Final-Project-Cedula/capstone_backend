@@ -2000,3 +2000,129 @@ class TestHealth:
     def test_protected_route_without_token(self, client):
         resp = client.get("/api/auth/me")
         assert resp.status_code == 401
+
+
+class TestWhisperEngine:
+    """Plan 002: WHISPER_ENGINE switches openai-whisper / faster-whisper behind the same interface."""
+
+    @staticmethod
+    def _fake_faster(calls):
+        """A stand-in faster_whisper module that records how it was called (no model is loaded)."""
+        import types
+
+        class WhisperModel:
+            def __init__(self, name, **kwargs):
+                calls.append(("load", name, kwargs))
+
+            def transcribe(self, audio, **kwargs):
+                calls.append(("transcribe", audio, kwargs))
+                segment = types.SimpleNamespace(id=0, start=0.0, end=1.2, text=" Dela Cruz po.", avg_logprob=-0.2,
+                                                compression_ratio=1.1)
+                return iter([segment]), types.SimpleNamespace(language="en")
+
+        return types.SimpleNamespace(WhisperModel=WhisperModel)
+
+    def test_openai_is_the_default(self):
+        from app.services import speech_service
+        assert speech_service.settings.WHISPER_ENGINE == "openai"
+        assert speech_service._engine() == "openai"
+
+    def test_faster_engine_same_keys_and_explicit_options(self):
+        import sys
+        import numpy as np
+        from app.services import speech_service
+        from app.services.speech_service import SpeechService
+        calls = []
+        with patch.dict(sys.modules, {"faster_whisper": self._fake_faster(calls)}), \
+                patch.object(speech_service.settings, "WHISPER_ENGINE", "faster"), \
+                patch.dict(SpeechService._models, clear=True):
+            out = SpeechService.transcribe_file(np.zeros(16000, dtype=np.float32), "surname")
+        assert set(out) == {"transcript", "language", "confidence", "segments", "processing_time_seconds"}
+        assert out["transcript"] == "Dela Cruz po." and out["language"] == "en"
+        assert out["segments"][0]["text"] == "Dela Cruz po." and 0 < out["confidence"] < 1
+        (_, name, load_kwargs), (_, _, options) = calls
+        assert name == "base" and load_kwargs == {"device": "cpu", "compute_type": "int8"}
+        # faster-whisper's own defaults differ (beam 5, previous text on, no VAD): every one is set here.
+        assert options["beam_size"] == 1 and options["condition_on_previous_text"] is False
+        assert options["language"] == "en" and options["vad_filter"] is True
+        assert options["initial_prompt"] == speech_service.FIELD_PROMPTS["surname"]
+        assert options["temperature"] == speech_service.FALLBACK_TEMPERATURES
+
+    def test_confirm_model_rule_is_the_same_on_faster(self):
+        import sys
+        import numpy as np
+        from app.services import speech_service
+        from app.services.speech_service import SpeechService
+        calls = []
+        with patch.dict(sys.modules, {"faster_whisper": self._fake_faster(calls)}), \
+                patch.object(speech_service.settings, "WHISPER_ENGINE", "faster"), \
+                patch.dict(SpeechService._models, clear=True):
+            SpeechService.transcribe_file(np.zeros(16000, dtype=np.float32), "confirm")
+        assert calls[0][1] == "tiny"
+
+    def test_faster_warm_up_runs_the_model(self):
+        import sys
+        from app.services import speech_service
+        from app.services.speech_service import SpeechService
+        calls = []
+        with patch.dict(sys.modules, {"faster_whisper": self._fake_faster(calls)}), \
+                patch.object(speech_service.settings, "WHISPER_ENGINE", "faster"), \
+                patch.dict(SpeechService._models, clear=True):
+            SpeechService.warm_up()
+        decodes = [kwargs for kind, _, kwargs in calls if kind == "transcribe"]
+        # base and tiny each decode once, with the VAD off: it would cut the silent clip away entirely.
+        assert len(decodes) == 2 and all(kwargs["vad_filter"] is False for kwargs in decodes)
+
+    def test_faster_missing_falls_back_to_openai(self, caplog):
+        import sys
+        import numpy as np
+        from app.services import speech_service
+        from app.services.speech_service import SpeechService
+        openai_model = MagicMock()
+        openai_model.transcribe.return_value = {"text": " Female.", "language": "en", "segments": []}
+        caplog.set_level("ERROR")
+        # A None entry in sys.modules makes "import faster_whisper" raise ImportError.
+        with patch.dict(sys.modules, {"faster_whisper": None}), \
+                patch.object(speech_service.settings, "WHISPER_ENGINE", "faster"), \
+                patch.object(speech_service, "_engine_warned", False), \
+                patch.object(speech_service.whisper, "load_model", return_value=openai_model) as load, \
+                patch.dict(SpeechService._models, clear=True):
+            out = SpeechService.transcribe_file(np.zeros(16000, dtype=np.float32), "sex")
+            SpeechService.transcribe_file(np.zeros(16000, dtype=np.float32), "sex")
+        assert out["transcript"] == "Female." and load.call_count == 1
+        errors = [r for r in caplog.records if "Using openai-whisper instead" in r.getMessage()]
+        assert len(errors) == 1   # said once, not on every answer
+
+    def test_beam_search_has_no_temperature_ladder(self):
+        from app.services import speech_service
+        with patch.object(speech_service.settings, "WHISPER_BEAM_SIZE", 5):
+            openai_options = speech_service._decode_options(None)
+            faster_options = speech_service._faster_options(None)
+        assert openai_options["beam_size"] == 5 and openai_options["temperature"] == 0.0
+        assert faster_options["beam_size"] == 5 and faster_options["temperature"] == 0.0
+        assert speech_service._decode_options(None)["temperature"] == speech_service.FALLBACK_TEMPERATURES
+
+    def test_answer_length_capped_and_repetition_dropped(self):
+        from app.services import speech_service
+        from app.services.speech_service import MAX_ANSWER_TOKENS, _clean_transcript
+        # The bake-off's small/beam-5 loop: one address became 157 words, 7 distinct.
+        assert speech_service._decode_options(None)["sample_len"] == MAX_ANSWER_TOKENS
+        assert speech_service._faster_options(None)["max_new_tokens"] == MAX_ANSWER_TOKENS
+        loop = "Purok 3, Barangay Uno, " * 20
+        assert _clean_transcript(loop, [{"compression_ratio": 9.5}]) == ""
+        assert _clean_transcript("Purok 3, Barangay Uno.", [{"compression_ratio": 1.1}]) == "Purok 3, Barangay Uno."
+        assert _clean_transcript("Female.") == "Female."   # no segments: only the silence phrases are dropped
+
+    def test_models_are_cached_per_engine(self):
+        import sys
+        from app.services import speech_service
+        from app.services.speech_service import SpeechService
+        calls = []
+        with patch.dict(sys.modules, {"faster_whisper": self._fake_faster(calls)}), \
+                patch.object(speech_service.whisper, "load_model", return_value=MagicMock()) as load, \
+                patch.dict(SpeechService._models, clear=True):
+            with patch.object(speech_service.settings, "WHISPER_ENGINE", "faster"):
+                faster_model = SpeechService.get_model("base")
+                assert SpeechService.get_model("base") is faster_model
+            openai_model = SpeechService.get_model("base")
+        assert openai_model is not faster_model and load.call_count == 1 and len(calls) == 1

@@ -56,6 +56,11 @@ class Settings(BaseSettings):
     WHISPER_PRELOAD: bool = True                   # load at startup so the first applicant doesn't wait
     WHISPER_NO_SPEECH_THRESHOLD: float = 0.35
     WHISPER_LOGPROB_THRESHOLD: float = -1.5
+    # Engine (plan 002): "openai" = openai-whisper (PyTorch), "faster" = faster-whisper (CTranslate2,
+    # same models, int8 on CPU). "faster" falls back to "openai" with a log line if it is not installed.
+    WHISPER_ENGINE: str = "openai"
+    WHISPER_COMPUTE_TYPE: str = "int8"             # faster engine only: int8 = fastest on a CPU
+    WHISPER_VAD: bool = True                       # faster engine only: skip silence so it is not turned into words
 
     # DistilBERT NER used to understand interview answers (names, places).
     # False skips the model (regex/gazetteer only), e.g. in the test suite.
@@ -72,7 +77,7 @@ class Settings(BaseSettings):
     PRACTICE_LOG_ENABLED: bool = False
     # Stamped on every practice session so the summary can group by build; the Builder bumps it
     # as the last build step of every later plan.
-    PRACTICE_LOG_BUILD: str = "version-2.2+001.8"
+    PRACTICE_LOG_BUILD: str = "version-2.2+002"
 
     # QR Code
     QR_EXPIRY_MINUTES: int = 60

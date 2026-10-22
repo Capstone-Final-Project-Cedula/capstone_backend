@@ -10,6 +10,10 @@ Calibrated for short, one-question answers recorded in the browser:
     since a 2-second answer gains little from beam search;
   * the model is loaded once at startup (WHISPER_PRELOAD) and shared;
   * phrases Whisper invents on near-silence ("Thank you.") are dropped.
+
+Two engines run the same Whisper models (WHISPER_ENGINE, plan 002): "openai" (openai-whisper)
+and "faster" (faster-whisper / CTranslate2, int8 on CPU, with a voice-activity filter).
+faster-whisper API: https://github.com/SYSTRAN/faster-whisper/blob/v1.2.1/faster_whisper/transcribe.py
 """
 import whisper
 import numpy as np
@@ -139,9 +143,26 @@ def birth_town_prompt(province_psgc: Optional[str]) -> str:
     return f"A town or city in {province.display}: {names}."
 
 
+FALLBACK_TEMPERATURES = (0.0, 0.4, 0.8)   # greedy only: retried when the first pass looks unreliable
+# One interview answer (even a spelled name) is far below this; the cap keeps a decode that loops on
+# the same words short (plan 002: small/beam-5 turned one address into 157 words, 7 of them distinct).
+MAX_ANSWER_TOKENS = 128
+REPETITIVE_RATIO = 2.4   # Whisper's own compression-ratio limit: above it the text is a repetition loop
+
+
+def _beam() -> int:
+    return max(1, int(settings.WHISPER_BEAM_SIZE))
+
+
+def _temperatures(beam: int):
+    # Beam search gets no fallback ladder: each retry re-runs the whole beam, which is how one
+    # small/beam-5 answer took 56 s (plan 002). One beam pass is already the careful decode.
+    return FALLBACK_TEMPERATURES if beam == 1 else 0.0
+
+
 def _decode_options(initial_prompt: Optional[str]) -> dict:
-    """Short-answer settings: greedy by default, small fallback ladder for unclear audio."""
-    beam = max(1, int(settings.WHISPER_BEAM_SIZE))
+    """openai-whisper short-answer settings: greedy by default, small fallback ladder for unclear audio."""
+    beam = _beam()
     options = dict(
         language="en",
         task="transcribe",
@@ -151,15 +172,87 @@ def _decode_options(initial_prompt: Optional[str]) -> dict:
         no_speech_threshold=settings.WHISPER_NO_SPEECH_THRESHOLD,
         logprob_threshold=settings.WHISPER_LOGPROB_THRESHOLD,
         initial_prompt=initial_prompt,
-        temperature=(0.0, 0.4, 0.8),       # retried only when the first pass looks unreliable
+        temperature=_temperatures(beam),
+        sample_len=MAX_ANSWER_TOKENS,
     )
     if beam > 1:
         options.update(beam_size=beam, best_of=beam)
     return options
 
 
-def _clean_transcript(text: str) -> str:
+def _faster_options(initial_prompt: Optional[str]) -> dict:
+    """The same settings for faster-whisper. Every option is given: its defaults differ (beam 5,
+    condition_on_previous_text on, a 6-step temperature ladder, no VAD)."""
+    beam = _beam()
+    return dict(
+        language="en",
+        task="transcribe",
+        beam_size=beam,
+        best_of=beam,                      # openai-whisper samples once per fallback step when greedy
+        condition_on_previous_text=False,
+        no_speech_threshold=settings.WHISPER_NO_SPEECH_THRESHOLD,
+        log_prob_threshold=settings.WHISPER_LOGPROB_THRESHOLD,
+        initial_prompt=initial_prompt,
+        temperature=_temperatures(beam),
+        max_new_tokens=MAX_ANSWER_TOKENS,
+        vad_filter=settings.WHISPER_VAD,   # Silero VAD (onnxruntime): silence is cut before decoding
+    )
+
+
+_engine_warned = False
+
+
+def _engine() -> str:
+    """The engine in use: "faster" only when chosen and installed; otherwise "openai"."""
+    global _engine_warned
+    choice = (settings.WHISPER_ENGINE or "openai").strip().lower()
+    if choice == "openai":
+        return "openai"
+    if choice == "faster":
+        try:
+            import faster_whisper  # noqa: F401
+            return "faster"
+        except ImportError:
+            reason = "faster-whisper is not installed (pip install -r requirements.txt)"
+    else:
+        reason = f"unknown engine {settings.WHISPER_ENGINE!r} (use openai or faster)"
+    if not _engine_warned:
+        logger.error(f"WHISPER_ENGINE={settings.WHISPER_ENGINE}: {reason}. Using openai-whisper instead.")
+        _engine_warned = True
+    return "openai"
+
+
+def _load_model(engine: str, name: str):
+    if engine == "faster":
+        from faster_whisper import WhisperModel
+        return WhisperModel(name, device="cpu", compute_type=settings.WHISPER_COMPUTE_TYPE)
+    return whisper.load_model(name)
+
+
+def _run(engine: str, model, audio: Union[str, np.ndarray], initial_prompt: Optional[str],
+         warm_up: bool = False) -> dict:
+    """One decode on either engine, returned in openai-whisper's shape: text, language, segments."""
+    if engine == "faster":
+        options = _faster_options(initial_prompt)
+        if warm_up:
+            options["vad_filter"] = False  # the VAD cuts the silent warm-up clip away: the model would never run
+        segments, info = model.transcribe(audio, **options)
+        segments = list(segments)          # a lazy generator: decoding happens here
+        return {
+            "text": "".join(s.text for s in segments),
+            "language": info.language,
+            "segments": [{"id": s.id, "start": s.start, "end": s.end, "text": s.text,
+                          "avg_logprob": s.avg_logprob, "compression_ratio": s.compression_ratio} for s in segments],
+        }
+    return model.transcribe(audio, **_decode_options(initial_prompt))
+
+
+def _clean_transcript(text: str, segments: Optional[list] = None) -> str:
+    """Drop what Whisper invents: silence phrases, and a decode stuck repeating the same words."""
     text = (text or "").strip()
+    if any(s.get("compression_ratio", 0) > REPETITIVE_RATIO for s in segments or []):
+        logger.info("Repetitive transcript dropped (a decoding loop, not an answer).")
+        return ""
     return "" if HALLUCINATIONS.match(text) else text
 
 
@@ -169,7 +262,7 @@ class SpeechService:
     Model is loaded once on first use to avoid repeated cold starts.
     """
 
-    _models: dict = {}  # Cached Whisper models by name (shared across requests)
+    _models: dict = {}  # Cached Whisper models by (engine, name) (shared across requests)
 
     @classmethod
     def model_name_for(cls, field_key: Optional[str]) -> str:
@@ -182,13 +275,14 @@ class SpeechService:
     def get_model(cls, name: Optional[str] = None):
         """Load a model once and cache it (lazy initialization)."""
         name = name or settings.WHISPER_MODEL
-        if name not in cls._models:
+        key = (_engine(), name)
+        if key not in cls._models:
             with _model_lock:
-                if name not in cls._models:
-                    logger.info(f"Loading Whisper model: {name}")
-                    cls._models[name] = whisper.load_model(name)
+                if key not in cls._models:
+                    logger.info(f"Loading Whisper model: {name} ({key[0]} engine)")
+                    cls._models[key] = _load_model(*key)
                     logger.info("Whisper model loaded successfully.")
-        return cls._models[name]
+        return cls._models[key]
 
     @classmethod
     def warm_up(cls) -> None:
@@ -197,7 +291,7 @@ class SpeechService:
             for name in {settings.WHISPER_MODEL, cls.model_name_for("confirm")}:
                 model = cls.get_model(name)
                 with _model_lock:
-                    model.transcribe(np.zeros(WHISPER_SAMPLE_RATE // 2, dtype=np.float32), **_decode_options(None))
+                    _run(_engine(), model, np.zeros(WHISPER_SAMPLE_RATE // 2, dtype=np.float32), None, warm_up=True)
             logger.info("Whisper warmed up.")
         except Exception as exc:  # never block startup on this
             logger.warning(f"Whisper warm-up failed: {exc}")
@@ -239,7 +333,7 @@ class SpeechService:
         logger.info(f"Transcribing {source} (field={field_key})")
 
         with _model_lock:
-            result = model.transcribe(audio_path, **_decode_options(initial_prompt))
+            result = _run(_engine(), model, audio_path, initial_prompt)
 
         processing_time = time.time() - start_time
 
@@ -250,7 +344,7 @@ class SpeechService:
         else:
             confidence = 0.0
 
-        transcript = _clean_transcript(result.get("text", ""))
+        transcript = _clean_transcript(result.get("text", ""), segments)
 
         # Only the length is logged: transcripts are applicants' personal data (Data Privacy Act).
         logger.info(f"Transcription complete in {processing_time:.2f}s | Confidence: {confidence:.2f} | "
@@ -310,7 +404,7 @@ class SpeechService:
         audio_array = audio_array.astype(np.float32)
 
         with _model_lock:
-            result = model.transcribe(audio_array, **_decode_options(initial_prompt))
+            result = _run(_engine(), model, audio_array, initial_prompt)
 
         processing_time = time.time() - start_time
         segments = result.get("segments", [])
@@ -320,7 +414,7 @@ class SpeechService:
         )
 
         return {
-            "transcript": _clean_transcript(result.get("text", "")),
+            "transcript": _clean_transcript(result.get("text", ""), segments),
             "language": result.get("language", "en"),
             "confidence": confidence,
             "segments": segments,
