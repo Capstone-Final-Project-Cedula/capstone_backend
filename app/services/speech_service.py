@@ -278,34 +278,34 @@ def _same_sentence(said: str, hint: str, cutoff: float = ECHO_SIMILARITY) -> boo
             and SequenceMatcher(None, said, hint).ratio() >= cutoff)
 
 
-def _echo_prefix(said: list, hint: list) -> int:
-    """How many leading sentences of the transcript are a run of the hint's sentences, in the hint's order."""
-    best = 0
-    for start in range(len(hint)):
-        k = 0
-        while k < len(said) and start + k < len(hint) and _same_sentence(said[k], hint[start + k]):
-            k += 1
-        best = max(best, k)
+_WORD = re.compile(r"[0-9a-zñ]+")
+
+
+def _hint_run(words: list, hint: list) -> tuple:
+    """(hint sentences, words) of the longest run of the hint's sentences, in the hint's order, at the start
+    of the words. Matched on words, not on the transcript's punctuation: Whisper may merge or split sentences."""
+    best = (0, 0)
+    for first in range(len(hint)):
+        at = count = 0
+        for sentence in hint[first:]:
+            size = len(sentence.split())
+            for n in (size, size - 1, size + 1):          # "Gerlie Mae" may come back as "Gerliemae"
+                if n > 0 and at + n <= len(words) and _same_sentence(" ".join(words[at:at + n]), sentence):
+                    at += n
+                    count += 1
+                    break
+            else:
+                break
+        best = max(best, (count, at))
     return best
-
-
-def _flat_run(words: list, run: list) -> bool:
-    """True when the words are exactly these hint sentences in order (each matched on its own words)."""
-    at = 0
-    for sentence in run:
-        size = len(sentence.split())
-        if not size or not _same_sentence(" ".join(words[at:at + size]), sentence):
-            return False
-        at += size
-    return at == len(words)
 
 
 def _clean_answer(text: str, segments: Optional[list] = None, prompt: Optional[str] = None,
                   field_key: Optional[str] = None) -> tuple:
     """(transcript, why it was dropped or None). Drops a decoding loop, a silence phrase and the hint read
     back; a reply that starts with the hint and then answers keeps only the answer (plan 002.2).
-    Matched sentence by sentence: for the answer-like hints (names, purok, the end-step commands) an echo is
-    two or more hint sentences in a row, so one hint example said alone ("Lagbas po.") stays an answer."""
+    For the answer-like hints (names, purok, the end-step commands) an echo is two or more hint sentences in
+    a row, so one hint example said alone ("Lagbas po.") stays an answer."""
     text = (text or "").strip()
     if any(s.get("compression_ratio", 0) > REPETITIVE_RATIO for s in segments or []):
         logger.info("Repetitive transcript dropped (a decoding loop, not an answer).")
@@ -313,28 +313,17 @@ def _clean_answer(text: str, segments: Optional[list] = None, prompt: Optional[s
     if HALLUCINATIONS.match(text):
         return "", "silence-phrase"
     hint = [_sentence_words(s) for s in _sentences(prompt or "")]
-    pieces = _sentences(text)
-    said = [_sentence_words(s) for s in pieces]
-    if not hint or not said:
+    kept = [(m.group(), m.start()) for m in _WORD.finditer(text.lower()) if m.group() != "po"]
+    if not hint or not kept:
         return text, None
     shortest = min(2 if field_key in ANSWER_LIKE_HINTS else 1, len(hint))
-    k = _echo_prefix(said, hint)
-    if k >= shortest:
-        if k == len(said):
-            logger.info("Transcript dropped: it repeats the question's hint (field=%s).", field_key)
-            return "", "echo"
-        return " ".join(pieces[k:]), None
-    # Read back without sentence breaks ("male or female lalaki or babae"): the words, from start to end,
-    # are a run of at least `shortest` (and 2) hint sentences, one after another.
-    if len(said) == 1:
-        words = said[0].split()
-        size = max(shortest, 2)
-        for start in range(len(hint) - size + 1):
-            for end in range(start + size, len(hint) + 1):
-                if _flat_run(words, hint[start:end]):
-                    logger.info("Transcript dropped: it repeats the question's hint (field=%s).", field_key)
-                    return "", "echo"
-    return text, None
+    count, used = _hint_run([w for w, _ in kept], hint)
+    if count < shortest:
+        return text, None
+    if used == len(kept):
+        logger.info("Transcript dropped: it repeats the question's hint (field=%s).", field_key)
+        return "", "echo"
+    return text[kept[used][1]:].strip(), None
 
 
 def _clean_transcript(text: str, segments: Optional[list] = None) -> str:

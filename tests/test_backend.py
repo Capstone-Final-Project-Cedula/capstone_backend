@@ -2190,6 +2190,16 @@ class TestHintEcho:
         flat = "male or female lalaki or babae"
         assert _clean_answer(flat, [], P["sex"], "sex") == ("", "echo")
 
+    def test_codex_round_2_merged_hint_sentences(self):
+        """Codex verify round 2 (plan 002.2): Whisper merging two hint sentences must not leak an example."""
+        from app.services.speech_service import FIELD_PROMPTS as P, _clean_answer
+        merged = "Jessa po. My first name is Rodel Mylene po. Gerlie Mae."
+        assert _clean_answer(merged, [], P["given_name"], "given_name") == ("", "echo")
+        assert _clean_answer(merged + " Ana po.", [], P["given_name"], "given_name") == ("Ana po.", None)
+        flat = P["surname"].replace(".", "")                     # no sentence breaks at all
+        assert _clean_answer(flat, [], P["surname"], "surname") == ("", "echo")
+        assert _clean_answer(flat + " Cruz", [], P["surname"], "surname") == ("Cruz", None)
+
     def test_drop_reasons(self):
         from app.services.speech_service import _clean_answer
         assert _clean_answer("Thank you.", []) == ("", "silence-phrase")
