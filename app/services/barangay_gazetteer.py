@@ -132,6 +132,11 @@ def region_town(town_psgc: str) -> Optional[dict]:
     return _load_region().get(town_psgc or "")
 
 
+def region_towns() -> list[tuple[str, dict]]:
+    """(town PSGC, {"town", "province", ...}) of every Region X town, by province then town (address picker)."""
+    return sorted(_load_region().items(), key=lambda item: (item[1]["province"], item[1]["town"]))
+
+
 def town_barangays(town_psgc: str) -> tuple[list[str], dict[str, str]]:
     """
     (barangay names, alias -> barangay) of one town. The office town also gets the aliases

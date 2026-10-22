@@ -199,6 +199,9 @@ class AttemptNote(BaseModel):
     parsed: Optional[str] = Field(None, max_length=500)          # what /answer made of it
     ok: Optional[bool] = None
     reason: Optional[str] = Field(None, max_length=60)
+    # Plan 002.2: "end_step" = asked again at the end (it had been skipped). The web sends a question's tries
+    # cumulatively, so the note that finishes a skipped question still holds its interview tries.
+    stage: Optional[Literal["interview", "end_step"]] = None
 
 
 class AnswerNote(BaseModel):

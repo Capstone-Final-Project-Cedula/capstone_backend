@@ -19,10 +19,14 @@ from app.models.applicant import ApplicantRecord
 from app.models.issuance import CTCIssuance, InputMethodEnum
 from app.models.record_access_log import RecordAccessLog
 from app.models.staff_user import StaffUser
-from app.services import name_lexicon, storage_service
+from app.services import name_lexicon, place_gazetteer, storage_service
+from app.services.answer_service import HEIGHT_CM, WEIGHT_KG, barangay_label
+from app.services.barangay_gazetteer import region_town, town_barangays
+from app.api.routes.places import town_option_value
 from app.services.pdf_service import generate_cedula_pdf, generate_receipt_pdf
 from app.services.tax_service import compute_tax
 from app.schemas.schemas import (
+    APPLICANT_PICKED_KEYS,
     IssuanceCreate,
     IssuanceResponse,
     DashboardStats,
@@ -172,6 +176,65 @@ def missing_required_fields(applicant_data: dict) -> List[dict]:
     return errors
 
 
+def _number(value) -> Optional[float]:
+    """A height / weight as sent; None when blank or 0 (the form sends 0 for "not given")."""
+    if value in (None, ""):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return float("nan")
+    return number or None
+
+
+def picked_and_range_problems(applicant_data: dict) -> List[dict]:
+    """
+    Plan 002.1: what the screen cannot be trusted with, checked on the payload as sent (the `dict`
+    branch of IssuanceCreate skips every ApplicantCreate validator).
+    - height and weight within the voice path's limits; blank or 0 is "not given";
+    - a place of birth or address town sent WITH its list code (picked from the list) must be that list
+      entry, and a picked barangay must be one of that town's. Typed text ("not in the list"), the voice
+      path and older phones send no code and are not list-checked.
+    Same item shape as missing_required_fields.
+    """
+    errors = []
+
+    def add(field: str, msg: str):
+        errors.append({"loc": ["body", "applicant_data", field], "msg": msg, "type": "value_error"})
+
+    for field, label, unit, (low, high) in (("height_cm", "Height", "cm", HEIGHT_CM), ("weight_kg", "Weight", "kg", WEIGHT_KG)):
+        number = _number(applicant_data.get(field))
+        if number is not None and not low <= number <= high:   # also NaN (not a number)
+            add(field, f"{label} must be {low} to {high} {unit}.")
+
+    code = str(applicant_data.get("place_of_birth_code") or "").strip()
+    if code:
+        place = place_gazetteer.place_by_code(code)
+        said = str(applicant_data.get("place_of_birth") or "").strip().lower()
+        if not place or place_gazetteer.place_value(place).lower() != said:
+            add("place_of_birth", "Place of birth does not match the place picked from the list.")
+
+    town_code = str(applicant_data.get("address_town_code") or "").strip()
+    if town_code:
+        address = str(applicant_data.get("address") or "").lower()
+        town = region_town(town_code)
+        barangay = str(applicant_data.get("address_barangay") or "").strip()
+        names = {name.lower() for name in town_barangays(town_code)[0]} if town else set()
+        town_text = town_option_value(town_code, town).lower() if town else ""
+        address = address.strip()
+        # "<purok>, <barangay label>, <town, province>" as the picker joins it. The whole label right before the
+        # town, never a substring ("Barangay 1" is not "Barangay 10", Imbatug is not Imbatugon), and a label
+        # may hold a comma itself ("Agapito Yap, Sr.").
+        before = address[:-len(town_text)].rstrip().rstrip(",").strip() if town_text else ""
+        label = barangay_label(barangay).lower() if barangay else ""
+        if not town or not address.endswith(town_text):
+            add("address", "Address does not match the town picked from the list.")
+        elif barangay and (barangay.lower() not in names
+                           or not (before == label or before.endswith(f", {label}"))):
+            add("address", "That barangay is not in the town picked.")
+    return errors
+
+
 def applicant_pdf_data(applicant: ApplicantRecord) -> dict:
     """Applicant fields in the shape generate_cedula_pdf expects."""
     return {
@@ -239,10 +302,12 @@ def issue_ctc(
         applicant_data = payload.applicant_data
     else:
         applicant_data = payload.applicant_data.model_dump()
+        # The list codes are request-only (excluded from model_dump): read them for the checks below.
+        applicant_data.update({key: getattr(payload.applicant_data, key) for key in APPLICANT_PICKED_KEYS})
 
     # Checked before anything is written: on 422 no row and no PDF exist.
     # (Outside the try below, which would turn the 422 into a 500.)
-    missing = missing_required_fields(applicant_data)
+    missing = missing_required_fields(applicant_data) + picked_and_range_problems(applicant_data)
     if missing:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=missing)
 

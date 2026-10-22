@@ -54,6 +54,9 @@ class AnswerResult:
     # Place of birth (plan 001.8): the closest list entries, to tap. {"value", "province"}: province is a
     # PSGC code when the entry is a province (its town is asked next), "" when it is a whole place.
     suggestions: List[dict] = field(default_factory=list)
+    # Plan 006: reason "ambiguous_town" lists EVERY province that has the town said: {"value": "San Jose, Bohol",
+    # "town": "San Jose", "province": "Bohol", "province_psgc": "..."}. The web asks "Which province is San Jose in?".
+    candidates: List[dict] = field(default_factory=list)
 
     def as_dict(self) -> dict:
         return self.__dict__.copy()
@@ -98,7 +101,8 @@ def _squash(text: str) -> str:
 def _basic_clean(text: str) -> str:
     """Lowercase-free cleanup shared by every field: polite particles, edge punctuation."""
     t = _squash(text)
-    t = re.sub(r"\b(?:po|opo|ho|uhm+|umm+|uh+|ah+|eh+|er+|ahm+|yung|iyong)\b", " ", t, flags=re.IGNORECASE)
+    t = re.sub(r"\b(?:po|opo|ho|uhm+|umm*|uh+|ah+|eh+|er+|ahm+|hmm+|hm+|mm+|yung|iyong)\b", " ", t,
+               flags=re.IGNORECASE)
     t = re.sub(r"^(?:yes|yeah|oo|okay|ok|sure|well|so)[,\s]+", "", t, flags=re.IGNORECASE)
     return _squash(t).strip(" ,.;:!?\"'")
 
@@ -113,6 +117,17 @@ def _strip_prefix(text: str, patterns: List[str]) -> str:
             if new != t:
                 t, changed = new, True
     return t
+
+
+# "Um.", "Uh", "Hmm", "Mm-hmm": a hesitation, never an answer (plan 006).
+FILLER_ONLY = re.compile(r"(?:uh+m*|um+|ah+m*|eh+|er+m*|hm+|mm+|mh+m*)", re.IGNORECASE)
+
+
+def _is_filler_only(text: str) -> bool:
+    if re.search(r"\d", text or ""):      # "Um, 60": a number is an answer
+        return False
+    words = re.findall(r"[A-Za-zñÑ']+", text or "")
+    return bool(words) and all(FILLER_ONLY.fullmatch(w) for w in words)
 
 
 def _is_unclear(text: str) -> bool:
@@ -624,6 +639,23 @@ SEX_FEMALE = {"female", "females", "woman", "women", "girl", "lady", "babae", "b
 SEX_MALE = {"male", "males", "man", "men", "boy", "guy", "lalaki", "lalake", "m", "mail", "mel", "meyl"}
 
 
+# By sound, for a one-word reply no list has (plan 006, Ralph): female has two syllables starting "fe"
+# (Femail, Feemale, Pemale, Fimale, Bimale); male has one (Meal, Mehl, Mayl, Nail, Mile).
+FEMALE_SOUND = re.compile(r"(?:fe+|fi|pe+|pi|be|bi|phe)m(?:ale|ail|eal|ehl|ayl|eyl|ell?|ile|eil)")
+MALE_SOUND = re.compile(r"[mn](?:ea?l|ehl|ayl|eyl|ail|ale|ell?|ile|eil|aal|ael)")
+
+
+def _sex_by_sound(text: str) -> Optional[str]:
+    words = re.findall(r"[a-z']+", _basic_clean(text).lower())
+    if len(words) != 1:
+        return None
+    if FEMALE_SOUND.fullmatch(words[0]):      # female first: "female" is never taken for male by sound
+        return "Female"
+    if MALE_SOUND.fullmatch(words[0]):
+        return "Male"
+    return None
+
+
 def _handle_sex(key: str, text: str) -> AnswerResult:
     # [a-z']+ keeps "i'm" whole, so its "m" is not read as "male".
     words = set(re.findall(r"[a-z']+", _basic_clean(text).lower()))
@@ -635,6 +667,9 @@ def _handle_sex(key: str, text: str) -> AnswerResult:
         return _ok(key, "Male")
     if is_f and is_m:
         return _fail(key, "Please say only one: male or female.")
+    sound = _sex_by_sound(text)
+    if sound:
+        return _ok(key, sound, confidence=0.8)
     return _fail(key, "Sorry, please answer male or female.")
 
 
@@ -648,9 +683,16 @@ CIVIL_RULES = [
 
 def _handle_civil_status(key: str, text: str) -> AnswerResult:
     t = _basic_clean(text).lower()
+    named = []
     for status, pattern in CIVIL_RULES:
         if re.search(pattern, t):
-            return _ok(key, status)
+            named.append(status)
+            t = re.sub(pattern, " ", t)    # "not married" is Single only, not Married too
+    if len(named) == 1:
+        return _ok(key, named[0])
+    if named:
+        # e.g. the hint read back ("Single, married, widowed or separated."), plan 002.2
+        return _fail(key, "Please say only one: single, married, widowed, or separated.")
     return _fail(key, "Please answer single, married, widowed, or separated.")
 
 
@@ -739,6 +781,11 @@ def _handle_icr(key: str, text: str) -> AnswerResult:
     return _ok(key, value, confidence=0.9)
 
 
+# Plausible height and weight; /forms/issue checks a typed or picked value against the same limits (plan 002.1).
+HEIGHT_CM = (50, 250)
+WEIGHT_KG = (20, 300)
+
+
 def _handle_height(key: str, text: str) -> AnswerResult:
     t = numbers_to_digits(_basic_clean(text).lower())
     nums = spoken_numbers(t)
@@ -774,7 +821,7 @@ def _handle_height(key: str, text: str) -> AnswerResult:
     if cm is None:
         return _fail(key, "Please say your height in centimeters, or in feet and inches, like 5 feet 4.")
     cm = round(cm)
-    if not 50 <= cm <= 250:
+    if not HEIGHT_CM[0] <= cm <= HEIGHT_CM[1]:
         return _fail(key, "That height doesn't seem right. Please say it again, for example 160 centimeters.")
     feet, inches = divmod(round(cm / 2.54), 12)
     return _ok(key, str(cm), display=f"{cm} centimeters ({feet} feet {inches})", normalized=str(cm))
@@ -792,7 +839,7 @@ def _handle_weight(key: str, text: str) -> AnswerResult:
     if kg is None:
         return _fail(key, "Please say your weight in kilos, for example 60 kilos.")
     kg = round(kg, 1)
-    if not 20 <= kg <= 300:
+    if not WEIGHT_KG[0] <= kg <= WEIGHT_KG[1]:
         return _fail(key, "That weight doesn't seem right. Please say it again in kilos.")
     shown = f"{kg:g}"
     return _ok(key, shown, display=f"{shown} kilos", normalized=shown)
@@ -1035,13 +1082,13 @@ def _find_address_town(text: str) -> Optional[dict]:
     return place_gazetteer.find_town(text, exclude=_office_barangay_words(), home_province=_office_location()[1])
 
 
-def _town_value(place: place_gazetteer.Place) -> str:
+def town_value(place: place_gazetteer.Place) -> str:
     """"Cagayan de Oro City, Misamis Oriental": the town with its OWN province (from the Region X list there)."""
     province = (region_town(place.psgc) or {}).get("province") or place.province
     return place.display if not province or province == place.display else f"{place.display}, {province}"
 
 
-def _barangay_label(name: str) -> str:
+def barangay_label(name: str) -> str:
     """"Carmen" -> "Barangay Carmen"; "Barangay 10" stays as it is."""
     return name if re.match(r"barangay\b", name, re.IGNORECASE) else f"Barangay {name}"
 
@@ -1093,9 +1140,9 @@ def _address_in_town(key: str, cleaned: str, town: dict, methods: List[str]) -> 
     """A one-sentence address with an explicitly named town."""
     parts = _parse_address(cleaned, town)
     place = parts["place"]
-    town_value = place.name if parts["ambiguous"] else _town_value(place)
+    town_text = place.name if parts["ambiguous"] else town_value(place)
     barangay = parts["barangay"]
-    value = _join_address(parts["rest"], _barangay_label(barangay) if barangay else "", town_value)
+    value = _join_address(parts["rest"], barangay_label(barangay) if barangay else "", town_text)
     if barangay:
         return _ok(key, value, methods=methods, confidence=0.95)
     warning = ("Barangay not recognized — please check the address." if region_town(place.psgc)
@@ -1116,7 +1163,7 @@ def _handle_address_town(key: str, text: str, spoken: bool = False) -> AnswerRes
     methods = ["regex", "gazetteer"]
     town = _find_address_town(_normalize_address_words(cleaned))
     if town and not town["ambiguous"]:
-        value = _town_value(town["place"])
+        value = town_value(town["place"])
         return _ok(key, value, normalized=town["place"].psgc, methods=methods, confidence=0.95)
     if town:
         # The same town name in several provinces outside Region X, and no province said.
@@ -1126,7 +1173,7 @@ def _handle_address_town(key: str, text: str, spoken: bool = False) -> AnswerRes
     office = _office_town()
     if spoken and office:
         # Nothing matched: most applicants live in the office's own town, so offer it for a yes.
-        value = _town_value(office)
+        value = town_value(office)
         return _ok(key, value, normalized=office.psgc, methods=methods, confidence=0.4, needs_confirmation=True,
                    message=f"I didn't catch the town. Do you live in {value}?",
                    warnings=["Town not recognized; the office town was offered."])
@@ -1157,11 +1204,11 @@ def _handle_address_barangay(key: str, text: str, town: Optional[str] = None) ->
         if not found:
             found, _, _ = _find_barangay(stripped, names, aliases)
         if found:
-            return _ok(key, found, display=_barangay_label(found), methods=methods, confidence=0.95)
+            return _ok(key, found, display=barangay_label(found), methods=methods, confidence=0.95)
     heard = re.sub(r"^(?:barangay|brgy|bgy)\.?\s+", "", _title(stripped), flags=re.IGNORECASE).strip(" ,.")
     if not heard or heard.lower() == "barangay":
         return _fail(key, "Please tell me the name of your barangay.")
-    label = _barangay_label(heard)
+    label = barangay_label(heard)
     town_name = (region_town(psgc) or {}).get("town", "")
     warning = (f"Not a barangay of {town_name} — please check it." if names
                else "No barangay list for this town (outside Region X) — please check it.")
@@ -1255,6 +1302,13 @@ def _birth_ok(key: str, found: dict) -> AnswerResult:
     return _ok(key, province.display, normalized=province.psgc, methods=methods, confidence=0.95)
 
 
+def _birth_candidates(places) -> List[dict]:
+    """Every province that has this town: the complete list, not only the closest three."""
+    codes = {p.name.lower(): p.psgc for p in place_gazetteer.provinces()}
+    return [{"value": place_gazetteer.place_value(p), "town": p.name, "province": p.province,
+             "province_psgc": codes.get(p.province.lower(), "")} for p in places if p.province]
+
+
 def _handle_birth_province(key: str, text: str) -> AnswerResult:
     """
     "Which province were you born in?" (plan 001.8). A province (the town is asked next), or a whole
@@ -1275,8 +1329,9 @@ def _handle_birth_province(key: str, text: str) -> AnswerResult:
     if same_name:
         # "San Jose": a town of that name in many provinces. The closest ones to tap; or say the province.
         result = _fail(key, f"There is more than one {same_name[0].display}. Please say the province first.",
-                       methods=["regex", "gazetteer"])
+                       reason="ambiguous_town", methods=["regex", "gazetteer"])
         result.suggestions = _birth_suggestions(same_name[:3])
+        result.candidates = _birth_candidates(same_name)
         return result
     pool = place_gazetteer.provinces() + place_gazetteer.places_without_province()
     result = _fail(key, "Please say the province where you were born. For example: Bukidnon. "
@@ -1465,8 +1520,9 @@ def understand_answer(field_key: str, transcript: str, spoken: bool = False, tow
         raise KeyError(field_key)
     text = _squash(transcript)
     label = FIELD_LABELS[field_key]
-    if not text:
-        if field_key in OPTIONAL_FIELDS:
+    filler = _is_filler_only(text)       # "Um." is not an answer, not even "none" for an optional field
+    if not text or filler:
+        if not filler and field_key in OPTIONAL_FIELDS:
             return _ok(field_key, "", display="none")
         result = _fail(field_key, f"I didn't hear an answer. Please tell me your {label}.", reason="empty")
         if field_key == "place_of_birth_province":     # the likeliest places to tap (plan 001.8)

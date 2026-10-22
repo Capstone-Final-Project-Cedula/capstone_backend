@@ -23,6 +23,7 @@ import threading
 import time
 import tempfile
 import os
+from difflib import SequenceMatcher
 from math import gcd
 from typing import Optional, Union
 from scipy.io import wavfile
@@ -117,7 +118,37 @@ HALLUCINATIONS = re.compile(
     re.IGNORECASE,
 )
 
+# Hints whose sentences are each a real answer or command ("Lagbas po.", "Purok 2.", "Type."), or whose first
+# sentence looks like one ("Barangay in Baungon, Bukidnon."): only a run of two or more of their sentences is an
+# echo of the hint, never one sentence alone (plan 002.2).
+ANSWER_LIKE_HINTS = {"surname", "given_name", "middle_name", "address_purok", "address_barangay",
+                     "missing_choice", "spelling"}
+ECHO_SIMILARITY = 0.85
+
 _model_lock = threading.Lock()   # one transcription at a time on the shared model
+
+# One Whisper model and beam per interview question (plan 006, Ralph's "PLAN 4" table). b1 = greedy.
+# Names, places, occupation and spelling are hard to hear: Turbo b5. Fixed-choice and number answers: Base b1.
+# Yes/no: Tiny b5. A key that is not here (or none) uses WHISPER_MODEL + WHISPER_BEAM_SIZE.
+TURBO = "large-v3-turbo"
+FIELD_MODELS = {
+    **{key: (TURBO, 5) for key in (
+        "surname", "given_name", "middle_name",
+        "address", "address_town", "address_barangay", "address_purok",
+        "place_of_birth", "place_of_birth_province", "place_of_birth_town",
+        "occupation", "spelling")},
+    **{key: ("base", 1) for key in (
+        "date", "sex", "civil_status", "citizenship", "height", "weight",
+        "gross_annual_income", "icr_no", "missing_choice")},
+    "confirm": ("tiny", 5),
+    "review": ("tiny", 5),      # first pass; a reply that is not a plain yes is decoded again with REVIEW_SECOND
+}
+REVIEW_SECOND = (TURBO, 5)
+
+_PLAIN_YES = re.compile(r"^(?:yes|yeah|yep|opo|oo|okay|ok|correct|right|sure)(?: (?:po|please))?$")
+_FIELD_WORDS = re.compile(
+    r"\b(?:change|but|no|not|name|surname|birth|address|purok|barangay|sex|civil|status|height|weight|"
+    r"occupation|citizenship|income|male|female|single|married)\b")
 
 
 def barangay_prompt(town_psgc: Optional[str]) -> str:
@@ -150,8 +181,8 @@ MAX_ANSWER_TOKENS = 128
 REPETITIVE_RATIO = 2.4   # Whisper's own compression-ratio limit: above it the text is a repetition loop
 
 
-def _beam() -> int:
-    return max(1, int(settings.WHISPER_BEAM_SIZE))
+def _beam(beam: Optional[int] = None) -> int:
+    return max(1, int(settings.WHISPER_BEAM_SIZE if beam is None else beam))
 
 
 def _temperatures(beam: int):
@@ -160,9 +191,9 @@ def _temperatures(beam: int):
     return FALLBACK_TEMPERATURES if beam == 1 else 0.0
 
 
-def _decode_options(initial_prompt: Optional[str]) -> dict:
+def _decode_options(initial_prompt: Optional[str], beam: Optional[int] = None) -> dict:
     """openai-whisper short-answer settings: greedy by default, small fallback ladder for unclear audio."""
-    beam = _beam()
+    beam = _beam(beam)
     options = dict(
         language="en",
         task="transcribe",
@@ -180,10 +211,10 @@ def _decode_options(initial_prompt: Optional[str]) -> dict:
     return options
 
 
-def _faster_options(initial_prompt: Optional[str]) -> dict:
+def _faster_options(initial_prompt: Optional[str], beam: Optional[int] = None) -> dict:
     """The same settings for faster-whisper. Every option is given: its defaults differ (beam 5,
     condition_on_previous_text on, a 6-step temperature ladder, no VAD)."""
-    beam = _beam()
+    beam = _beam(beam)
     return dict(
         language="en",
         task="transcribe",
@@ -230,10 +261,10 @@ def _load_model(engine: str, name: str):
 
 
 def _run(engine: str, model, audio: Union[str, np.ndarray], initial_prompt: Optional[str],
-         warm_up: bool = False) -> dict:
+         warm_up: bool = False, beam: Optional[int] = None) -> dict:
     """One decode on either engine, returned in openai-whisper's shape: text, language, segments."""
     if engine == "faster":
-        options = _faster_options(initial_prompt)
+        options = _faster_options(initial_prompt, beam)
         if warm_up:
             options["vad_filter"] = False  # the VAD cuts the silent warm-up clip away: the model would never run
         segments, info = model.transcribe(audio, **options)
@@ -244,16 +275,90 @@ def _run(engine: str, model, audio: Union[str, np.ndarray], initial_prompt: Opti
             "segments": [{"id": s.id, "start": s.start, "end": s.end, "text": s.text,
                           "avg_logprob": s.avg_logprob, "compression_ratio": s.compression_ratio} for s in segments],
         }
-    return model.transcribe(audio, **_decode_options(initial_prompt))
+    return model.transcribe(audio, **_decode_options(initial_prompt, beam))
+
+
+def _normalize(text: str) -> str:
+    return " ".join(re.findall(r"[0-9a-zñ]+", (text or "").lower()))
+
+
+def is_plain_yes(text: str) -> bool:
+    """The whole reply is a yes ("Yes." / "Opo" / "yes po"): at most 3 words, no field name, no "change"/"but".
+    "Yes, my surname is Cruz" is a correction, never an approval (plan 006)."""
+    words = _normalize(text)
+    return bool(words) and len(words.split()) <= 3 and not _FIELD_WORDS.search(words) and bool(_PLAIN_YES.match(words))
+
+
+def _sentences(text: str) -> list:
+    return [s for s in re.split(r"(?<=[.!?])\s+", (text or "").strip()) if _normalize(s)]
+
+
+def _sentence_words(text: str) -> str:
+    """A sentence compared with the hint: normalized, without the polite "po" ("Tagaylo po." = "Tagaylo.")."""
+    return " ".join(w for w in _normalize(text).split() if w != "po")
+
+
+def _same_sentence(said: str, hint: str, cutoff: float = ECHO_SIMILARITY) -> bool:
+    """One sentence read back from the hint: equal, or close with the same numbers ("Purok 5." is not "Purok 2.")."""
+    if not said or not hint:
+        return False
+    if said == hint:
+        return True
+    return (re.findall(r"\d+", said) == re.findall(r"\d+", hint)
+            and SequenceMatcher(None, said, hint).ratio() >= cutoff)
+
+
+_WORD = re.compile(r"[0-9a-zñ]+")
+
+
+def _hint_run(words: list, hint: list) -> tuple:
+    """(hint sentences, words) of the longest run of the hint's sentences, in the hint's order, at the start
+    of the words. Matched on words, not on the transcript's punctuation: Whisper may merge or split sentences."""
+    best = (0, 0)
+    for first in range(len(hint)):
+        at = count = 0
+        for sentence in hint[first:]:
+            size = len(sentence.split())
+            for n in (size, size - 1, size + 1):          # "Gerlie Mae" may come back as "Gerliemae"
+                if n > 0 and at + n <= len(words) and _same_sentence(" ".join(words[at:at + n]), sentence):
+                    at += n
+                    count += 1
+                    break
+            else:
+                break
+        best = max(best, (count, at))
+    return best
+
+
+def _clean_answer(text: str, segments: Optional[list] = None, prompt: Optional[str] = None,
+                  field_key: Optional[str] = None) -> tuple:
+    """(transcript, why it was dropped or None). Drops a decoding loop, a silence phrase and the hint read
+    back; a reply that starts with the hint and then answers keeps only the answer (plan 002.2).
+    For the answer-like hints (names, purok, the end-step commands) an echo is two or more hint sentences in
+    a row, so one hint example said alone ("Lagbas po.") stays an answer."""
+    text = (text or "").strip()
+    if any(s.get("compression_ratio", 0) > REPETITIVE_RATIO for s in segments or []):
+        logger.info("Repetitive transcript dropped (a decoding loop, not an answer).")
+        return "", "repetition"
+    if HALLUCINATIONS.match(text):
+        return "", "silence-phrase"
+    hint = [_sentence_words(s) for s in _sentences(prompt or "")]
+    kept = [(m.group(), m.start()) for m in _WORD.finditer(text.lower()) if m.group() != "po"]
+    if not hint or not kept:
+        return text, None
+    shortest = min(2 if field_key in ANSWER_LIKE_HINTS else 1, len(hint))
+    count, used = _hint_run([w for w, _ in kept], hint)
+    if count < shortest:
+        return text, None
+    if used == len(kept):
+        logger.info("Transcript dropped: it repeats the question's hint (field=%s).", field_key)
+        return "", "echo"
+    return text[kept[used][1]:].strip(), None
 
 
 def _clean_transcript(text: str, segments: Optional[list] = None) -> str:
     """Drop what Whisper invents: silence phrases, and a decode stuck repeating the same words."""
-    text = (text or "").strip()
-    if any(s.get("compression_ratio", 0) > REPETITIVE_RATIO for s in segments or []):
-        logger.info("Repetitive transcript dropped (a decoding loop, not an answer).")
-        return ""
-    return "" if HALLUCINATIONS.match(text) else text
+    return _clean_answer(text, segments)[0]
 
 
 class SpeechService:
@@ -265,11 +370,37 @@ class SpeechService:
     _models: dict = {}  # Cached Whisper models by (engine, name) (shared across requests)
 
     @classmethod
+    def model_and_beam_for(cls, field_key: Optional[str], second_pass: bool = False) -> tuple:
+        """(model name, beam) for a question. With WHISPER_FIELD_MODELS off, every question uses
+        WHISPER_MODEL + WHISPER_BEAM_SIZE, and only that model is loaded (plan 006, Codex verify)."""
+        if not settings.WHISPER_FIELD_MODELS:
+            return settings.WHISPER_MODEL, _beam()
+        if second_pass:
+            return REVIEW_SECOND
+        return FIELD_MODELS.get(field_key or "", (settings.WHISPER_MODEL, _beam()))
+
+    @classmethod
     def model_name_for(cls, field_key: Optional[str]) -> str:
-        """Yes/no replies use the small, fast model; everything else the main one."""
-        if field_key == "confirm" and settings.WHISPER_CONFIRM_MODEL:
-            return settings.WHISPER_CONFIRM_MODEL
-        return settings.WHISPER_MODEL
+        return cls.model_and_beam_for(field_key)[0]
+
+    @classmethod
+    def _decode(cls, audio: Union[str, np.ndarray], field_key: Optional[str], prompt: Optional[str]) -> dict:
+        """Decode with the question's model and beam. `review` is two-pass: Tiny first; unless that is a plain
+        yes (or silence), the same audio is decoded again with Turbo, whose text is used."""
+        passes = [False]
+        result: dict = {}
+        for second in passes:
+            name, beam = cls.model_and_beam_for(field_key, second)
+            model = cls.get_model(name)
+            logger.info(f"Whisper model for {field_key or 'no field'}: {name}, beam {beam}"
+                        f"{' (second pass)' if second else ''}")
+            with _model_lock:
+                result = _run(_engine(), model, audio, prompt, beam=beam)
+            if field_key == "review" and not second and settings.WHISPER_FIELD_MODELS:
+                heard = _clean_transcript(result.get("text", ""), result.get("segments", []))
+                if heard and not is_plain_yes(heard):
+                    passes.append(True)
+        return result
 
     @classmethod
     def get_model(cls, name: Optional[str] = None):
@@ -288,7 +419,11 @@ class SpeechService:
     def warm_up(cls) -> None:
         """Load the models (and run one short pass) at startup so the first answer is fast."""
         try:
-            for name in {settings.WHISPER_MODEL, cls.model_name_for("confirm")}:
+            if settings.WHISPER_FIELD_MODELS:
+                names = {name for name, _ in FIELD_MODELS.values()} | {REVIEW_SECOND[0]}
+            else:
+                names = {settings.WHISPER_MODEL}
+            for name in sorted(names):
                 model = cls.get_model(name)
                 with _model_lock:
                     _run(_engine(), model, np.zeros(WHISPER_SAMPLE_RATE // 2, dtype=np.float32), None, warm_up=True)
@@ -325,15 +460,13 @@ class SpeechService:
             dict with keys: transcript, language, confidence, segments,
                             processing_time_seconds
         """
-        model = cls.get_model(cls.model_name_for(field_key))
         start_time = time.time()
         initial_prompt = cls._build_prompt(field_key, town, province)
 
         source = audio_path if isinstance(audio_path, str) else f"{len(audio_path) / WHISPER_SAMPLE_RATE:.1f}s of audio"
         logger.info(f"Transcribing {source} (field={field_key})")
 
-        with _model_lock:
-            result = _run(_engine(), model, audio_path, initial_prompt)
+        result = cls._decode(audio_path, field_key, initial_prompt)
 
         processing_time = time.time() - start_time
 
@@ -344,7 +477,7 @@ class SpeechService:
         else:
             confidence = 0.0
 
-        transcript = _clean_transcript(result.get("text", ""), segments)
+        transcript, dropped = _clean_answer(result.get("text", ""), segments, initial_prompt, field_key)
 
         # Only the length is logged: transcripts are applicants' personal data (Data Privacy Act).
         logger.info(f"Transcription complete in {processing_time:.2f}s | Confidence: {confidence:.2f} | "
@@ -352,6 +485,7 @@ class SpeechService:
 
         return {
             "transcript": transcript,
+            "dropped": dropped,
             "language": result.get("language", "en"),
             "confidence": confidence,
             "segments": [
@@ -395,7 +529,6 @@ class SpeechService:
         """
         Transcribe a numpy float32 audio array (from sounddevice capture).
         """
-        model = cls.get_model()
         start_time = time.time()
         initial_prompt = cls._build_prompt(field_key)
 
@@ -403,8 +536,7 @@ class SpeechService:
             audio_array = audio_array.mean(axis=1)
         audio_array = audio_array.astype(np.float32)
 
-        with _model_lock:
-            result = _run(_engine(), model, audio_array, initial_prompt)
+        result = cls._decode(audio_array, field_key, initial_prompt)
 
         processing_time = time.time() - start_time
         segments = result.get("segments", [])

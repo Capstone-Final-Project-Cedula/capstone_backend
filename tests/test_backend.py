@@ -24,6 +24,11 @@ os.environ["SUPABASE_URL"] = ""
 os.environ["SUPABASE_SECRET_KEY"] = ""
 os.environ["NER_ENABLED"] = "false"   # don't load DistilBERT in unit tests
 os.environ["WHISPER_PRELOAD"] = "false"
+os.environ["WHISPER_BEAM_SIZE"] = "1"          # pinned: a local settings file may choose another beam, engine or table
+os.environ["WHISPER_ENGINE"] = "openai"
+os.environ["WHISPER_MODEL"] = "base"
+os.environ["WHISPER_CONFIRM_MODEL"] = "tiny"
+os.environ["WHISPER_FIELD_MODELS"] = "true"
 os.environ["PRACTICE_LOG_ENABLED"] = "false"   # off like its default, even when .env turns it on for a live run
 os.environ["BARANGAY_NAME"] = "Barangay Imbatug"
 os.environ["MUNICIPALITY"] = "Baungon"
@@ -2035,10 +2040,11 @@ class TestWhisperEngine:
         calls = []
         with patch.dict(sys.modules, {"faster_whisper": self._fake_faster(calls)}), \
                 patch.object(speech_service.settings, "WHISPER_ENGINE", "faster"), \
+                patch.object(speech_service.settings, "WHISPER_FIELD_MODELS", False), \
                 patch.dict(SpeechService._models, clear=True):
             out = SpeechService.transcribe_file(np.zeros(16000, dtype=np.float32), "surname")
-        assert set(out) == {"transcript", "language", "confidence", "segments", "processing_time_seconds"}
-        assert out["transcript"] == "Dela Cruz po." and out["language"] == "en"
+        assert set(out) == {"transcript", "dropped", "language", "confidence", "segments", "processing_time_seconds"}
+        assert out["transcript"] == "Dela Cruz po." and out["language"] == "en" and out["dropped"] is None
         assert out["segments"][0]["text"] == "Dela Cruz po." and 0 < out["confidence"] < 1
         (_, name, load_kwargs), (_, _, options) = calls
         assert name == "base" and load_kwargs == {"device": "cpu", "compute_type": "int8"}
@@ -2070,8 +2076,142 @@ class TestWhisperEngine:
                 patch.dict(SpeechService._models, clear=True):
             SpeechService.warm_up()
         decodes = [kwargs for kind, _, kwargs in calls if kind == "transcribe"]
-        # base and tiny each decode once, with the VAD off: it would cut the silent clip away entirely.
-        assert len(decodes) == 2 and all(kwargs["vad_filter"] is False for kwargs in decodes)
+        # tiny, base and turbo each load and decode once, with the VAD off: it would cut the silent clip away.
+        assert sorted(name for kind, name, _ in calls if kind == "load") == ["base", "large-v3-turbo", "tiny"]
+        assert len(decodes) == 3 and all(kwargs["vad_filter"] is False for kwargs in decodes)
+
+    def test_warm_up_with_the_table_off_loads_only_the_main_model(self):
+        import sys
+        from app.services import speech_service
+        from app.services.speech_service import SpeechService
+        calls = []
+        with patch.dict(sys.modules, {"faster_whisper": self._fake_faster(calls)}), \
+                patch.object(speech_service.settings, "WHISPER_ENGINE", "faster"), \
+                patch.object(speech_service.settings, "WHISPER_FIELD_MODELS", False), \
+                patch.dict(SpeechService._models, clear=True):
+            SpeechService.warm_up()
+        assert [name for kind, name, _ in calls if kind == "load"] == ["base"]
+
+    def test_with_the_table_off_every_question_uses_the_global_model_and_beam(self):
+        from app.services import speech_service
+        from app.services.speech_service import SpeechService
+        with patch.object(speech_service.settings, "WHISPER_FIELD_MODELS", False),                 patch.object(speech_service.settings, "WHISPER_MODEL", "base"),                 patch.object(speech_service.settings, "WHISPER_BEAM_SIZE", 1):
+            for key in ("confirm", "surname", "review", "spelling", None):
+                assert SpeechService.model_and_beam_for(key) == ("base", 1)
+
+    # ── Plan 006: one model and beam per question (Ralph's PLAN 4 table) ──
+    TABLE = [
+        ("surname", "large-v3-turbo", 5), ("given_name", "large-v3-turbo", 5), ("middle_name", "large-v3-turbo", 5),
+        ("address", "large-v3-turbo", 5), ("address_town", "large-v3-turbo", 5),
+        ("address_barangay", "large-v3-turbo", 5), ("address_purok", "large-v3-turbo", 5),
+        ("date", "base", 1), ("sex", "base", 1), ("civil_status", "base", 1), ("citizenship", "base", 1),
+        ("place_of_birth", "large-v3-turbo", 5), ("place_of_birth_province", "large-v3-turbo", 5),
+        ("place_of_birth_town", "large-v3-turbo", 5),
+        ("height", "base", 1), ("weight", "base", 1), ("occupation", "large-v3-turbo", 5),
+        ("confirm", "tiny", 5), ("gross_annual_income", "base", 1), ("icr_no", "base", 1),
+        ("review", "tiny", 5), ("spelling", "large-v3-turbo", 5), ("missing_choice", "base", 1),
+        (None, "base", 1), ("unknown_key", "base", 1),
+    ]
+
+    @staticmethod
+    def _fake_openai(calls):
+        def load_model(name):
+            model = MagicMock()
+
+            def transcribe(audio, **kwargs):
+                calls.append(("transcribe", name, kwargs))
+                return {"text": " Dela Cruz po.", "language": "en", "segments": []}
+            model.transcribe.side_effect = transcribe
+            calls.append(("load", name, {}))
+            return model
+        return load_model
+
+    @pytest.mark.parametrize("engine", ["faster", "openai"])
+    @pytest.mark.parametrize("capture", ["file", "bytes", "numpy"])
+    @pytest.mark.parametrize("field_key,model,beam", TABLE)
+    def test_each_question_uses_its_models_row(self, field_key, model, beam, capture, engine):
+        import sys
+        import numpy as np
+        from app.services import speech_service
+        from app.services.speech_service import SpeechService
+        calls = []
+        samples = np.zeros(16000, dtype=np.float32)
+        with patch.dict(sys.modules, {"faster_whisper": self._fake_faster(calls)}), \
+                patch.object(speech_service.settings, "WHISPER_ENGINE", engine), \
+                patch.object(speech_service.settings, "WHISPER_MODEL", "base"), \
+                patch.object(speech_service.settings, "WHISPER_BEAM_SIZE", 1), \
+                patch.object(speech_service.whisper, "load_model", side_effect=self._fake_openai(calls)), \
+                patch.object(speech_service, "_decode_wav", return_value=samples), \
+                patch.dict(SpeechService._models, clear=True):
+            if capture == "numpy":
+                SpeechService.transcribe_numpy(samples, field_key=field_key)
+            elif capture == "bytes":
+                SpeechService.transcribe_bytes(b"test-audio", field_key=field_key)
+            else:
+                SpeechService.transcribe_file(samples, field_key=field_key)
+        loads = [c for c in calls if c[0] == "load"]
+        decodes = [c for c in calls if c[0] == "transcribe"]
+        # "Dela Cruz po." is not a plain yes, so `review` is decoded a second time (Turbo); the others once.
+        assert loads[0][1] == model and len(decodes) == (2 if field_key == "review" else 1)
+        options = decodes[0][2]   # the question's own row (first pass)
+        if engine == "faster":
+            assert options["beam_size"] == beam and options["max_new_tokens"] == speech_service.MAX_ANSWER_TOKENS
+        else:
+            assert options.get("beam_size", 1) == beam and options["sample_len"] == speech_service.MAX_ANSWER_TOKENS
+        assert (options["temperature"] == 0.0) == (beam > 1)   # beam search decodes once, no ladder
+
+    def _review(self, texts, field_enabled=True):
+        """Run a `review` answer whose decodes return `texts` in turn; returns (result, models decoded)."""
+        import sys
+        import types
+        import numpy as np
+        from app.services import speech_service
+        from app.services.speech_service import SpeechService
+        decoded, queue = [], list(texts)
+
+        class WhisperModel:
+            def __init__(self, name, **kwargs):
+                self.name = name
+
+            def transcribe(self, audio, **kwargs):
+                decoded.append((self.name, kwargs["beam_size"]))
+                text = queue.pop(0)
+                segments = [types.SimpleNamespace(id=0, start=0.0, end=1.0, text=text, avg_logprob=-0.2,
+                                                  compression_ratio=1.1)] if text else []
+                return iter(segments), types.SimpleNamespace(language="en")
+
+        with patch.dict(sys.modules, {"faster_whisper": types.SimpleNamespace(WhisperModel=WhisperModel)}), \
+                patch.object(speech_service.settings, "WHISPER_ENGINE", "faster"), \
+                patch.object(speech_service.settings, "WHISPER_FIELD_MODELS", field_enabled), \
+                patch.dict(SpeechService._models, clear=True):
+            out = SpeechService.transcribe_file(np.zeros(16000, dtype=np.float32), "review")
+        return out, decoded
+
+    def test_review_plain_yes_is_one_tiny_decode(self):
+        out, decoded = self._review([" Yes."])
+        assert out["transcript"] == "Yes." and decoded == [("tiny", 5)]
+
+    def test_review_correction_is_decoded_again_with_turbo(self):
+        out, decoded = self._review([" Yes my surname is Cruz.", " Yes, my surname is Cruz."])
+        assert out["transcript"] == "Yes, my surname is Cruz."
+        assert decoded == [("tiny", 5), ("large-v3-turbo", 5)]
+
+    def test_review_silence_is_one_decode(self):
+        out, decoded = self._review([""])
+        assert out["transcript"] == "" and decoded == [("tiny", 5)]
+
+    def test_review_with_the_table_off_is_one_decode_and_never_loads_turbo(self):
+        out, decoded = self._review([" Change surname to Cruz."], field_enabled=False)
+        assert decoded == [("base", 1)]
+
+    @pytest.mark.parametrize("text,expected", [
+        ("Yes.", True), ("yes po", True), ("Opo", True), ("Okay", True), ("Correct.", True),
+        ("Yes, my surname is Cruz.", False), ("Yes but change the address", False), ("No", False),
+        ("Yes male", False), ("", False), ("Yes yes yes yes", False),
+    ])
+    def test_is_plain_yes_is_a_whole_reply(self, text, expected):
+        from app.services.speech_service import is_plain_yes
+        assert is_plain_yes(text) is expected
 
     def test_faster_missing_falls_back_to_openai(self, caplog):
         import sys
@@ -2126,3 +2266,394 @@ class TestWhisperEngine:
                 assert SpeechService.get_model("base") is faster_model
             openai_model = SpeechService.get_model("base")
         assert openai_model is not faster_model and load.call_count == 1 and len(calls) == 1
+
+
+class TestHintEcho:
+    """Plan 002.2: Whisper reading the question's hint back is never an answer (made-up text only)."""
+
+    @pytest.mark.parametrize("key", ["sex", "civil_status", "confirm", "surname", "given_name", "middle_name",
+                                     "address_purok", "missing_choice", "citizenship", "review"])
+    def test_the_hint_read_back_is_dropped(self, key):
+        from app.services.speech_service import FIELD_PROMPTS, _clean_answer
+        prompt = FIELD_PROMPTS[key]
+        assert _clean_answer(prompt, [], prompt, key) == ("", "echo")
+        assert _clean_answer(prompt.rstrip(".").lower(), [], prompt, key) == ("", "echo")   # no punctuation
+
+    @pytest.mark.parametrize("key,spoken", [
+        ("sex", "Male or female."), ("sex", "Lalaki or babae."), ("confirm", "Yes or no."),
+        ("confirm", "Opo, oo, hindi."), ("civil_status", "Single, married, widowed, or separated."),
+        ("surname", "Lagbas po. Ybañez po."), ("address_purok", "Purok 2. Zone 1."),
+    ])
+    def test_a_run_of_hint_sentences_is_dropped(self, key, spoken):
+        from app.services.speech_service import FIELD_PROMPTS, _clean_answer
+        assert _clean_answer(spoken, [], FIELD_PROMPTS[key], key) == ("", "echo")
+
+    @pytest.mark.parametrize("key,spoken", [
+        ("surname", "Lagbas po."), ("given_name", "Jessa po."), ("middle_name", "Ybañez."),
+        ("address_purok", "Purok 2."), ("address_purok", "Zone 1."),
+        ("missing_choice", "Type."), ("missing_choice", "Say it again."),
+        ("sex", "Female."), ("sex", "Lalaki po."), ("civil_status", "Married."), ("confirm", "Oo."),
+        ("confirm", "Yes."), ("confirm", "Hindi."), ("citizenship", "Filipino."),
+        ("date", "May 10, 1990."), ("height", "160 centimeters."),
+    ])
+    def test_a_real_answer_that_is_also_a_hint_example_is_kept(self, key, spoken):
+        from app.services.speech_service import FIELD_PROMPTS, _clean_answer
+        assert _clean_answer(spoken, [], FIELD_PROMPTS[key], key) == (spoken, None)
+
+    def test_a_barangay_answer_is_not_the_barangay_hint(self):
+        from app.services.speech_service import SpeechService, _clean_answer
+        prompt = SpeechService._build_prompt("address_barangay", None)
+        spoken = "Barangay Imbatug, Baungon, Bukidnon."
+        assert _clean_answer(spoken, [], prompt, "address_barangay") == (spoken, None)
+
+    @pytest.mark.parametrize("key,spoken,kept", [
+        ("sex", "Male or female. Lalaki or babae. Female.", "Female."),
+        ("confirm", "Yes or no. Yes po.", "Yes po."),
+        ("surname", "Lagbas po. Ybañez po. Cruz po.", "Cruz po."),
+    ])
+    def test_hint_then_answer_keeps_the_answer(self, key, spoken, kept):
+        from app.services.speech_service import FIELD_PROMPTS, _clean_answer
+        assert _clean_answer(spoken, [], FIELD_PROMPTS[key], key) == (kept, None)
+
+    def test_codex_review_echo_boundaries(self):
+        """Codex verify round 1 (plan 002.2): three cases the first filter got wrong."""
+        from app.services.speech_service import FIELD_PROMPTS as P, _clean_answer
+        # The whole surname hint read back with a small change is still the hint, never an answer.
+        assert _clean_answer(P["surname"].replace("Tagaylo.", "Tagaylo po."), [], P["surname"], "surname") == ("", "echo")
+        # A real purok after the whole hint is kept, though it looks like a hint example (Purok 2).
+        for purok in ("Purok 5.", "Purok 3.", "Zone 4."):
+            assert _clean_answer(f"{P['address_purok']} {purok}", [], P["address_purok"], "address_purok") == (purok, None)
+        # One answer-like hint sentence said alone is an answer, also the longest one.
+        said = "My middle name is Ybañez."
+        assert _clean_answer(said, [], P["middle_name"], "middle_name") == (said, None)
+        # The hint read back with no sentence breaks is still the hint.
+        flat = "male or female lalaki or babae"
+        assert _clean_answer(flat, [], P["sex"], "sex") == ("", "echo")
+
+    def test_codex_round_2_merged_hint_sentences(self):
+        """Codex verify round 2 (plan 002.2): Whisper merging two hint sentences must not leak an example."""
+        from app.services.speech_service import FIELD_PROMPTS as P, _clean_answer
+        merged = "Jessa po. My first name is Rodel Mylene po. Gerlie Mae."
+        assert _clean_answer(merged, [], P["given_name"], "given_name") == ("", "echo")
+        assert _clean_answer(merged + " Ana po.", [], P["given_name"], "given_name") == ("Ana po.", None)
+        flat = P["surname"].replace(".", "")                     # no sentence breaks at all
+        assert _clean_answer(flat, [], P["surname"], "surname") == ("", "echo")
+        assert _clean_answer(flat + " Cruz", [], P["surname"], "surname") == ("Cruz", None)
+
+    def test_drop_reasons(self):
+        from app.services.speech_service import _clean_answer
+        assert _clean_answer("Thank you.", []) == ("", "silence-phrase")
+        assert _clean_answer("Purok 3, " * 20, [{"compression_ratio": 9.5}]) == ("", "repetition")
+        assert _clean_answer("Female.", []) == ("Female.", None)
+
+    @pytest.mark.parametrize("dropped,reason", [
+        ("echo", "dropped-echo"), ("repetition", "dropped-repetition"), ("silence-phrase", "whisper-empty"),
+        (None, "whisper-empty"),
+    ])
+    def test_the_422_says_why_it_was_empty(self, client, staff_token, dropped, reason):
+        from app.services.speech_service import SpeechService
+        with patch.object(SpeechService, "transcribe_bytes", return_value={
+                "transcript": "", "dropped": dropped, "language": "en", "confidence": 0.0, "segments": [],
+                "processing_time_seconds": 0.1}):
+            r = client.post("/api/speech/transcribe", headers={"Authorization": f"Bearer {staff_token}"},
+                            files={"audio_file": ("a.wav", b"RIFF0000", "audio/wav")}, data={"field_key": "sex"})
+        assert r.status_code == 422
+        assert r.headers["X-Empty-Reason"] == reason
+        assert "Could not detect any speech" in r.json()["detail"]
+
+    def test_a_kept_transcript_has_no_drop_reason_in_the_response(self, client, staff_token):
+        from app.services.speech_service import SpeechService
+        with patch.object(SpeechService, "transcribe_bytes", return_value={
+                "transcript": "Female.", "dropped": None, "language": "en", "confidence": 0.9, "segments": [],
+                "processing_time_seconds": 0.1}):
+            r = client.post("/api/speech/transcribe", headers={"Authorization": f"Bearer {staff_token}"},
+                            files={"audio_file": ("a.wav", b"RIFF0000", "audio/wav")}, data={"field_key": "sex"})
+        assert r.status_code == 200 and r.json()["transcript"] == "Female." and "dropped" not in r.json()
+
+    @pytest.mark.parametrize("spoken", [
+        "Single, married, widowed or separated.", "single or married", "married but separated",
+        "widowed, married",
+    ])
+    def test_civil_status_refuses_two_statuses(self, spoken):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("civil_status", spoken)
+        assert not result.ok and "only one" in result.message
+
+    @pytest.mark.parametrize("spoken,value", [
+        ("not married", "Single"), ("never married po", "Single"), ("single", "Single"),
+        ("married", "Married"), ("hiwalay na", "Separated"), ("biyuda", "Widowed"),
+    ])
+    def test_civil_status_one_status_still_works(self, spoken, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("civil_status", spoken)
+        assert result.ok and result.value == value
+
+
+class TestPracticeLogLadderStages:
+    """Plan 002.2: a skipped question finished at the end step still shows it was skipped (fake data only)."""
+
+    INTERVIEW = [{"heard": "", "engine": "whisper", "reason": "browser-no-speech", "stage": "interview"},
+                 {"heard": "rayes", "engine": "whisper", "ok": False, "reason": "dropped-echo", "stage": "interview"},
+                 {"heard": "R E Y", "engine": "spelled", "ok": False, "stage": "interview"}]
+
+    def test_the_end_step_note_keeps_the_interview_tries_and_their_stages(self, client, staff_token, admin_token):
+        with _log():
+            sid = _start(client, staff_token)["session_id"]
+            _note(client, staff_token, sid, "surname", attempts=3, accepted_engine="skipped",
+                  attempt_details=self.INTERVIEW)
+            _note(client, staff_token, sid, "surname", attempts=4, accepted_engine="typed", accepted_value="Reyes",
+                  attempt_details=self.INTERVIEW + [{"heard": "Reyes", "engine": "typed", "ok": True,
+                                                     "stage": "end_step"}])
+            _, answers = _session_detail(client, admin_token, sid)
+        stages = [a["stage"] for a in answers["surname"]["attempt_details"]]
+        assert stages == ["interview", "interview", "interview", "end_step"]
+        assert answers["surname"]["attempt_details"][0]["reason"] == "browser-no-speech"
+
+    def test_an_unknown_stage_is_refused(self, client, staff_token):
+        with _log():
+            sid = _start(client, staff_token)["session_id"]
+            resp = _note(client, staff_token, sid, "surname", attempt_details=[{"engine": "whisper", "stage": "later"}])
+        assert resp.status_code == 422
+
+    @staticmethod
+    def _row(field, attempts, engine, details, value="x"):
+        return {"field": field, "attempts": attempts, "attempt_details": details, "first_value": None,
+                "accepted_value": value, "accepted_engine": engine, "seconds": 10.0, "final_value": None,
+                "changed_after_voice": None}
+
+    def test_resolutions(self):
+        script = _load_summary_script()
+        end_typed = [{"engine": "whisper", "stage": "interview"}, {"engine": "typed", "stage": "end_step"}]
+        end_said = [{"engine": "whisper", "stage": "interview"}, {"engine": "whisper", "stage": "end_step"}]
+        blank = [{"engine": "whisper", "stage": "interview"}, {"engine": "typed", "stage": "end_step",
+                                                               "reason": "left-blank"}]
+        assert script.resolution(self._row("sex", 1, "whisper", [{"engine": "whisper"}])) == "first_try"
+        assert script.resolution(self._row("sex", 3, "whisper", [{"engine": "whisper"}] * 3)) == "ladder"
+        assert script.resolution(self._row("surname", 4, "spelled", [{"engine": "whisper"}] * 4)) == "ladder"
+        assert script.resolution(self._row("height", 1, "typed", [{"engine": "typed"}])) == "typed"
+        assert script.resolution(self._row("surname", 2, "typed", end_typed)) == "end_step_typed"
+        assert script.resolution(self._row("surname", 2, "whisper", end_said)) == "end_step_voice"
+        assert script.resolution(self._row("surname", 2, "spelled", end_said)) == "end_step_voice"
+        assert script.resolution(self._row("height", 2, "typed", blank, value=None)) == "end_step_blank"
+        assert script.resolution(self._row("height", 3, "skipped", [{"engine": "whisper"}] * 3, None)) == "skipped"
+
+    def test_three_numbers_per_field_and_empty_turn_reasons(self):
+        script = _load_summary_script()
+        rows = [
+            self._row("surname", 1, "whisper", [{"engine": "whisper", "stage": "interview"}]),
+            self._row("surname", 4, "spelled", [{"engine": "whisper", "reason": "dropped-echo"}] * 3
+                      + [{"engine": "spelled"}]),
+            self._row("surname", 6, "typed", [{"engine": "whisper", "reason": "browser-no-speech",
+                                               "stage": "interview"}] * 5
+                      + [{"engine": "typed", "stage": "end_step"}]),
+            self._row("surname", 5, "skipped", [{"engine": "whisper", "reason": "whisper-empty"}] * 5, None),
+        ]
+        summary = script.summarize([{"outcome": "issued", "build_label": "version-2.2+002.2", "answers": rows}])
+        surname = summary["fields"][0]
+        assert surname["first_try_rate"] == 0.25 and surname["after_ladder_rate"] == 0.5
+        assert surname["end_step"] == {"said": 0, "typed": 1, "blank": 0}
+        assert surname["skipped"] == 2 and surname["still_skipped"] == 1 and summary["skipped_questions"] == 2
+        assert surname["empty_turns"] == {"dropped-echo": 3, "browser-no-speech": 5, "whisper-empty": 5}
+        text = script.render_markdown(summary, "plan 002.2 or later")
+        assert "| surname | 25% | 50% | 0 / 1 / 0 | 1 | 0 |" in text and "skipped questions: 2" in text
+
+
+BAUNGON = "1001301000"
+CDO = "1030500000"
+
+
+class TestPickers:
+    """Plan 002.1: the lists behind the typing pickers, and what /forms/issue checks (fake data only)."""
+
+    def test_birth_places_search_the_voice_list(self, client, staff_token):
+        r = client.get("/api/places/birth", params={"q": "malaybalay"}, headers=_auth(staff_token))
+        assert r.status_code == 200
+        assert r.json()[0]["value"] == "Malaybalay City, Bukidnon" and r.json()[0]["code"]
+        # A city with no province is in the list too, written without one (as the voice path writes it).
+        values = [o["value"] for o in client.get("/api/places/birth", params={"q": "iligan"},
+                                                 headers=_auth(staff_token)).json()]
+        assert "Iligan City" in values
+        assert client.get("/api/places/birth", params={"q": ""}, headers=_auth(staff_token)).json() == []
+
+    def test_every_province_less_place_can_be_found(self):
+        from app.services import place_gazetteer as g
+        loose = g.places_without_province()
+        assert len(loose) == 44
+        for place in loose:
+            assert place in g.search_birth_places(place.name, limit=50), place.name
+
+    def test_towns_and_barangays_are_written_like_the_voice_path(self, client, staff_token):
+        from app.services.answer_service import understand_answer
+        towns = {o["code"]: o["value"] for o in client.get("/api/places/towns", headers=_auth(staff_token)).json()}
+        assert towns[BAUNGON] == "Baungon, Bukidnon"
+        assert towns[CDO] == "Cagayan de Oro City, Misamis Oriental"
+        assert understand_answer("address_town", "Cagayan de Oro").value == towns[CDO]   # the same text
+        brgys = client.get(f"/api/places/towns/{BAUNGON}/barangays", headers=_auth(staff_token)).json()
+        imbatug = next(b for b in brgys if b["name"] == "Imbatug")
+        assert imbatug["label"] == "Barangay Imbatug"
+        assert client.get("/api/places/towns/0304926000/barangays", headers=_auth(staff_token)).status_code == 404
+
+    def test_lists_need_a_staff_login(self, client):
+        assert client.get("/api/places/towns").status_code in (401, 403)
+        assert client.get("/api/places/birth", params={"q": "malay"}).status_code in (401, 403)
+
+    @pytest.mark.parametrize("changes,field", [
+        ({"height_cm": 400}, "height_cm"), ({"height_cm": 49}, "height_cm"), ({"weight_kg": 301}, "weight_kg"),
+        ({"weight_kg": "heavy"}, "weight_kg"),
+    ])
+    def test_height_and_weight_outside_the_voice_limits_are_refused(self, client, staff_token, changes, field):
+        before = _row_counts()
+        r = _issue(client, staff_token, **changes)
+        assert r.status_code == 422
+        assert [item["loc"][-1] for item in r.json()["detail"]] == [field]
+        assert _row_counts() == before                                   # nothing written
+
+    @pytest.mark.parametrize("changes", [
+        {"height_cm": 0, "weight_kg": 0}, {"height_cm": None, "weight_kg": ""}, {"height_cm": 50, "weight_kg": 300},
+        {"height_cm": 250, "weight_kg": 20},
+    ])
+    def test_blank_or_boundary_height_and_weight_are_issued(self, client, staff_token, changes):
+        assert _issue(client, staff_token, **changes).status_code == 201
+
+    def test_a_picked_place_of_birth_must_be_that_list_place(self, client, staff_token):
+        from app.services import place_gazetteer as g
+        code = g.search_birth_places("malaybalay")[0].psgc
+        ok = _issue(client, staff_token, place_of_birth="Malaybalay City, Bukidnon", place_of_birth_code=code)
+        assert ok.status_code == 201
+        # Title-cased by the web ("De" for "de"): the same place.
+        cdo = g.search_birth_places("cagayan de oro")[0].psgc
+        assert _issue(client, staff_token, place_of_birth="Cagayan De Oro City", place_of_birth_code=cdo).status_code == 201
+        bad = _issue(client, staff_token, place_of_birth="Somewhere Else", place_of_birth_code=code)
+        assert bad.status_code == 422 and bad.json()["detail"][0]["loc"][-1] == "place_of_birth"
+        assert _issue(client, staff_token, place_of_birth="Nowhere", place_of_birth_code="999").status_code == 422
+
+    def test_typed_free_text_is_not_list_checked(self, client, staff_token):
+        # "Not in the list": no code is sent, as from the voice path and older phones.
+        assert _issue(client, staff_token, place_of_birth="Tokyo, Japan").status_code == 201
+        assert _issue(client, staff_token, address="Purok 1, Some Town, Lanao del Sur").status_code == 201
+
+    def test_a_picked_barangay_must_be_in_the_picked_town(self, client, staff_token):
+        good = "Purok 7, Barangay Imbatug, Baungon, Bukidnon"
+        assert _issue(client, staff_token, address=good, address_town_code=BAUNGON,
+                      address_barangay="Imbatug").status_code == 201
+        wrong_town = _issue(client, staff_token, address="Barangay Lapasan, Baungon, Bukidnon",
+                            address_town_code=BAUNGON, address_barangay="Lapasan")
+        assert wrong_town.status_code == 422 and wrong_town.json()["detail"][0]["loc"][-1] == "address"
+        other_text = _issue(client, staff_token, address="Purok 7, Barangay Imbatug, Talakag, Bukidnon",
+                            address_town_code=BAUNGON, address_barangay="Imbatug")
+        assert other_text.status_code == 422
+        assert _issue(client, staff_token, address=good, address_town_code="0304926000").status_code == 422
+
+    def test_the_picked_barangay_is_a_whole_part_of_the_address(self, client, staff_token):
+        """Codex verify (plan 002.1): never a substring match."""
+        r = _issue(client, staff_token, address="Barangay 10, Cagayan de Oro City, Misamis Oriental",
+                   address_town_code=CDO, address_barangay="Barangay 1")
+        assert r.status_code == 422 and r.json()["detail"][0]["loc"][-1] == "address"
+        r = _issue(client, staff_token, address="Barangay Imbatugon, Baungon, Bukidnon",
+                   address_town_code=BAUNGON, address_barangay="Imbatug")
+        assert r.status_code == 422
+        # The town must be the end of the address, not just somewhere in it.
+        r = _issue(client, staff_token, address="Barangay Imbatug, Baungon, Bukidnon, Some Other Place",
+                   address_town_code=BAUNGON, address_barangay="Imbatug")
+        assert r.status_code == 422
+        # Title-cased by the web, with or without a purok: still the pick.
+        for address in ("Barangay Imbatug, Baungon, Bukidnon", "Purok 7, Barangay Imbatug, Baungon, Bukidnon"):
+            assert _issue(client, staff_token, address=address, address_town_code=BAUNGON,
+                          address_barangay="Imbatug").status_code == 201
+        cdo = _issue(client, staff_token, address="Purok 1, Barangay 10, Cagayan De Oro City, Misamis Oriental",
+                     address_town_code=CDO, address_barangay="Barangay 10")
+        assert cdo.status_code == 201, cdo.json()
+
+    def test_a_barangay_name_with_a_comma(self, client, staff_token):
+        """Codex verify round 2 (plan 002.1): "Agapito Yap, Sr." is one barangay (Sapang Dalaga)."""
+        from app.services.barangay_gazetteer import town_barangays
+        from app.api.routes.places import town_option_value
+        from app.services.barangay_gazetteer import region_town
+        code = "1004213000"
+        names = town_barangays(code)[0]
+        town = town_option_value(code, region_town(code))
+        for name in ("Agapito Yap, Sr.", "Sixto Velez, Sr."):
+            assert name in names
+            for address in (f"Barangay {name}, {town}", f"Purok 2, Barangay {name}, {town}"):
+                r = _issue(client, staff_token, address=address, address_town_code=code, address_barangay=name)
+                assert r.status_code == 201, (address, r.json())
+        # Still never a substring of another label.
+        wrong = _issue(client, staff_token, address=f"Barangay Agapito Yap, Sr., {town}", address_town_code=code,
+                       address_barangay="Sixto Velez, Sr.")
+        assert wrong.status_code == 422
+
+    def test_list_codes_are_request_only(self):
+        # Never stored with a phone's QR form, never sent back in a scan (plan 002.1).
+        from app.schemas.schemas import ApplicantCreate
+        a = ApplicantCreate(**TestIssuance.SAMPLE_APPLICANT, place_of_birth_code="1", address_town_code="2",
+                            address_barangay="Imbatug")
+        assert a.place_of_birth_code == "1"
+        dumped = a.model_dump()
+        assert not {"place_of_birth_code", "address_town_code", "address_barangay"} & set(dumped)
+        assert "place_of_birth_code" not in a.model_dump_json()
+
+
+class TestPlan006Answers:
+    """Plan 006: fillers are never answers, sex by sound, a town in several provinces lists them all."""
+
+    @pytest.mark.parametrize("text,key,value", [
+        ("Um, 60", "weight", "60"), ("Uh, 165", "height", "165"), ("Hmm, 20000", "gross_annual_income", "20000"),
+    ])
+    def test_a_filler_before_a_number_keeps_the_number(self, text, key, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer(key, text, spoken=True)
+        assert result.ok is True and value in result.value
+
+    @pytest.mark.parametrize("filler", ["Um.", "Uh", "Uhm", "Hmm", "Mm", "Ah", "Eh", "Er", "UM!", "um... uh", "Mm-hmm."])
+    @pytest.mark.parametrize("key", ["surname", "given_name", "middle_name", "address_purok", "sex", "civil_status",
+                                     "date", "occupation", "citizenship", "icr_no", "place_of_birth", "height"])
+    @pytest.mark.parametrize("spoken", [True, False])
+    def test_filler_only_is_an_empty_answer_for_every_field(self, key, filler, spoken):
+        from app.services.answer_service import understand_answer
+        result = understand_answer(key, filler, spoken=spoken)
+        assert result.ok is False and result.reason == "empty"
+        assert result.message.startswith("I didn't hear an answer. Please tell me your ")
+
+    @pytest.mark.parametrize("text,key,value", [
+        ("Um, Purok 2", "address_purok", "Purok 2"), ("Uh, male", "sex", "Male"), ("um... Juan", "given_name", "Juan"),
+    ])
+    def test_a_filler_inside_a_real_answer_is_removed(self, text, key, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer(key, text, spoken=True)
+        assert result.ok is True and result.value == value
+
+    @pytest.mark.parametrize("surname", ["Umali", "Uy", "Ermita", "Ahmad", "Hermano", "Mamon"])
+    def test_surnames_that_look_like_fillers_survive(self, surname):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("surname", surname)
+        assert result.ok is True and result.value.lower() == surname.lower()
+
+    @pytest.mark.parametrize("text,expected", [
+        ("Meal", "Male"), ("Mehl.", "Male"), ("Mail", "Male"), ("Mel", "Male"), ("Meyl", "Male"), ("Mayl", "Male"),
+        ("Nail", "Male"), ("Mile", "Male"), ("Male.", "Male"),
+        ("Femail", "Female"), ("Feemale", "Female"), ("Pemale", "Female"), ("Fimale", "Female"),
+        ("Bimale", "Female"), ("Female.", "Female"),
+    ])
+    def test_sex_by_sound(self, text, expected):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("sex", text, spoken=True)
+        assert result.ok is True and result.value == expected
+
+    @pytest.mark.parametrize("text", ["I'm", "Email", "Animal", "Meal time", "Nails", "", "Fail", "Feel"])
+    def test_sex_is_not_guessed(self, text):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("sex", text, spoken=True)
+        assert result.ok is False
+
+    def test_a_town_in_several_provinces_lists_every_province(self):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("place_of_birth_province", "San Jose", spoken=True)
+        assert result.ok is False and result.reason == "ambiguous_town"
+        assert len(result.candidates) > len(result.suggestions) == 3
+        assert all(c["value"].startswith("San Jose") and c["province_psgc"] for c in result.candidates)
+
+    def test_the_answer_route_returns_the_candidates(self, client, staff_token):
+        resp = client.post("/api/extraction/answer", headers={"Authorization": f"Bearer {staff_token}"},
+                           json={"field_key": "place_of_birth_province", "transcript": "San Jose", "spoken": True})
+        assert resp.status_code == 200 and resp.json()["reason"] == "ambiguous_town"
+        assert len(resp.json()["candidates"]) > 3

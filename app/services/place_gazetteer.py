@@ -475,6 +475,33 @@ def _entries() -> Dict[str, Place]:
             if p.type != "province" and ("," in place_value(p) or not p.province)}
 
 
+@lru_cache(maxsize=1)
+def _towns_by_code() -> Dict[str, Place]:
+    return {p.psgc: p for ps in _load()[0].values() for p in ps if p.type != "province"}
+
+
+def place_by_code(code: str) -> Optional[Place]:
+    """A city or municipality by its PSGC code (the place-of-birth picker's selection, plan 002.1)."""
+    return _towns_by_code().get(code or "")
+
+
+def search_birth_places(query: str, limit: int = 20) -> List[Place]:
+    """
+    The picker's type-to-search (plan 002.1): every city and town, also the ones with no province, whose
+    written form ("Malaybalay City, Bukidnon") has a word starting with each word typed. Region X first.
+    """
+    words = _norm(query).split()
+    if not words:
+        return []
+    found = []
+    for place in _towns_by_code().values():
+        value = _norm(place_value(place))
+        tokens = value.split()
+        if all(any(t.startswith(w) for t in tokens) for w in words):
+            found.append((not value.startswith(words[0]), place.region != REGION_X, value, place))
+    return [place for *_, place in sorted(found, key=lambda f: f[:3])[:limit]]
+
+
 def _list_entry(text: str) -> Optional[Place]:
     return _entries().get(re.sub(r"\s*,\s*", ", ", (text or "").strip().rstrip(".")).lower())
 
