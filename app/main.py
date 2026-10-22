@@ -146,7 +146,7 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
         # Let the browser read the total needed for the Records page buttons, and
         # the file name (CTC-..._COPY.pdf for a re-print) of a Records download.
-        expose_headers=["X-Total-Count", "Content-Disposition"],
+        expose_headers=["X-Total-Count", "Content-Disposition", "X-Empty-Reason"],
     )
 
     # ── Routers ───────────────────────────────────────────────────────────────

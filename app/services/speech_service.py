@@ -23,6 +23,7 @@ import threading
 import time
 import tempfile
 import os
+from difflib import SequenceMatcher
 from math import gcd
 from typing import Optional, Union
 from scipy.io import wavfile
@@ -116,6 +117,13 @@ HALLUCINATIONS = re.compile(
     r"please subscribe\.?|\.+|subtitles by .*|amara\.org.*)$",
     re.IGNORECASE,
 )
+
+# Hints whose sentences are each a real answer or command ("Lagbas po.", "Purok 2.", "Type."), or whose first
+# sentence looks like one ("Barangay in Baungon, Bukidnon."): only a run of two or more of their sentences is an
+# echo of the hint, never one sentence alone (plan 002.2).
+ANSWER_LIKE_HINTS = {"surname", "given_name", "middle_name", "address_purok", "address_barangay",
+                     "missing_choice", "spelling"}
+ECHO_SIMILARITY = 0.85
 
 _model_lock = threading.Lock()   # one transcription at a time on the shared model
 
@@ -247,13 +255,57 @@ def _run(engine: str, model, audio: Union[str, np.ndarray], initial_prompt: Opti
     return model.transcribe(audio, **_decode_options(initial_prompt))
 
 
-def _clean_transcript(text: str, segments: Optional[list] = None) -> str:
-    """Drop what Whisper invents: silence phrases, and a decode stuck repeating the same words."""
+def _normalize(text: str) -> str:
+    return " ".join(re.findall(r"[0-9a-zñ]+", (text or "").lower()))
+
+
+def _sentences(text: str) -> list:
+    return [s for s in re.split(r"(?<=[.!?])\s+", (text or "").strip()) if _normalize(s)]
+
+
+def _is_hint_echo(text: str, prompt: Optional[str], field_key: Optional[str], any_part: bool = False) -> bool:
+    """True when the text is the hint itself, or a run of its sentences, read back by Whisper.
+    any_part: also a single sentence or word of the hint (the tail left after a read-back hint)."""
+    said = _normalize(text)
+    parts = _sentences(prompt or "")
+    if not said or not parts:
+        return False
+    shortest = 1 if any_part else min(2 if field_key in ANSWER_LIKE_HINTS else 1, len(parts))
+    for size in range(shortest, len(parts) + 1):
+        for start in range(len(parts) - size + 1):
+            run = _normalize(" ".join(parts[start:start + size]))
+            if (any_part or len(run.split()) >= 2) and SequenceMatcher(None, said, run).ratio() >= ECHO_SIMILARITY:
+                return True
+    return False
+
+
+def _clean_answer(text: str, segments: Optional[list] = None, prompt: Optional[str] = None,
+                  field_key: Optional[str] = None) -> tuple:
+    """(transcript, why it was dropped or None). Drops a decoding loop, a silence phrase and the hint read
+    back; a reply that starts with the hint and then answers keeps only the answer."""
     text = (text or "").strip()
     if any(s.get("compression_ratio", 0) > REPETITIVE_RATIO for s in segments or []):
         logger.info("Repetitive transcript dropped (a decoding loop, not an answer).")
-        return ""
-    return "" if HALLUCINATIONS.match(text) else text
+        return "", "repetition"
+    if HALLUCINATIONS.match(text):
+        return "", "silence-phrase"
+    # Hint first, then the answer ("Male or female. Lalaki or babae. Female."): checked before the whole text,
+    # which is still close enough to the hint to count as an echo.
+    said = _sentences(text)
+    for cut in range(len(said) - 1, 0, -1):
+        rest = " ".join(said[cut:])
+        if (_is_hint_echo(" ".join(said[:cut]), prompt, field_key)
+                and not _is_hint_echo(rest, prompt, field_key, any_part=True)):
+            return rest, None
+    if _is_hint_echo(text, prompt, field_key):
+        logger.info("Transcript dropped: it repeats the question's hint (field=%s).", field_key)
+        return "", "echo"
+    return text, None
+
+
+def _clean_transcript(text: str, segments: Optional[list] = None) -> str:
+    """Drop what Whisper invents: silence phrases, and a decode stuck repeating the same words."""
+    return _clean_answer(text, segments)[0]
 
 
 class SpeechService:
@@ -344,7 +396,7 @@ class SpeechService:
         else:
             confidence = 0.0
 
-        transcript = _clean_transcript(result.get("text", ""), segments)
+        transcript, dropped = _clean_answer(result.get("text", ""), segments, initial_prompt, field_key)
 
         # Only the length is logged: transcripts are applicants' personal data (Data Privacy Act).
         logger.info(f"Transcription complete in {processing_time:.2f}s | Confidence: {confidence:.2f} | "
@@ -352,6 +404,7 @@ class SpeechService:
 
         return {
             "transcript": transcript,
+            "dropped": dropped,
             "language": result.get("language", "en"),
             "confidence": confidence,
             "segments": [

@@ -2037,8 +2037,8 @@ class TestWhisperEngine:
                 patch.object(speech_service.settings, "WHISPER_ENGINE", "faster"), \
                 patch.dict(SpeechService._models, clear=True):
             out = SpeechService.transcribe_file(np.zeros(16000, dtype=np.float32), "surname")
-        assert set(out) == {"transcript", "language", "confidence", "segments", "processing_time_seconds"}
-        assert out["transcript"] == "Dela Cruz po." and out["language"] == "en"
+        assert set(out) == {"transcript", "dropped", "language", "confidence", "segments", "processing_time_seconds"}
+        assert out["transcript"] == "Dela Cruz po." and out["language"] == "en" and out["dropped"] is None
         assert out["segments"][0]["text"] == "Dela Cruz po." and 0 < out["confidence"] < 1
         (_, name, load_kwargs), (_, _, options) = calls
         assert name == "base" and load_kwargs == {"device": "cpu", "compute_type": "int8"}
@@ -2126,3 +2126,99 @@ class TestWhisperEngine:
                 assert SpeechService.get_model("base") is faster_model
             openai_model = SpeechService.get_model("base")
         assert openai_model is not faster_model and load.call_count == 1 and len(calls) == 1
+
+
+class TestHintEcho:
+    """Plan 002.2: Whisper reading the question's hint back is never an answer (made-up text only)."""
+
+    @pytest.mark.parametrize("key", ["sex", "civil_status", "confirm", "surname", "given_name", "middle_name",
+                                     "address_purok", "missing_choice", "citizenship", "review"])
+    def test_the_hint_read_back_is_dropped(self, key):
+        from app.services.speech_service import FIELD_PROMPTS, _clean_answer
+        prompt = FIELD_PROMPTS[key]
+        assert _clean_answer(prompt, [], prompt, key) == ("", "echo")
+        assert _clean_answer(prompt.rstrip(".").lower(), [], prompt, key) == ("", "echo")   # no punctuation
+
+    @pytest.mark.parametrize("key,spoken", [
+        ("sex", "Male or female."), ("sex", "Lalaki or babae."), ("confirm", "Yes or no."),
+        ("confirm", "Opo, oo, hindi."), ("civil_status", "Single, married, widowed, or separated."),
+        ("surname", "Lagbas po. Ybañez po."), ("address_purok", "Purok 2. Zone 1."),
+    ])
+    def test_a_run_of_hint_sentences_is_dropped(self, key, spoken):
+        from app.services.speech_service import FIELD_PROMPTS, _clean_answer
+        assert _clean_answer(spoken, [], FIELD_PROMPTS[key], key) == ("", "echo")
+
+    @pytest.mark.parametrize("key,spoken", [
+        ("surname", "Lagbas po."), ("given_name", "Jessa po."), ("middle_name", "Ybañez."),
+        ("address_purok", "Purok 2."), ("address_purok", "Zone 1."),
+        ("missing_choice", "Type."), ("missing_choice", "Say it again."),
+        ("sex", "Female."), ("sex", "Lalaki po."), ("civil_status", "Married."), ("confirm", "Oo."),
+        ("confirm", "Yes."), ("confirm", "Hindi."), ("citizenship", "Filipino."),
+        ("date", "May 10, 1990."), ("height", "160 centimeters."),
+    ])
+    def test_a_real_answer_that_is_also_a_hint_example_is_kept(self, key, spoken):
+        from app.services.speech_service import FIELD_PROMPTS, _clean_answer
+        assert _clean_answer(spoken, [], FIELD_PROMPTS[key], key) == (spoken, None)
+
+    def test_a_barangay_answer_is_not_the_barangay_hint(self):
+        from app.services.speech_service import SpeechService, _clean_answer
+        prompt = SpeechService._build_prompt("address_barangay", None)
+        spoken = "Barangay Imbatug, Baungon, Bukidnon."
+        assert _clean_answer(spoken, [], prompt, "address_barangay") == (spoken, None)
+
+    @pytest.mark.parametrize("key,spoken,kept", [
+        ("sex", "Male or female. Lalaki or babae. Female.", "Female."),
+        ("confirm", "Yes or no. Yes po.", "Yes po."),
+        ("surname", "Lagbas po. Ybañez po. Cruz po.", "Cruz po."),
+    ])
+    def test_hint_then_answer_keeps_the_answer(self, key, spoken, kept):
+        from app.services.speech_service import FIELD_PROMPTS, _clean_answer
+        assert _clean_answer(spoken, [], FIELD_PROMPTS[key], key) == (kept, None)
+
+    def test_drop_reasons(self):
+        from app.services.speech_service import _clean_answer
+        assert _clean_answer("Thank you.", []) == ("", "silence-phrase")
+        assert _clean_answer("Purok 3, " * 20, [{"compression_ratio": 9.5}]) == ("", "repetition")
+        assert _clean_answer("Female.", []) == ("Female.", None)
+
+    @pytest.mark.parametrize("dropped,reason", [
+        ("echo", "dropped-echo"), ("repetition", "dropped-repetition"), ("silence-phrase", "whisper-empty"),
+        (None, "whisper-empty"),
+    ])
+    def test_the_422_says_why_it_was_empty(self, client, staff_token, dropped, reason):
+        from app.services.speech_service import SpeechService
+        with patch.object(SpeechService, "transcribe_bytes", return_value={
+                "transcript": "", "dropped": dropped, "language": "en", "confidence": 0.0, "segments": [],
+                "processing_time_seconds": 0.1}):
+            r = client.post("/api/speech/transcribe", headers={"Authorization": f"Bearer {staff_token}"},
+                            files={"audio_file": ("a.wav", b"RIFF0000", "audio/wav")}, data={"field_key": "sex"})
+        assert r.status_code == 422
+        assert r.headers["X-Empty-Reason"] == reason
+        assert "Could not detect any speech" in r.json()["detail"]
+
+    def test_a_kept_transcript_has_no_drop_reason_in_the_response(self, client, staff_token):
+        from app.services.speech_service import SpeechService
+        with patch.object(SpeechService, "transcribe_bytes", return_value={
+                "transcript": "Female.", "dropped": None, "language": "en", "confidence": 0.9, "segments": [],
+                "processing_time_seconds": 0.1}):
+            r = client.post("/api/speech/transcribe", headers={"Authorization": f"Bearer {staff_token}"},
+                            files={"audio_file": ("a.wav", b"RIFF0000", "audio/wav")}, data={"field_key": "sex"})
+        assert r.status_code == 200 and r.json()["transcript"] == "Female." and "dropped" not in r.json()
+
+    @pytest.mark.parametrize("spoken", [
+        "Single, married, widowed or separated.", "single or married", "married but separated",
+        "widowed, married",
+    ])
+    def test_civil_status_refuses_two_statuses(self, spoken):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("civil_status", spoken)
+        assert not result.ok and "only one" in result.message
+
+    @pytest.mark.parametrize("spoken,value", [
+        ("not married", "Single"), ("never married po", "Single"), ("single", "Single"),
+        ("married", "Married"), ("hiwalay na", "Separated"), ("biyuda", "Widowed"),
+    ])
+    def test_civil_status_one_status_still_works(self, spoken, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("civil_status", spoken)
+        assert result.ok and result.value == value

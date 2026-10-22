@@ -83,11 +83,15 @@ async def transcribe_audio(
             detail=f"Transcription failed: {str(e)}",
         )
 
+    dropped = result.pop("dropped", None)
     if not result.get("transcript"):
+        # Why it is empty, for the practice log (plan 002.2): the message stays the same for every reason.
+        reason = {"echo": "dropped-echo", "repetition": "dropped-repetition"}.get(dropped, "whisper-empty")
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Could not detect any speech in the audio. "
                    "Please speak clearly and try again.",
+            headers={"X-Empty-Reason": reason},
         )
 
     return TranscriptionResponse(**result)

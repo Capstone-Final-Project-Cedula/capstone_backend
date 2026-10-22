@@ -648,9 +648,16 @@ CIVIL_RULES = [
 
 def _handle_civil_status(key: str, text: str) -> AnswerResult:
     t = _basic_clean(text).lower()
+    named = []
     for status, pattern in CIVIL_RULES:
         if re.search(pattern, t):
-            return _ok(key, status)
+            named.append(status)
+            t = re.sub(pattern, " ", t)    # "not married" is Single only, not Married too
+    if len(named) == 1:
+        return _ok(key, named[0])
+    if named:
+        # e.g. the hint read back ("Single, married, widowed or separated."), plan 002.2
+        return _fail(key, "Please say only one: single, married, widowed, or separated.")
     return _fail(key, "Please answer single, married, widowed, or separated.")
 
 
