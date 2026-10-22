@@ -2175,6 +2175,31 @@ class TestHintEcho:
         from app.services.speech_service import FIELD_PROMPTS, _clean_answer
         assert _clean_answer(spoken, [], FIELD_PROMPTS[key], key) == (kept, None)
 
+    def test_codex_review_echo_boundaries(self):
+        """Codex verify round 1 (plan 002.2): three cases the first filter got wrong."""
+        from app.services.speech_service import FIELD_PROMPTS as P, _clean_answer
+        # The whole surname hint read back with a small change is still the hint, never an answer.
+        assert _clean_answer(P["surname"].replace("Tagaylo.", "Tagaylo po."), [], P["surname"], "surname") == ("", "echo")
+        # A real purok after the whole hint is kept, though it looks like a hint example (Purok 2).
+        for purok in ("Purok 5.", "Purok 3.", "Zone 4."):
+            assert _clean_answer(f"{P['address_purok']} {purok}", [], P["address_purok"], "address_purok") == (purok, None)
+        # One answer-like hint sentence said alone is an answer, also the longest one.
+        said = "My middle name is Ybañez."
+        assert _clean_answer(said, [], P["middle_name"], "middle_name") == (said, None)
+        # The hint read back with no sentence breaks is still the hint.
+        flat = "male or female lalaki or babae"
+        assert _clean_answer(flat, [], P["sex"], "sex") == ("", "echo")
+
+    def test_codex_round_2_merged_hint_sentences(self):
+        """Codex verify round 2 (plan 002.2): Whisper merging two hint sentences must not leak an example."""
+        from app.services.speech_service import FIELD_PROMPTS as P, _clean_answer
+        merged = "Jessa po. My first name is Rodel Mylene po. Gerlie Mae."
+        assert _clean_answer(merged, [], P["given_name"], "given_name") == ("", "echo")
+        assert _clean_answer(merged + " Ana po.", [], P["given_name"], "given_name") == ("Ana po.", None)
+        flat = P["surname"].replace(".", "")                     # no sentence breaks at all
+        assert _clean_answer(flat, [], P["surname"], "surname") == ("", "echo")
+        assert _clean_answer(flat + " Cruz", [], P["surname"], "surname") == ("Cruz", None)
+
     def test_drop_reasons(self):
         from app.services.speech_service import _clean_answer
         assert _clean_answer("Thank you.", []) == ("", "silence-phrase")
