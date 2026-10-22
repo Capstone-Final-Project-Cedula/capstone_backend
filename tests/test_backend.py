@@ -2584,3 +2584,61 @@ class TestPickers:
         dumped = a.model_dump()
         assert not {"place_of_birth_code", "address_town_code", "address_barangay"} & set(dumped)
         assert "place_of_birth_code" not in a.model_dump_json()
+
+
+class TestPlan006Answers:
+    """Plan 006: fillers are never answers, sex by sound, a town in several provinces lists them all."""
+
+    @pytest.mark.parametrize("filler", ["Um.", "Uh", "Uhm", "Hmm", "Mm", "Ah", "Eh", "Er", "UM!", "um... uh", "Mm-hmm."])
+    @pytest.mark.parametrize("key", ["surname", "given_name", "middle_name", "address_purok", "sex", "civil_status",
+                                     "date", "occupation", "citizenship", "icr_no", "place_of_birth", "height"])
+    @pytest.mark.parametrize("spoken", [True, False])
+    def test_filler_only_is_an_empty_answer_for_every_field(self, key, filler, spoken):
+        from app.services.answer_service import understand_answer
+        result = understand_answer(key, filler, spoken=spoken)
+        assert result.ok is False and result.reason == "empty"
+        assert result.message.startswith("I didn't hear an answer. Please tell me your ")
+
+    @pytest.mark.parametrize("text,key,value", [
+        ("Um, Purok 2", "address_purok", "Purok 2"), ("Uh, male", "sex", "Male"), ("um... Juan", "given_name", "Juan"),
+    ])
+    def test_a_filler_inside_a_real_answer_is_removed(self, text, key, value):
+        from app.services.answer_service import understand_answer
+        result = understand_answer(key, text, spoken=True)
+        assert result.ok is True and result.value == value
+
+    @pytest.mark.parametrize("surname", ["Umali", "Uy", "Ermita", "Ahmad", "Hermano", "Mamon"])
+    def test_surnames_that_look_like_fillers_survive(self, surname):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("surname", surname)
+        assert result.ok is True and result.value.lower() == surname.lower()
+
+    @pytest.mark.parametrize("text,expected", [
+        ("Meal", "Male"), ("Mehl.", "Male"), ("Mail", "Male"), ("Mel", "Male"), ("Meyl", "Male"), ("Mayl", "Male"),
+        ("Nail", "Male"), ("Mile", "Male"), ("Male.", "Male"),
+        ("Femail", "Female"), ("Feemale", "Female"), ("Pemale", "Female"), ("Fimale", "Female"),
+        ("Bimale", "Female"), ("Female.", "Female"),
+    ])
+    def test_sex_by_sound(self, text, expected):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("sex", text, spoken=True)
+        assert result.ok is True and result.value == expected
+
+    @pytest.mark.parametrize("text", ["I'm", "Email", "Animal", "Meal time", "Nails", "", "Fail", "Feel"])
+    def test_sex_is_not_guessed(self, text):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("sex", text, spoken=True)
+        assert result.ok is False
+
+    def test_a_town_in_several_provinces_lists_every_province(self):
+        from app.services.answer_service import understand_answer
+        result = understand_answer("place_of_birth_province", "San Jose", spoken=True)
+        assert result.ok is False and result.reason == "ambiguous_town"
+        assert len(result.candidates) > len(result.suggestions) == 3
+        assert all(c["value"].startswith("San Jose") and c["province_psgc"] for c in result.candidates)
+
+    def test_the_answer_route_returns_the_candidates(self, client, staff_token):
+        resp = client.post("/api/extraction/answer", headers={"Authorization": f"Bearer {staff_token}"},
+                           json={"field_key": "place_of_birth_province", "transcript": "San Jose", "spoken": True})
+        assert resp.status_code == 200 and resp.json()["reason"] == "ambiguous_town"
+        assert len(resp.json()["candidates"]) > 3

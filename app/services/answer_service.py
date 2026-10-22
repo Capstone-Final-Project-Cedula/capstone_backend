@@ -54,6 +54,9 @@ class AnswerResult:
     # Place of birth (plan 001.8): the closest list entries, to tap. {"value", "province"}: province is a
     # PSGC code when the entry is a province (its town is asked next), "" when it is a whole place.
     suggestions: List[dict] = field(default_factory=list)
+    # Plan 006: reason "ambiguous_town" lists EVERY province that has the town said: {"value": "San Jose, Bohol",
+    # "province": "Bohol", "province_psgc": "..."}. The web asks "Which province is San Jose in?".
+    candidates: List[dict] = field(default_factory=list)
 
     def as_dict(self) -> dict:
         return self.__dict__.copy()
@@ -98,7 +101,8 @@ def _squash(text: str) -> str:
 def _basic_clean(text: str) -> str:
     """Lowercase-free cleanup shared by every field: polite particles, edge punctuation."""
     t = _squash(text)
-    t = re.sub(r"\b(?:po|opo|ho|uhm+|umm+|uh+|ah+|eh+|er+|ahm+|yung|iyong)\b", " ", t, flags=re.IGNORECASE)
+    t = re.sub(r"\b(?:po|opo|ho|uhm+|umm*|uh+|ah+|eh+|er+|ahm+|hmm+|hm+|mm+|yung|iyong)\b", " ", t,
+               flags=re.IGNORECASE)
     t = re.sub(r"^(?:yes|yeah|oo|okay|ok|sure|well|so)[,\s]+", "", t, flags=re.IGNORECASE)
     return _squash(t).strip(" ,.;:!?\"'")
 
@@ -113,6 +117,15 @@ def _strip_prefix(text: str, patterns: List[str]) -> str:
             if new != t:
                 t, changed = new, True
     return t
+
+
+# "Um.", "Uh", "Hmm", "Mm-hmm": a hesitation, never an answer (plan 006).
+FILLER_ONLY = re.compile(r"(?:uh+m*|um+|ah+m*|eh+|er+m*|hm+|mm+|mh+m*)", re.IGNORECASE)
+
+
+def _is_filler_only(text: str) -> bool:
+    words = re.findall(r"[A-Za-zñÑ']+", text or "")
+    return bool(words) and all(FILLER_ONLY.fullmatch(w) for w in words)
 
 
 def _is_unclear(text: str) -> bool:
@@ -624,6 +637,23 @@ SEX_FEMALE = {"female", "females", "woman", "women", "girl", "lady", "babae", "b
 SEX_MALE = {"male", "males", "man", "men", "boy", "guy", "lalaki", "lalake", "m", "mail", "mel", "meyl"}
 
 
+# By sound, for a one-word reply no list has (plan 006, Ralph): female has two syllables starting "fe"
+# (Femail, Feemale, Pemale, Fimale, Bimale); male has one (Meal, Mehl, Mayl, Nail, Mile).
+FEMALE_SOUND = re.compile(r"(?:fe+|fi|pe+|pi|be|bi|phe)m(?:ale|ail|eal|ehl|ayl|eyl|ell?|ile|eil)")
+MALE_SOUND = re.compile(r"[mn](?:ea?l|ehl|ayl|eyl|ail|ale|ell?|ile|eil|aal|ael)")
+
+
+def _sex_by_sound(text: str) -> Optional[str]:
+    words = re.findall(r"[a-z']+", _basic_clean(text).lower())
+    if len(words) != 1:
+        return None
+    if FEMALE_SOUND.fullmatch(words[0]):      # female first: "female" is never taken for male by sound
+        return "Female"
+    if MALE_SOUND.fullmatch(words[0]):
+        return "Male"
+    return None
+
+
 def _handle_sex(key: str, text: str) -> AnswerResult:
     # [a-z']+ keeps "i'm" whole, so its "m" is not read as "male".
     words = set(re.findall(r"[a-z']+", _basic_clean(text).lower()))
@@ -635,6 +665,9 @@ def _handle_sex(key: str, text: str) -> AnswerResult:
         return _ok(key, "Male")
     if is_f and is_m:
         return _fail(key, "Please say only one: male or female.")
+    sound = _sex_by_sound(text)
+    if sound:
+        return _ok(key, sound, confidence=0.8)
     return _fail(key, "Sorry, please answer male or female.")
 
 
@@ -1267,6 +1300,13 @@ def _birth_ok(key: str, found: dict) -> AnswerResult:
     return _ok(key, province.display, normalized=province.psgc, methods=methods, confidence=0.95)
 
 
+def _birth_candidates(places) -> List[dict]:
+    """Every province that has this town: the complete list, not only the closest three."""
+    codes = {p.name.lower(): p.psgc for p in place_gazetteer.provinces()}
+    return [{"value": place_gazetteer.place_value(p), "province": p.province,
+             "province_psgc": codes.get(p.province.lower(), "")} for p in places if p.province]
+
+
 def _handle_birth_province(key: str, text: str) -> AnswerResult:
     """
     "Which province were you born in?" (plan 001.8). A province (the town is asked next), or a whole
@@ -1287,8 +1327,9 @@ def _handle_birth_province(key: str, text: str) -> AnswerResult:
     if same_name:
         # "San Jose": a town of that name in many provinces. The closest ones to tap; or say the province.
         result = _fail(key, f"There is more than one {same_name[0].display}. Please say the province first.",
-                       methods=["regex", "gazetteer"])
+                       reason="ambiguous_town", methods=["regex", "gazetteer"])
         result.suggestions = _birth_suggestions(same_name[:3])
+        result.candidates = _birth_candidates(same_name)
         return result
     pool = place_gazetteer.provinces() + place_gazetteer.places_without_province()
     result = _fail(key, "Please say the province where you were born. For example: Bukidnon. "
@@ -1477,8 +1518,9 @@ def understand_answer(field_key: str, transcript: str, spoken: bool = False, tow
         raise KeyError(field_key)
     text = _squash(transcript)
     label = FIELD_LABELS[field_key]
-    if not text:
-        if field_key in OPTIONAL_FIELDS:
+    filler = _is_filler_only(text)       # "Um." is not an answer, not even "none" for an optional field
+    if not text or filler:
+        if not filler and field_key in OPTIONAL_FIELDS:
             return _ok(field_key, "", display="none")
         result = _fail(field_key, f"I didn't hear an answer. Please tell me your {label}.", reason="empty")
         if field_key == "place_of_birth_province":     # the likeliest places to tap (plan 001.8)

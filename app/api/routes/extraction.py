@@ -52,6 +52,7 @@ class AnswerResponse(BaseModel):
     confidence: float = 0.0
     warnings: List[str] = []
     suggestions: List[Dict[str, str]] = []   # place of birth: the closest list entries to tap (plan 001.8)
+    candidates: List[Dict[str, str]] = []    # reason "ambiguous_town": every province with that town (plan 006)
 
 
 class AnswersRequest(BaseModel):
