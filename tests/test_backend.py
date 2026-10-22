@@ -2222,3 +2222,72 @@ class TestHintEcho:
         from app.services.answer_service import understand_answer
         result = understand_answer("civil_status", spoken)
         assert result.ok and result.value == value
+
+
+class TestPracticeLogLadderStages:
+    """Plan 002.2: a skipped question finished at the end step still shows it was skipped (fake data only)."""
+
+    INTERVIEW = [{"heard": "", "engine": "whisper", "reason": "browser-no-speech", "stage": "interview"},
+                 {"heard": "rayes", "engine": "whisper", "ok": False, "reason": "dropped-echo", "stage": "interview"},
+                 {"heard": "R E Y", "engine": "spelled", "ok": False, "stage": "interview"}]
+
+    def test_the_end_step_note_keeps_the_interview_tries_and_their_stages(self, client, staff_token, admin_token):
+        with _log():
+            sid = _start(client, staff_token)["session_id"]
+            _note(client, staff_token, sid, "surname", attempts=3, accepted_engine="skipped",
+                  attempt_details=self.INTERVIEW)
+            _note(client, staff_token, sid, "surname", attempts=4, accepted_engine="typed", accepted_value="Reyes",
+                  attempt_details=self.INTERVIEW + [{"heard": "Reyes", "engine": "typed", "ok": True,
+                                                     "stage": "end_step"}])
+            _, answers = _session_detail(client, admin_token, sid)
+        stages = [a["stage"] for a in answers["surname"]["attempt_details"]]
+        assert stages == ["interview", "interview", "interview", "end_step"]
+        assert answers["surname"]["attempt_details"][0]["reason"] == "browser-no-speech"
+
+    def test_an_unknown_stage_is_refused(self, client, staff_token):
+        with _log():
+            sid = _start(client, staff_token)["session_id"]
+            resp = _note(client, staff_token, sid, "surname", attempt_details=[{"engine": "whisper", "stage": "later"}])
+        assert resp.status_code == 422
+
+    @staticmethod
+    def _row(field, attempts, engine, details, value="x"):
+        return {"field": field, "attempts": attempts, "attempt_details": details, "first_value": None,
+                "accepted_value": value, "accepted_engine": engine, "seconds": 10.0, "final_value": None,
+                "changed_after_voice": None}
+
+    def test_resolutions(self):
+        script = _load_summary_script()
+        end_typed = [{"engine": "whisper", "stage": "interview"}, {"engine": "typed", "stage": "end_step"}]
+        end_said = [{"engine": "whisper", "stage": "interview"}, {"engine": "whisper", "stage": "end_step"}]
+        blank = [{"engine": "whisper", "stage": "interview"}, {"engine": "typed", "stage": "end_step",
+                                                               "reason": "left-blank"}]
+        assert script.resolution(self._row("sex", 1, "whisper", [{"engine": "whisper"}])) == "first_try"
+        assert script.resolution(self._row("sex", 3, "whisper", [{"engine": "whisper"}] * 3)) == "ladder"
+        assert script.resolution(self._row("surname", 4, "spelled", [{"engine": "whisper"}] * 4)) == "ladder"
+        assert script.resolution(self._row("height", 1, "typed", [{"engine": "typed"}])) == "typed"
+        assert script.resolution(self._row("surname", 2, "typed", end_typed)) == "end_step_typed"
+        assert script.resolution(self._row("surname", 2, "whisper", end_said)) == "end_step_voice"
+        assert script.resolution(self._row("surname", 2, "spelled", end_said)) == "end_step_voice"
+        assert script.resolution(self._row("height", 2, "typed", blank, value=None)) == "end_step_blank"
+        assert script.resolution(self._row("height", 3, "skipped", [{"engine": "whisper"}] * 3, None)) == "skipped"
+
+    def test_three_numbers_per_field_and_empty_turn_reasons(self):
+        script = _load_summary_script()
+        rows = [
+            self._row("surname", 1, "whisper", [{"engine": "whisper", "stage": "interview"}]),
+            self._row("surname", 4, "spelled", [{"engine": "whisper", "reason": "dropped-echo"}] * 3
+                      + [{"engine": "spelled"}]),
+            self._row("surname", 6, "typed", [{"engine": "whisper", "reason": "browser-no-speech",
+                                               "stage": "interview"}] * 5
+                      + [{"engine": "typed", "stage": "end_step"}]),
+            self._row("surname", 5, "skipped", [{"engine": "whisper", "reason": "whisper-empty"}] * 5, None),
+        ]
+        summary = script.summarize([{"outcome": "issued", "build_label": "version-2.2+002.2", "answers": rows}])
+        surname = summary["fields"][0]
+        assert surname["first_try_rate"] == 0.25 and surname["after_ladder_rate"] == 0.5
+        assert surname["end_step"] == {"said": 0, "typed": 1, "blank": 0}
+        assert surname["skipped"] == 2 and surname["still_skipped"] == 1 and summary["skipped_questions"] == 2
+        assert surname["empty_turns"] == {"dropped-echo": 3, "browser-no-speech": 5, "whisper-empty": 5}
+        text = script.render_markdown(summary, "plan 002.2 or later")
+        assert "| surname | 25% | 50% | 0 / 1 / 0 | 1 | 0 |" in text and "skipped questions: 2" in text

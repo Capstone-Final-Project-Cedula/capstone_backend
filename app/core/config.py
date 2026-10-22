@@ -77,7 +77,7 @@ class Settings(BaseSettings):
     PRACTICE_LOG_ENABLED: bool = False
     # Stamped on every practice session so the summary can group by build; the Builder bumps it
     # as the last build step of every later plan.
-    PRACTICE_LOG_BUILD: str = "version-2.2+002"
+    PRACTICE_LOG_BUILD: str = "version-2.2+002.2"
 
     # QR Code
     QR_EXPIRY_MINUTES: int = 60

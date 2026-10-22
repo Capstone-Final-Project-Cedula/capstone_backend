@@ -43,6 +43,12 @@ PAIR_FIELDS = {
 }
 # The joined address is a summary row: it has no tries or seconds of its own.
 SUMMARY_FIELDS = {"address"}
+VOICE = ("whisper", "browser")
+# Why a turn came back empty (plan 002.2). Older builds logged only "no-speech".
+EMPTY_REASONS = ("browser-no-speech", "too-short", "whisper-empty", "dropped-echo", "dropped-repetition",
+                 "no-speech")
+# How a question ended (plan 002.2). Skipped questions count as misses until finished; typing is never voice.
+RESOLUTIONS = ("first_try", "ladder", "typed", "end_step_voice", "end_step_typed", "end_step_blank", "skipped")
 
 
 def plan_tuple(plan: str):
@@ -117,6 +123,32 @@ def _first_heard(answer):
     return None
 
 
+def resolution(answer):
+    """
+    first_try: right by voice on the only try; ladder: by voice or spelling, later in the interview;
+    typed: typed during the interview (staff pressed type); end_step_*: skipped, then said, typed or left
+    blank at the end; skipped: never finished. Rows from before 002.2 have no stages: never end_step.
+    """
+    engine = answer["accepted_engine"]
+    if engine == "skipped":
+        return "skipped"
+    tries = answer["attempt_details"]
+    end = [a for a in tries if a.get("stage") == "end_step"]
+    if end:
+        if end[-1].get("reason") == "left-blank":
+            return "end_step_blank"
+        return "end_step_typed" if engine == "typed" else "end_step_voice"
+    if engine == "typed":
+        return "typed"
+    if engine in VOICE and answer["attempts"] == 1:
+        return "first_try"
+    return "ladder"
+
+
+def _rate(count, total):
+    return round(count / total, 3) if total else None
+
+
 def summarize(sessions):
     """Per-field numbers and the most common 'heard -> final' pairs, from load_sessions() output."""
     by_field = defaultdict(list)
@@ -137,15 +169,24 @@ def summarize(sessions):
             # Only a real mis-hearing: not the same word, and not just a longer form ("Baungon" -> "Baungon, Bukidnon").
             if heard and final and heard.lower() not in final.lower():
                 pairs[(heard, final)] += 1
+        ends = Counter(resolution(r) for r in questions)
+        empty = Counter(a.get("reason") for r in questions for a in r["attempt_details"]
+                        if a.get("reason") in EMPTY_REASONS)
         fields.append({
             "field": field,
             "answers": len(rows),
             "changed_known": len(known),
             "changed_rate": round(sum(1 for r in known if r["changed_after_voice"]) / len(known), 3) if known else None,
             "average_tries": round(statistics.mean(r["attempts"] for r in questions), 2) if questions else None,
-            "first_try_rate": round(
-                sum(1 for r in questions if r["attempts"] == 1 and r["accepted_engine"] != "skipped") / len(questions), 3
-            ) if questions else None,
+            # Plan 002.2's three numbers: first try, after the ladder (voice or spelling), finished at the end.
+            "first_try_rate": _rate(ends["first_try"], len(questions)),
+            "after_ladder_rate": _rate(ends["first_try"] + ends["ladder"], len(questions)),
+            "end_step": {"said": ends["end_step_voice"], "typed": ends["end_step_typed"],
+                         "blank": ends["end_step_blank"]},
+            "skipped": sum(ends[k] for k in ("end_step_voice", "end_step_typed", "end_step_blank", "skipped")),
+            "still_skipped": ends["skipped"],
+            "typed_in_interview": ends["typed"],
+            "empty_turns": dict(empty),
             "seconds_median": round(statistics.median(seconds), 1) if seconds else None,
             "seconds_max": round(max(seconds), 1) if seconds else None,
             "engines": dict(Counter(r["accepted_engine"] for r in rows)),
@@ -160,6 +201,7 @@ def summarize(sessions):
         "answers_read": sum(len(s["answers"]) for s in sessions),
         "outcomes": dict(Counter(s["outcome"] for s in sessions)),
         "builds": dict(Counter(s["build_label"] or "(none)" for s in sessions)),
+        "skipped_questions": sum(f["skipped"] for f in fields),
         "fields": fields,
     }
 
@@ -202,6 +244,25 @@ def render_markdown(summary, filters):
         lines.append(
             f"| {f['field']} | {f['answers']} | {changed} | {_num(f['average_tries'])} | {_pct(f['first_try_rate'])} | "
             f"{_num(f['seconds_median'])} / {_num(f['seconds_max'])} | {engines} |"
+        )
+    lines += [
+        "",
+        f"## The voice ladder (plan 002.2) · skipped questions: {summary.get('skipped_questions', 0)}",
+        "_Skipped questions count as misses until finished; a typed answer is never a voice success._",
+        "",
+        "| Field | First try | After the ladder | Finished at the end (said / typed / blank) | Still skipped | "
+        "Typed mid-interview | Empty turns |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for f in summary["fields"]:
+        if f["field"] in SUMMARY_FIELDS:
+            continue
+        end = f["end_step"]
+        empty = ", ".join(f"{k} {v}" for k, v in sorted(f["empty_turns"].items())) or "none"
+        lines.append(
+            f"| {f['field']} | {_pct(f['first_try_rate'])} | {_pct(f['after_ladder_rate'])} | "
+            f"{end['said']} / {end['typed']} / {end['blank']} | {f['still_skipped']} | {f['typed_in_interview']} | "
+            f"{empty} |"
         )
     lines += ["", "## Common mis-hearings (heard on the first try -> saved)", ""]
     any_pairs = False
