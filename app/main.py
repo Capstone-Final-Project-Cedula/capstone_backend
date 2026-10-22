@@ -13,7 +13,7 @@ from app.core.config import settings
 from app.core.database import (
     DATABASE_KIND, create_tables, missing_migration_message, missing_practice_log_message,
 )
-from app.api.routes import auth, speech, extraction, qr, forms, citizen_auth
+from app.api.routes import auth, speech, extraction, qr, forms, citizen_auth, places
 from app.api.routes import settings as settings_routes
 from app.api.routes import sus, practice_log
 
@@ -159,6 +159,7 @@ def create_app() -> FastAPI:
     app.include_router(settings_routes.router, prefix="/api/settings", tags=["Settings"])
     app.include_router(sus.router,          prefix="/api/sus",        tags=["SUS Survey"])
     app.include_router(practice_log.router, prefix="/api/practice-log", tags=["Practice Log (temporary)"])
+    app.include_router(places.router,       prefix="/api/places",     tags=["Place lists (pickers)"])
 
     # Generated PDFs are NOT served as public static files: they contain
     # citizens' personal data and have guessable names. Downloads go through

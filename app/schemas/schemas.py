@@ -107,6 +107,11 @@ class ApplicantCreate(BaseModel):
     occupation: Optional[str] = None
     gross_annual_income: Optional[float] = Field(None, ge=0)
     tax_classification: str = "A"
+    # Request only, never saved (plan 002.1): sent when the value was picked from a list, so /forms/issue
+    # can check it is that list entry. Typed text, the voice path and older phones leave them out.
+    place_of_birth_code: Optional[str] = Field(None, max_length=20)
+    address_town_code: Optional[str] = Field(None, max_length=20)
+    address_barangay: Optional[str] = Field(None, max_length=100)
 
     @validator('sex', pre=True)
     def validate_sex(cls, v):

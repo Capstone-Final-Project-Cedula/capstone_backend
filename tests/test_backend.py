@@ -2291,3 +2291,90 @@ class TestPracticeLogLadderStages:
         assert surname["empty_turns"] == {"dropped-echo": 3, "browser-no-speech": 5, "whisper-empty": 5}
         text = script.render_markdown(summary, "plan 002.2 or later")
         assert "| surname | 25% | 50% | 0 / 1 / 0 | 1 | 0 |" in text and "skipped questions: 2" in text
+
+
+BAUNGON = "1001301000"
+CDO = "1030500000"
+
+
+class TestPickers:
+    """Plan 002.1: the lists behind the typing pickers, and what /forms/issue checks (fake data only)."""
+
+    def test_birth_places_search_the_voice_list(self, client, staff_token):
+        r = client.get("/api/places/birth", params={"q": "malaybalay"}, headers=_auth(staff_token))
+        assert r.status_code == 200
+        assert r.json()[0]["value"] == "Malaybalay City, Bukidnon" and r.json()[0]["code"]
+        # A city with no province is in the list too, written without one (as the voice path writes it).
+        values = [o["value"] for o in client.get("/api/places/birth", params={"q": "iligan"},
+                                                 headers=_auth(staff_token)).json()]
+        assert "Iligan City" in values
+        assert client.get("/api/places/birth", params={"q": ""}, headers=_auth(staff_token)).json() == []
+
+    def test_every_province_less_place_can_be_found(self):
+        from app.services import place_gazetteer as g
+        loose = g.places_without_province()
+        assert len(loose) == 44
+        for place in loose:
+            assert place in g.search_birth_places(place.name, limit=50), place.name
+
+    def test_towns_and_barangays_are_written_like_the_voice_path(self, client, staff_token):
+        from app.services.answer_service import understand_answer
+        towns = {o["code"]: o["value"] for o in client.get("/api/places/towns", headers=_auth(staff_token)).json()}
+        assert towns[BAUNGON] == "Baungon, Bukidnon"
+        assert towns[CDO] == "Cagayan de Oro City, Misamis Oriental"
+        assert understand_answer("address_town", "Cagayan de Oro").value == towns[CDO]   # the same text
+        brgys = client.get(f"/api/places/towns/{BAUNGON}/barangays", headers=_auth(staff_token)).json()
+        imbatug = next(b for b in brgys if b["name"] == "Imbatug")
+        assert imbatug["label"] == "Barangay Imbatug"
+        assert client.get("/api/places/towns/0304926000/barangays", headers=_auth(staff_token)).status_code == 404
+
+    def test_lists_need_a_staff_login(self, client):
+        assert client.get("/api/places/towns").status_code in (401, 403)
+        assert client.get("/api/places/birth", params={"q": "malay"}).status_code in (401, 403)
+
+    @pytest.mark.parametrize("changes,field", [
+        ({"height_cm": 400}, "height_cm"), ({"height_cm": 49}, "height_cm"), ({"weight_kg": 301}, "weight_kg"),
+        ({"weight_kg": "heavy"}, "weight_kg"),
+    ])
+    def test_height_and_weight_outside_the_voice_limits_are_refused(self, client, staff_token, changes, field):
+        before = _row_counts()
+        r = _issue(client, staff_token, **changes)
+        assert r.status_code == 422
+        assert [item["loc"][-1] for item in r.json()["detail"]] == [field]
+        assert _row_counts() == before                                   # nothing written
+
+    @pytest.mark.parametrize("changes", [
+        {"height_cm": 0, "weight_kg": 0}, {"height_cm": None, "weight_kg": ""}, {"height_cm": 50, "weight_kg": 300},
+        {"height_cm": 250, "weight_kg": 20},
+    ])
+    def test_blank_or_boundary_height_and_weight_are_issued(self, client, staff_token, changes):
+        assert _issue(client, staff_token, **changes).status_code == 201
+
+    def test_a_picked_place_of_birth_must_be_that_list_place(self, client, staff_token):
+        from app.services import place_gazetteer as g
+        code = g.search_birth_places("malaybalay")[0].psgc
+        ok = _issue(client, staff_token, place_of_birth="Malaybalay City, Bukidnon", place_of_birth_code=code)
+        assert ok.status_code == 201
+        # Title-cased by the web ("De" for "de"): the same place.
+        cdo = g.search_birth_places("cagayan de oro")[0].psgc
+        assert _issue(client, staff_token, place_of_birth="Cagayan De Oro City", place_of_birth_code=cdo).status_code == 201
+        bad = _issue(client, staff_token, place_of_birth="Somewhere Else", place_of_birth_code=code)
+        assert bad.status_code == 422 and bad.json()["detail"][0]["loc"][-1] == "place_of_birth"
+        assert _issue(client, staff_token, place_of_birth="Nowhere", place_of_birth_code="999").status_code == 422
+
+    def test_typed_free_text_is_not_list_checked(self, client, staff_token):
+        # "Not in the list": no code is sent, as from the voice path and older phones.
+        assert _issue(client, staff_token, place_of_birth="Tokyo, Japan").status_code == 201
+        assert _issue(client, staff_token, address="Purok 1, Some Town, Lanao del Sur").status_code == 201
+
+    def test_a_picked_barangay_must_be_in_the_picked_town(self, client, staff_token):
+        good = "Purok 7, Barangay Imbatug, Baungon, Bukidnon"
+        assert _issue(client, staff_token, address=good, address_town_code=BAUNGON,
+                      address_barangay="Imbatug").status_code == 201
+        wrong_town = _issue(client, staff_token, address="Barangay Lapasan, Baungon, Bukidnon",
+                            address_town_code=BAUNGON, address_barangay="Lapasan")
+        assert wrong_town.status_code == 422 and wrong_town.json()["detail"][0]["loc"][-1] == "address"
+        other_text = _issue(client, staff_token, address="Purok 7, Barangay Imbatug, Talakag, Bukidnon",
+                            address_town_code=BAUNGON, address_barangay="Imbatug")
+        assert other_text.status_code == 422
+        assert _issue(client, staff_token, address=good, address_town_code="0304926000").status_code == 422

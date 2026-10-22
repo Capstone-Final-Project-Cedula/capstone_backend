@@ -746,6 +746,11 @@ def _handle_icr(key: str, text: str) -> AnswerResult:
     return _ok(key, value, confidence=0.9)
 
 
+# Plausible height and weight; /forms/issue checks a typed or picked value against the same limits (plan 002.1).
+HEIGHT_CM = (50, 250)
+WEIGHT_KG = (20, 300)
+
+
 def _handle_height(key: str, text: str) -> AnswerResult:
     t = numbers_to_digits(_basic_clean(text).lower())
     nums = spoken_numbers(t)
@@ -781,7 +786,7 @@ def _handle_height(key: str, text: str) -> AnswerResult:
     if cm is None:
         return _fail(key, "Please say your height in centimeters, or in feet and inches, like 5 feet 4.")
     cm = round(cm)
-    if not 50 <= cm <= 250:
+    if not HEIGHT_CM[0] <= cm <= HEIGHT_CM[1]:
         return _fail(key, "That height doesn't seem right. Please say it again, for example 160 centimeters.")
     feet, inches = divmod(round(cm / 2.54), 12)
     return _ok(key, str(cm), display=f"{cm} centimeters ({feet} feet {inches})", normalized=str(cm))
@@ -799,7 +804,7 @@ def _handle_weight(key: str, text: str) -> AnswerResult:
     if kg is None:
         return _fail(key, "Please say your weight in kilos, for example 60 kilos.")
     kg = round(kg, 1)
-    if not 20 <= kg <= 300:
+    if not WEIGHT_KG[0] <= kg <= WEIGHT_KG[1]:
         return _fail(key, "That weight doesn't seem right. Please say it again in kilos.")
     shown = f"{kg:g}"
     return _ok(key, shown, display=f"{shown} kilos", normalized=shown)
@@ -1042,13 +1047,13 @@ def _find_address_town(text: str) -> Optional[dict]:
     return place_gazetteer.find_town(text, exclude=_office_barangay_words(), home_province=_office_location()[1])
 
 
-def _town_value(place: place_gazetteer.Place) -> str:
+def town_value(place: place_gazetteer.Place) -> str:
     """"Cagayan de Oro City, Misamis Oriental": the town with its OWN province (from the Region X list there)."""
     province = (region_town(place.psgc) or {}).get("province") or place.province
     return place.display if not province or province == place.display else f"{place.display}, {province}"
 
 
-def _barangay_label(name: str) -> str:
+def barangay_label(name: str) -> str:
     """"Carmen" -> "Barangay Carmen"; "Barangay 10" stays as it is."""
     return name if re.match(r"barangay\b", name, re.IGNORECASE) else f"Barangay {name}"
 
@@ -1100,9 +1105,9 @@ def _address_in_town(key: str, cleaned: str, town: dict, methods: List[str]) -> 
     """A one-sentence address with an explicitly named town."""
     parts = _parse_address(cleaned, town)
     place = parts["place"]
-    town_value = place.name if parts["ambiguous"] else _town_value(place)
+    town_text = place.name if parts["ambiguous"] else town_value(place)
     barangay = parts["barangay"]
-    value = _join_address(parts["rest"], _barangay_label(barangay) if barangay else "", town_value)
+    value = _join_address(parts["rest"], barangay_label(barangay) if barangay else "", town_text)
     if barangay:
         return _ok(key, value, methods=methods, confidence=0.95)
     warning = ("Barangay not recognized — please check the address." if region_town(place.psgc)
@@ -1123,7 +1128,7 @@ def _handle_address_town(key: str, text: str, spoken: bool = False) -> AnswerRes
     methods = ["regex", "gazetteer"]
     town = _find_address_town(_normalize_address_words(cleaned))
     if town and not town["ambiguous"]:
-        value = _town_value(town["place"])
+        value = town_value(town["place"])
         return _ok(key, value, normalized=town["place"].psgc, methods=methods, confidence=0.95)
     if town:
         # The same town name in several provinces outside Region X, and no province said.
@@ -1133,7 +1138,7 @@ def _handle_address_town(key: str, text: str, spoken: bool = False) -> AnswerRes
     office = _office_town()
     if spoken and office:
         # Nothing matched: most applicants live in the office's own town, so offer it for a yes.
-        value = _town_value(office)
+        value = town_value(office)
         return _ok(key, value, normalized=office.psgc, methods=methods, confidence=0.4, needs_confirmation=True,
                    message=f"I didn't catch the town. Do you live in {value}?",
                    warnings=["Town not recognized; the office town was offered."])
@@ -1164,11 +1169,11 @@ def _handle_address_barangay(key: str, text: str, town: Optional[str] = None) ->
         if not found:
             found, _, _ = _find_barangay(stripped, names, aliases)
         if found:
-            return _ok(key, found, display=_barangay_label(found), methods=methods, confidence=0.95)
+            return _ok(key, found, display=barangay_label(found), methods=methods, confidence=0.95)
     heard = re.sub(r"^(?:barangay|brgy|bgy)\.?\s+", "", _title(stripped), flags=re.IGNORECASE).strip(" ,.")
     if not heard or heard.lower() == "barangay":
         return _fail(key, "Please tell me the name of your barangay.")
-    label = _barangay_label(heard)
+    label = barangay_label(heard)
     town_name = (region_town(psgc) or {}).get("town", "")
     warning = (f"Not a barangay of {town_name} — please check it." if names
                else "No barangay list for this town (outside Region X) — please check it.")
