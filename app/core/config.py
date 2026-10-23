@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     # reply with the same accuracy on Philippine voices (benchmark, October 2026). "" = WHISPER_MODEL.
     WHISPER_CONFIRM_MODEL: str = "tiny"
     # One model + beam per interview question (plan 006). False = every question uses WHISPER_MODEL +
-    # WHISPER_BEAM_SIZE again (for a laptop that cannot hold or run large-v3-turbo). Edit .env, restart.
+    # WHISPER_BEAM_SIZE again (for a laptop that cannot hold or run medium). Edit .env, restart.
     WHISPER_FIELD_MODELS: bool = True
     WHISPER_BEAM_SIZE: int = 1                     # 1 = greedy (fast); 5 = thorough but ~2x slower
     WHISPER_PRELOAD: bool = True                   # load at startup so the first applicant doesn't wait

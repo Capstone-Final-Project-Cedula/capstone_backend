@@ -2076,8 +2076,8 @@ class TestWhisperEngine:
                 patch.dict(SpeechService._models, clear=True):
             SpeechService.warm_up()
         decodes = [kwargs for kind, _, kwargs in calls if kind == "transcribe"]
-        # tiny, base and turbo each load and decode once, with the VAD off: it would cut the silent clip away.
-        assert sorted(name for kind, name, _ in calls if kind == "load") == ["base", "large-v3-turbo", "tiny"]
+        # tiny, base and medium each load and decode once, with the VAD off: it would cut the silent clip away.
+        assert sorted(name for kind, name, _ in calls if kind == "load") == ["base", "medium", "tiny"]
         assert len(decodes) == 3 and all(kwargs["vad_filter"] is False for kwargs in decodes)
 
     def test_warm_up_with_the_table_off_loads_only_the_main_model(self):
@@ -2099,17 +2099,17 @@ class TestWhisperEngine:
             for key in ("confirm", "surname", "review", "spelling", None):
                 assert SpeechService.model_and_beam_for(key) == ("base", 1)
 
-    # ── Plan 006: one model and beam per question (Ralph's PLAN 4 table) ──
+    # ── Plan 006: one model and beam per question (Ralph's PLAN 6 table) ──
     TABLE = [
-        ("surname", "large-v3-turbo", 5), ("given_name", "large-v3-turbo", 5), ("middle_name", "large-v3-turbo", 5),
-        ("address", "large-v3-turbo", 5), ("address_town", "large-v3-turbo", 5),
-        ("address_barangay", "large-v3-turbo", 5), ("address_purok", "large-v3-turbo", 5),
-        ("date", "base", 1), ("sex", "base", 1), ("civil_status", "base", 1), ("citizenship", "base", 1),
-        ("place_of_birth", "large-v3-turbo", 5), ("place_of_birth_province", "large-v3-turbo", 5),
-        ("place_of_birth_town", "large-v3-turbo", 5),
-        ("height", "base", 1), ("weight", "base", 1), ("occupation", "large-v3-turbo", 5),
-        ("confirm", "tiny", 5), ("gross_annual_income", "base", 1), ("icr_no", "base", 1),
-        ("review", "tiny", 5), ("spelling", "large-v3-turbo", 5), ("missing_choice", "base", 1),
+        ("surname", "medium", 5), ("given_name", "medium", 5), ("middle_name", "medium", 5),
+        ("address", "medium", 5), ("address_town", "medium", 5),
+        ("address_barangay", "medium", 5), ("address_purok", "medium", 5),
+        ("date", "medium", 5), ("sex", "medium", 5), ("civil_status", "medium", 5), ("citizenship", "medium", 5),
+        ("place_of_birth", "medium", 5), ("place_of_birth_province", "medium", 5),
+        ("place_of_birth_town", "medium", 5),
+        ("height", "medium", 5), ("weight", "medium", 5), ("occupation", "medium", 5),
+        ("confirm", "tiny", 5), ("gross_annual_income", "medium", 5), ("icr_no", "medium", 5),
+        ("review", "tiny", 5), ("spelling", "medium", 5), ("missing_choice", "base", 1),
         (None, "base", 1), ("unknown_key", "base", 1),
     ]
 
@@ -2151,7 +2151,7 @@ class TestWhisperEngine:
                 SpeechService.transcribe_file(samples, field_key=field_key)
         loads = [c for c in calls if c[0] == "load"]
         decodes = [c for c in calls if c[0] == "transcribe"]
-        # "Dela Cruz po." is not a plain yes, so `review` is decoded a second time (Turbo); the others once.
+        # "Dela Cruz po." is not a plain yes, so `review` is decoded a second time (Medium); the others once.
         assert loads[0][1] == model and len(decodes) == (2 if field_key == "review" else 1)
         options = decodes[0][2]   # the question's own row (first pass)
         if engine == "faster":
@@ -2191,16 +2191,16 @@ class TestWhisperEngine:
         out, decoded = self._review([" Yes."])
         assert out["transcript"] == "Yes." and decoded == [("tiny", 5)]
 
-    def test_review_correction_is_decoded_again_with_turbo(self):
+    def test_review_correction_is_decoded_again_with_medium(self):
         out, decoded = self._review([" Yes my surname is Cruz.", " Yes, my surname is Cruz."])
         assert out["transcript"] == "Yes, my surname is Cruz."
-        assert decoded == [("tiny", 5), ("large-v3-turbo", 5)]
+        assert decoded == [("tiny", 5), ("medium", 5)]
 
     def test_review_silence_is_one_decode(self):
         out, decoded = self._review([""])
         assert out["transcript"] == "" and decoded == [("tiny", 5)]
 
-    def test_review_with_the_table_off_is_one_decode_and_never_loads_turbo(self):
+    def test_review_with_the_table_off_is_one_decode_and_never_loads_medium(self):
         out, decoded = self._review([" Change surname to Cruz."], field_enabled=False)
         assert decoded == [("base", 1)]
 

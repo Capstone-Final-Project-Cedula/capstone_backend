@@ -127,23 +127,22 @@ ECHO_SIMILARITY = 0.85
 
 _model_lock = threading.Lock()   # one transcription at a time on the shared model
 
-# One Whisper model and beam per interview question (plan 006, Ralph's "PLAN 4" table). b1 = greedy.
-# Names, places, occupation and spelling are hard to hear: Turbo b5. Fixed-choice and number answers: Base b1.
+# One Whisper model and beam per interview question (plan 006, Ralph's "PLAN 6" table).
+# All answer fields and spelling: Medium b5. The type-or-spell choice keeps Base b1.
 # Yes/no: Tiny b5. A key that is not here (or none) uses WHISPER_MODEL + WHISPER_BEAM_SIZE.
-TURBO = "large-v3-turbo"
 FIELD_MODELS = {
-    **{key: (TURBO, 5) for key in (
+    **{key: ("medium", 5) for key in (
         "surname", "given_name", "middle_name",
         "address", "address_town", "address_barangay", "address_purok",
         "place_of_birth", "place_of_birth_province", "place_of_birth_town",
-        "occupation", "spelling")},
-    **{key: ("base", 1) for key in (
+        "occupation", "spelling",
         "date", "sex", "civil_status", "citizenship", "height", "weight",
-        "gross_annual_income", "icr_no", "missing_choice")},
+        "gross_annual_income", "icr_no")},
+    "missing_choice": ("base", 1),
     "confirm": ("tiny", 5),
     "review": ("tiny", 5),      # first pass; a reply that is not a plain yes is decoded again with REVIEW_SECOND
 }
-REVIEW_SECOND = (TURBO, 5)
+REVIEW_SECOND = ("medium", 5)
 
 _PLAIN_YES = re.compile(r"^(?:yes|yeah|yep|opo|oo|okay|ok|correct|right|sure)(?: (?:po|please))?$")
 _FIELD_WORDS = re.compile(
@@ -386,7 +385,7 @@ class SpeechService:
     @classmethod
     def _decode(cls, audio: Union[str, np.ndarray], field_key: Optional[str], prompt: Optional[str]) -> dict:
         """Decode with the question's model and beam. `review` is two-pass: Tiny first; unless that is a plain
-        yes (or silence), the same audio is decoded again with Turbo, whose text is used."""
+        yes (or silence), the same audio is decoded again with Medium, whose text is used."""
         passes = [False]
         result: dict = {}
         for second in passes:
