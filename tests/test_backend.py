@@ -1450,6 +1450,29 @@ class TestSusSurvey:
         assert row["features_used"] == ["voice_input", "qr_prefill"]
         assert row["synced_to_sheets"] is False
 
+    def test_typed_name_is_saved_trimmed_and_long_names_work(self, client, staff_token):
+        """Plan 007 B: a typed name is kept (trimmed); the 120-character limit is refused above."""
+        headers = {"Authorization": f"Bearer {staff_token}"}
+        name = "Ma. Concepcion Dela Cruz-Villanueva"
+        resp = client.post("/api/sus/responses", json=self.survey(respondent_name=f"  {name} "))
+        assert resp.status_code == 201
+        rows = client.get("/api/sus/responses", headers=headers).json()
+        assert next(r for r in rows if r["id"] == resp.json()["id"])["respondent_name"] == name
+        assert client.post("/api/sus/responses", json=self.survey(respondent_name="x" * 120)).status_code == 201
+        too_long = client.post("/api/sus/responses", json=self.survey(respondent_name="x" * 121))
+        assert too_long.status_code == 422
+
+    def test_missing_name_is_stored_as_empty(self, client, staff_token):
+        resp = client.post("/api/sus/responses", json={k: v for k, v in self.survey().items() if k != "respondent_name"})
+        assert resp.status_code == 201
+        rows = client.get("/api/sus/responses", headers={"Authorization": f"Bearer {staff_token}"}).json()
+        assert next(r for r in rows if r["id"] == resp.json()["id"])["respondent_name"] is None
+
+    def test_sheet_sync_still_sends_the_name(self):
+        from pathlib import Path
+        sync = Path(__file__).resolve().parents[1] / "supabase" / "functions" / "sus-sheets-sync" / "index.ts"
+        assert "respondent_name" in sync.read_text(encoding="utf-8")
+
     def test_rejects_invalid_answers(self, client):
         for bad in ({"consent_given": False}, {"q3": 6}, {"q10": 0}, {"role": "mayor"},
                     {"features_used": ["hacking"]}, {"platform": "desktop"}, {"transaction_id": 999999}):
