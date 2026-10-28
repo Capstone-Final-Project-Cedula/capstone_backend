@@ -99,7 +99,7 @@ async def transcribe_audio(
     if not result.get("transcript"):
         for row in eval_logs:
             eval_service.log_transcribe(**row)        # a silent try is a row too (no clip: nothing to hear)
-        # Why it is empty, for the practice log (plan 002.2): the message stays the same for every reason.
+        # Why it is empty, for the evaluation log: the message stays the same for every reason.
         reason = {"echo": "dropped-echo", "repetition": "dropped-repetition"}.get(dropped, "whisper-empty")
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

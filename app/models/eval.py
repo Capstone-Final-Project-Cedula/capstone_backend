@@ -13,7 +13,7 @@ text column and the study numbers stay.
 
 The tables exist only through supabase/migrations/20261028090000_evaluation_mode.sql (RLS on):
 they are marked info["eval"] so create_tables() never builds them with create_all (the test suite
-builds them itself, like the practice log).
+builds them itself).
 """
 from sqlalchemy import (
     Boolean, CheckConstraint, Column, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint,

@@ -53,7 +53,7 @@ class StartResponse(BaseModel):
 
 
 class FieldNote(BaseModel):
-    """What only the browser knows about one question (the practice recorder's note, plan 001.7)."""
+    """What only the browser knows about one question (the browser's recorder note)."""
     field: str = Field(..., min_length=1, max_length=40)
     accepted_engine: Literal["whisper", "browser", "typed", "spelled", "skipped"] = "whisper"
     accepted_value: Optional[str] = Field(None, max_length=500)
@@ -81,7 +81,7 @@ def consent(db: Session = Depends(get_db), _user: StaffUser = Depends(require_st
 def start_session(body: StartBody, db: Session = Depends(get_db), user: StaffUser = Depends(require_staff)):
     try:
         session = eval_service.start_session(db, user, body.input_method, body.device,
-                                             settings.PRACTICE_LOG_BUILD)
+                                             settings.APP_BUILD)
         return StartResponse(session_id=session.id if session else None)
     except Exception:
         db.rollback()
@@ -118,7 +118,6 @@ class EvalSettings(BaseModel):
     round_condition: Literal["quiet", "noisy"]
     card_set: Optional[str] = None
     round_no: int
-    practice_log_conflict: bool = False
     card_sets: List[str] = []
 
 

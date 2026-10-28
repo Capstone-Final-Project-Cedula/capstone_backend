@@ -75,13 +75,9 @@ class Settings(BaseSettings):
     # must set CITIZEN_EMAIL_VERIFICATION=False in .env / on the host, or new citizens can never log in.
     CITIZEN_EMAIL_VERIFICATION: bool = True
 
-    # TEMPORARY practice session log (plan 001.7; plan 003 replaces it). Off by default: on, every
-    # voice interview is logged answer by answer for Ralph's practice. MUST be off before real
-    # residents or the real study. On needs migration 20261021090000_practice_log.sql applied.
-    PRACTICE_LOG_ENABLED: bool = False
-    # Stamped on every practice session so the summary can group by build; the Builder bumps it
+    # Stamped on every evaluation session so results can be grouped by build; the Builder bumps it
     # as the last build step of every later plan.
-    PRACTICE_LOG_BUILD: str = "version-2.2+006"
+    APP_BUILD: str = "version-2.3+007"
 
     # QR Code
     QR_EXPIRY_MINUTES: int = 60
