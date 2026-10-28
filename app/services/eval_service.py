@@ -280,7 +280,11 @@ def log_transcribe(session_id: int, user_id: int, *, field: str, step: str, try_
                                                    " ".join(_words(transcript))) else ("no" if transcript else "other")
 
         _save_row(db, write)
-        if clip and engine == "whisper" and session.input_method != "manual" and recording_on(db):
+        # The session starts at the consent notice, before voice or typing is chosen: a Whisper call makes it voice.
+        if engine == "whisper" and session.input_method == "manual":
+            session.input_method = "voice"
+            db.commit()
+        if clip and engine == "whisper" and session.input_method == "voice" and recording_on(db):
             _save_clip(db, session.id, try_id, field, step, clip, clip_type)
     except Exception:
         db.rollback()

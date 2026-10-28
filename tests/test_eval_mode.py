@@ -411,11 +411,18 @@ class TestEvalAudio:
         assert len(uploads) == 1 and uploads[0][0] == "eval-audio" and uploads[0][2] == "audio/webm"
         assert row.audio_ref and row.audio_ref.startswith("eval-audio/")
 
-    def test_not_saved_when_off_browser_engine_or_manual(self, db):
+    def test_not_saved_when_off_browser_engine_typed_or_qr(self, db):
         for kwargs in (dict(mode_on=False, try_id="off1"), dict(engine="browser", try_id="br1"),
-                       dict(input_method="manual", try_id="man1")):
+                       dict(engine="typed", try_id="ty1"), dict(input_method="qr", try_id="qr1")):
             uploads, row = self._log(db, **kwargs)
             assert uploads == [] and row.audio_ref is None, kwargs
+
+    def test_a_session_started_as_manual_becomes_voice_on_the_first_whisper_try(self, db):
+        """Typed input never calls Whisper, so a manual session has no clips; the first Whisper try makes it voice."""
+        from app.models.eval import EvalSession
+        uploads, row = self._log(db, input_method="manual", try_id="man1")
+        assert len(uploads) == 1
+        assert db.get(EvalSession, row.session_id).input_method == "voice"
 
     def test_route_sends_the_compressed_clip_and_falls_back_to_the_wav(self, client, staff_token, admin_token):
         from app.services import eval_service
