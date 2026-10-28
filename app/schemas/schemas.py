@@ -209,6 +209,9 @@ class IssuanceCreate(BaseModel):
     raw_transcript: Optional[str] = None
     # Plan 001.7 (temporary): the practice-log session this interview belongs to.
     practice_session_id: Optional[int] = None
+    # Plan 003: the evaluation session and the browser's one batch (typed vs staff, skips, seconds).
+    eval_session_id: Optional[int] = None
+    eval_batch: Optional[dict] = None
 
     @validator('input_method', pre=True)
     def validate_input_method(cls, v):

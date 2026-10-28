@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     SUPABASE_SECRET_KEY: str = ""                  # sb_secret_... (server-side only, never in clients)
     SUPABASE_PDF_BUCKET: str = "ctc-pdfs"
     SUPABASE_PROFILE_BUCKET: str = "profile-pictures"
+    SUPABASE_EVAL_BUCKET: str = "eval-audio"       # private; evaluation-mode clips (plan 003)
 
     # Web app origins allowed to call the API when DEBUG is off (comma-separated),
     # e.g. "http://localhost:3000,http://192.168.1.8:3000"

@@ -8,10 +8,11 @@ GET  /api/speech/script      — get verification script text without speaking
 """
 import os
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, File, Form, status
 from fastapi.responses import Response
 
 from app.core.security import get_current_user
+from app.services import eval_service
 from app.services.speech_service import SpeechService
 from app.services.tts_service import speak_verification, get_verification_script, synthesize_bytes
 from app.schemas.schemas import TranscriptionResponse
@@ -37,6 +38,14 @@ async def transcribe_audio(
                                description="PSGC code of the town answered before ('address_barangay' hint)"),
     province: Optional[str] = Form(None, pattern=r"^\d{0,10}$",
                                    description="PSGC code of the province of birth ('place_of_birth_town' hint)"),
+    # Evaluation mode (plan 003): which logged interview this try belongs to, what was asked, and the
+    # original compressed recording (saved after the response, never sent to Whisper).
+    eval_session_id: Optional[int] = Form(None),
+    eval_field: Optional[str] = Form(None, max_length=40),
+    eval_step: Optional[str] = Form(None, max_length=10),
+    eval_try: Optional[str] = Form(None, max_length=40, pattern=r"^[A-Za-z0-9_-]*$"),
+    eval_clip: Optional[UploadFile] = File(None),
+    background_tasks: BackgroundTasks = None,
     current_user=Depends(get_current_user),
 ):
     """
@@ -84,7 +93,18 @@ async def transcribe_audio(
         )
 
     dropped = result.pop("dropped", None)
+    passes = result.pop("passes", [])
+    eval_log = None
+    if eval_session_id and eval_step and (eval_field or field_key):
+        name, beam = _model_used(passes, field_key)
+        eval_log = dict(
+            session_id=eval_session_id, user_id=current_user.id, field=eval_field or field_key, step=eval_step,
+            try_id=eval_try or None, engine="whisper", model=name, beam=beam,
+            transcript=result.get("transcript", ""), seconds=result.get("processing_time_seconds"),
+        )
     if not result.get("transcript"):
+        if eval_log:
+            eval_service.log_transcribe(**eval_log)   # a silent try is a row too (no clip: nothing to hear)
         # Why it is empty, for the practice log (plan 002.2): the message stays the same for every reason.
         reason = {"echo": "dropped-echo", "repetition": "dropped-repetition"}.get(dropped, "whisper-empty")
         raise HTTPException(
@@ -94,7 +114,22 @@ async def transcribe_audio(
             headers={"X-Empty-Reason": reason},
         )
 
+    if eval_log:
+        clip = await eval_clip.read() if eval_clip is not None else None
+        # No compressed recording sent: the WAV is saved instead (plan 003 A).
+        eval_log["clip"] = clip if clip else audio_bytes
+        eval_log["clip_type"] = (eval_clip.content_type if clip else audio_file.content_type) or "audio/wav"
+        background_tasks.add_task(eval_service.log_transcribe, **eval_log)
+
     return TranscriptionResponse(**result)
+
+
+def _model_used(passes: list, field_key: Optional[str]):
+    """The model and beam that really decoded the answer; a two-pass review is "tiny>medium"."""
+    if not passes:
+        return SpeechService.model_and_beam_for(field_key)
+    names = ">".join(p["model"] for p in passes)
+    return names, passes[-1]["beam"]
 
 
 @router.post("/verify")

@@ -1,0 +1,706 @@
+{
+ "version": 1,
+ "note": "Made-up people only. Built by scripts/build_reading_cards.py from interview_script.md.",
+ "sets": {
+  "all": [
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8
+  ],
+  "set_a": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "set_b": [
+   5,
+   6,
+   7,
+   8
+  ]
+ },
+ "cards": [
+  {
+   "no": 1,
+   "style": "A",
+   "answers": {
+    "surname": {
+     "expected": "Abarquez",
+     "read": "Abarquez."
+    },
+    "given_name": {
+     "expected": "Maria Luisa",
+     "read": "Maria Luisa."
+    },
+    "middle_name": {
+     "expected": "Tumampos",
+     "read": "Tumampos."
+    },
+    "address": {
+     "expected": "Purok 2, Barangay Imbatug, Baungon, Bukidnon",
+     "read": "Purok 2, Barangay Imbatug, Baungon, Bukidnon.",
+     "parts": {
+      "address_town": {
+       "expected": "Baungon",
+       "read": "Baungon."
+      },
+      "address_barangay": {
+       "expected": "Imbatug",
+       "read": "Imbatug."
+      },
+      "address_purok": {
+       "expected": "Purok 2",
+       "read": "Purok 2."
+      }
+     }
+    },
+    "place_of_birth": {
+     "expected": "Malaybalay City, Bukidnon",
+     "read": "Malaybalay City, Bukidnon.",
+     "parts": {
+      "place_of_birth_province": {
+       "expected": "Bukidnon",
+       "read": "Bukidnon."
+      },
+      "place_of_birth_town": {
+       "expected": "Malaybalay City",
+       "read": "Malaybalay City."
+      }
+     }
+    },
+    "date": {
+     "expected": "1990-03-14",
+     "read": "March 14, 1990."
+    },
+    "sex": {
+     "expected": "Female",
+     "read": "Female."
+    },
+    "civil_status": {
+     "expected": "Married",
+     "read": "Married."
+    },
+    "citizenship": {
+     "expected": "Filipino",
+     "read": "Filipino."
+    },
+    "icr_no": {
+     "expected": "",
+     "read": "None."
+    },
+    "height": {
+     "expected": "158",
+     "read": "158 centimeters."
+    },
+    "weight": {
+     "expected": "55",
+     "read": "55 kilos."
+    },
+    "occupation": {
+     "expected": "Teacher",
+     "read": "Teacher."
+    },
+    "gross_annual_income": {
+     "expected": "180000",
+     "read": "180,000 pesos."
+    }
+   }
+  },
+  {
+   "no": 2,
+   "style": "B",
+   "answers": {
+    "surname": {
+     "expected": "Dela Cruz",
+     "read": "My surname is Dela Cruz po."
+    },
+    "given_name": {
+     "expected": "Jerome",
+     "read": "My given name is Jerome po."
+    },
+    "middle_name": {
+     "expected": "Bacalso",
+     "read": "My middle name is Bacalso po."
+    },
+    "address": {
+     "expected": "Purok 5, Barangay Lingating, Baungon, Bukidnon",
+     "read": "My address is Purok 5, Barangay Lingating, Baungon, Bukidnon po.",
+     "parts": {
+      "address_town": {
+       "expected": "Baungon",
+       "read": "I live in Baungon po."
+      },
+      "address_barangay": {
+       "expected": "Lingating",
+       "read": "My barangay is Lingating po."
+      },
+      "address_purok": {
+       "expected": "Purok 5",
+       "read": "I live in Purok 5 po."
+      }
+     }
+    },
+    "place_of_birth": {
+     "expected": "Cagayan de Oro City",
+     "read": "I was born in Cagayan de Oro City po.",
+     "parts": {
+      "place_of_birth_province": {
+       "expected": "Cagayan de Oro City",
+       "read": "I was born in Cagayan de Oro City po."
+      }
+     }
+    },
+    "date": {
+     "expected": "1985-05-02",
+     "read": "My birthday is May 2, 1985 po."
+    },
+    "sex": {
+     "expected": "Male",
+     "read": "I am male po."
+    },
+    "civil_status": {
+     "expected": "Single",
+     "read": "I am single po."
+    },
+    "citizenship": {
+     "expected": "Filipino",
+     "read": "I am Filipino po."
+    },
+    "icr_no": {
+     "expected": "",
+     "read": "My ICR number is none po."
+    },
+    "height": {
+     "expected": "170",
+     "read": "My height is 170 centimeters po."
+    },
+    "weight": {
+     "expected": "68",
+     "read": "My weight is 68 kilos po."
+    },
+    "occupation": {
+     "expected": "Farmer",
+     "read": "My occupation is farmer po."
+    },
+    "gross_annual_income": {
+     "expected": "96000",
+     "read": "My annual income is 96,000 pesos po."
+    }
+   }
+  },
+  {
+   "no": 3,
+   "style": "C",
+   "answers": {
+    "surname": {
+     "expected": "Jumawan",
+     "read": "Akong apelyido kay Jumawan."
+    },
+    "given_name": {
+     "expected": "Ricky",
+     "read": "Akong pangalan kay Ricky."
+    },
+    "middle_name": {
+     "expected": "",
+     "read": "Akong middle name kay none."
+    },
+    "address": {
+     "expected": "Sitio Kibalabag, Barangay Pualas, Baungon, Bukidnon",
+     "read": "Sa Sitio Kibalabag, Barangay Pualas, Baungon, Bukidnon.",
+     "parts": {
+      "address_town": {
+       "expected": "Baungon",
+       "read": "Nagpuyo ko sa Baungon."
+      },
+      "address_barangay": {
+       "expected": "Pualas",
+       "read": "Sa barangay Pualas."
+      },
+      "address_purok": {
+       "expected": "Sitio Kibalabag",
+       "read": "Sa Sitio Kibalabag."
+      }
+     }
+    },
+    "place_of_birth": {
+     "expected": "Valencia City, Bukidnon",
+     "read": "Natawo ko sa Valencia City, Bukidnon.",
+     "parts": {
+      "place_of_birth_province": {
+       "expected": "Bukidnon",
+       "read": "Natawo ko sa Bukidnon."
+      },
+      "place_of_birth_town": {
+       "expected": "Valencia City",
+       "read": "Natawo ko sa Valencia City."
+      }
+     }
+    },
+    "date": {
+     "expected": "1972-11-30",
+     "read": "Natawo ko og November 30, 1972."
+    },
+    "sex": {
+     "expected": "Male",
+     "read": "Male ko."
+    },
+    "civil_status": {
+     "expected": "Widowed",
+     "read": "Widowed ko."
+    },
+    "citizenship": {
+     "expected": "Filipino",
+     "read": "Filipino ko."
+    },
+    "icr_no": {
+     "expected": "",
+     "read": "Walay ICR nako."
+    },
+    "height": {
+     "expected": "165",
+     "read": "Ang gitas-on nako kay 165 centimeters."
+    },
+    "weight": {
+     "expected": "72",
+     "read": "Ang gibug-aton nako kay 72 kilos."
+    },
+    "occupation": {
+     "expected": "Carpenter",
+     "read": "Trabaho nako kay carpenter."
+    },
+    "gross_annual_income": {
+     "expected": "120000",
+     "read": "Ang kita nako kay 120,000 pesos."
+    }
+   }
+  },
+  {
+   "no": 4,
+   "style": "D",
+   "answers": {
+    "surname": {
+     "expected": "Sumagang",
+     "read": "Ang apelyido ko ay Sumagang."
+    },
+    "given_name": {
+     "expected": "Analyn",
+     "read": "Ang pangalan ko ay Analyn."
+    },
+    "middle_name": {
+     "expected": "Ocampo",
+     "read": "Ang middle name ko ay Ocampo."
+    },
+    "address": {
+     "expected": "Purok 1, Barangay Liboran, Baungon, Bukidnon",
+     "read": "Ang tirahan ko ay Purok 1, Barangay Liboran, Baungon, Bukidnon.",
+     "parts": {
+      "address_town": {
+       "expected": "Baungon",
+       "read": "Nakatira ako sa Baungon."
+      },
+      "address_barangay": {
+       "expected": "Liboran",
+       "read": "Ang barangay ko ay Liboran."
+      },
+      "address_purok": {
+       "expected": "Purok 1",
+       "read": "Sa Purok 1 ako nakatira."
+      }
+     }
+    },
+    "place_of_birth": {
+     "expected": "Iligan City",
+     "read": "Ipinanganak ako sa Iligan City.",
+     "parts": {
+      "place_of_birth_province": {
+       "expected": "Iligan City",
+       "read": "Ipinanganak ako sa Iligan City."
+      }
+     }
+    },
+    "date": {
+     "expected": "2001-01-09",
+     "read": "Ipinanganak ako noong January 9, 2001."
+    },
+    "sex": {
+     "expected": "Female",
+     "read": "Female po ako."
+    },
+    "civil_status": {
+     "expected": "Single",
+     "read": "Single po ako."
+    },
+    "citizenship": {
+     "expected": "Filipino",
+     "read": "Filipino po ako."
+    },
+    "icr_no": {
+     "expected": "",
+     "read": "Wala akong ICR."
+    },
+    "height": {
+     "expected": "152",
+     "read": "Ang taas ko ay 152 centimeters."
+    },
+    "weight": {
+     "expected": "48",
+     "read": "Ang timbang ko ay 48 kilos."
+    },
+    "occupation": {
+     "expected": "Student",
+     "read": "Ang trabaho ko ay student."
+    },
+    "gross_annual_income": {
+     "expected": "0",
+     "read": "Ang kita ko ay none."
+    }
+   }
+  },
+  {
+   "no": 5,
+   "style": "E",
+   "answers": {
+    "surname": {
+     "expected": "Abella",
+     "read": "Abella, A-B-E-L-L-A."
+    },
+    "given_name": {
+     "expected": "Kristine Joy",
+     "read": "Kristine Joy, K-R-I-S-T-I-N-E J-O-Y."
+    },
+    "middle_name": {
+     "expected": "Pacquiao",
+     "read": "Pacquiao, P-A-C-Q-U-I-A-O."
+    },
+    "address": {
+     "expected": "Purok 4, Barangay Salimbalan, Baungon, Bukidnon",
+     "read": "Purok 4, Barangay Salimbalan, Baungon, Bukidnon.",
+     "parts": {
+      "address_town": {
+       "expected": "Baungon",
+       "read": "Baungon."
+      },
+      "address_barangay": {
+       "expected": "Salimbalan",
+       "read": "Salimbalan."
+      },
+      "address_purok": {
+       "expected": "Purok 4",
+       "read": "Purok 4."
+      }
+     }
+    },
+    "place_of_birth": {
+     "expected": "Talakag, Bukidnon",
+     "read": "Talakag, Bukidnon.",
+     "parts": {
+      "place_of_birth_province": {
+       "expected": "Bukidnon",
+       "read": "Bukidnon."
+      },
+      "place_of_birth_town": {
+       "expected": "Talakag",
+       "read": "Talakag."
+      }
+     }
+    },
+    "date": {
+     "expected": "1995-07-21",
+     "read": "July 21, 1995."
+    },
+    "sex": {
+     "expected": "Female",
+     "read": "Female."
+    },
+    "civil_status": {
+     "expected": "Separated",
+     "read": "Separated."
+    },
+    "citizenship": {
+     "expected": "Filipino",
+     "read": "Filipino."
+    },
+    "icr_no": {
+     "expected": "",
+     "read": "None."
+    },
+    "height": {
+     "expected": "160",
+     "read": "160 centimeters."
+    },
+    "weight": {
+     "expected": "52",
+     "read": "52 kilos."
+    },
+    "occupation": {
+     "expected": "Vendor",
+     "read": "Vendor."
+    },
+    "gross_annual_income": {
+     "expected": "60000",
+     "read": "60,000 pesos."
+    }
+   }
+  },
+  {
+   "no": 6,
+   "style": "B",
+   "answers": {
+    "surname": {
+     "expected": "Gumapac",
+     "read": "My surname is Gumapac po."
+    },
+    "given_name": {
+     "expected": "Rodel",
+     "read": "My given name is Rodel po."
+    },
+    "middle_name": {
+     "expected": "Maglinte",
+     "read": "My middle name is Maglinte po."
+    },
+    "address": {
+     "expected": "Purok 7, Barangay San Vicente, Baungon, Bukidnon",
+     "read": "My address is Purok 7, Barangay San Vicente, Baungon, Bukidnon po.",
+     "parts": {
+      "address_town": {
+       "expected": "Baungon",
+       "read": "I live in Baungon po."
+      },
+      "address_barangay": {
+       "expected": "San Vicente",
+       "read": "My barangay is San Vicente po."
+      },
+      "address_purok": {
+       "expected": "Purok 7",
+       "read": "I live in Purok 7 po."
+      }
+     }
+    },
+    "place_of_birth": {
+     "expected": "Manolo Fortich, Bukidnon",
+     "read": "I was born in Manolo Fortich, Bukidnon po.",
+     "parts": {
+      "place_of_birth_province": {
+       "expected": "Bukidnon",
+       "read": "I was born in Bukidnon po."
+      },
+      "place_of_birth_town": {
+       "expected": "Manolo Fortich",
+       "read": "I was born in Manolo Fortich po."
+      }
+     }
+    },
+    "date": {
+     "expected": "1968-09-05",
+     "read": "My birthday is September 5, 1968 po."
+    },
+    "sex": {
+     "expected": "Male",
+     "read": "I am male po."
+    },
+    "civil_status": {
+     "expected": "Married",
+     "read": "I am married po."
+    },
+    "citizenship": {
+     "expected": "Filipino",
+     "read": "I am Filipino po."
+    },
+    "icr_no": {
+     "expected": "",
+     "read": "My ICR number is none po."
+    },
+    "height": {
+     "expected": "172",
+     "read": "My height is 172 centimeters po."
+    },
+    "weight": {
+     "expected": "80",
+     "read": "My weight is 80 kilos po."
+    },
+    "occupation": {
+     "expected": "Driver",
+     "read": "My occupation is driver po."
+    },
+    "gross_annual_income": {
+     "expected": "150000",
+     "read": "My annual income is 150,000 pesos po."
+    }
+   }
+  },
+  {
+   "no": 7,
+   "style": "C",
+   "answers": {
+    "surname": {
+     "expected": "Ybañez",
+     "read": "Akong apelyido kay Ybañez."
+    },
+    "given_name": {
+     "expected": "Ma. Cristina",
+     "read": "Akong pangalan kay Ma. Cristina."
+    },
+    "middle_name": {
+     "expected": "Lumapas",
+     "read": "Akong middle name kay Lumapas."
+    },
+    "address": {
+     "expected": "Purok 3, Barangay Danatag, Baungon, Bukidnon",
+     "read": "Sa Purok 3, Barangay Danatag, Baungon, Bukidnon.",
+     "parts": {
+      "address_town": {
+       "expected": "Baungon",
+       "read": "Nagpuyo ko sa Baungon."
+      },
+      "address_barangay": {
+       "expected": "Danatag",
+       "read": "Sa barangay Danatag."
+      },
+      "address_purok": {
+       "expected": "Purok 3",
+       "read": "Sa Purok 3."
+      }
+     }
+    },
+    "place_of_birth": {
+     "expected": "Baungon, Bukidnon",
+     "read": "Natawo ko sa Baungon, Bukidnon.",
+     "parts": {
+      "place_of_birth_province": {
+       "expected": "Bukidnon",
+       "read": "Natawo ko sa Bukidnon."
+      },
+      "place_of_birth_town": {
+       "expected": "Baungon",
+       "read": "Natawo ko sa Baungon."
+      }
+     }
+    },
+    "date": {
+     "expected": "1980-12-25",
+     "read": "Natawo ko og December 25, 1980."
+    },
+    "sex": {
+     "expected": "Female",
+     "read": "Female ko."
+    },
+    "civil_status": {
+     "expected": "Widowed",
+     "read": "Widowed ko."
+    },
+    "citizenship": {
+     "expected": "Filipino",
+     "read": "Filipino ko."
+    },
+    "icr_no": {
+     "expected": "",
+     "read": "Walay ICR nako."
+    },
+    "height": {
+     "expected": "155",
+     "read": "Ang gitas-on nako kay 155 centimeters."
+    },
+    "weight": {
+     "expected": "60",
+     "read": "Ang gibug-aton nako kay 60 kilos."
+    },
+    "occupation": {
+     "expected": "Barangay health worker",
+     "read": "Trabaho nako kay barangay health worker."
+    },
+    "gross_annual_income": {
+     "expected": "84000",
+     "read": "Ang kita nako kay 84,000 pesos."
+    }
+   }
+  },
+  {
+   "no": 8,
+   "style": "A",
+   "answers": {
+    "surname": {
+     "expected": "Sta. Maria",
+     "read": "Sta. Maria."
+    },
+    "given_name": {
+     "expected": "Jun-jun",
+     "read": "Jun-jun."
+    },
+    "middle_name": {
+     "expected": "Cabahug",
+     "read": "Cabahug."
+    },
+    "address": {
+     "expected": "Purok 6, Barangay Nicdao, Baungon, Bukidnon",
+     "read": "Purok 6, Barangay Nicdao, Baungon, Bukidnon.",
+     "parts": {
+      "address_town": {
+       "expected": "Baungon",
+       "read": "Baungon."
+      },
+      "address_barangay": {
+       "expected": "Nicdao",
+       "read": "Nicdao."
+      },
+      "address_purok": {
+       "expected": "Purok 6",
+       "read": "Purok 6."
+      }
+     }
+    },
+    "place_of_birth": {
+     "expected": "Davao City",
+     "read": "Davao City.",
+     "parts": {
+      "place_of_birth_province": {
+       "expected": "Davao City",
+       "read": "Davao City."
+      }
+     }
+    },
+    "date": {
+     "expected": "1999-04-17",
+     "read": "April 17, 1999."
+    },
+    "sex": {
+     "expected": "Male",
+     "read": "Male."
+    },
+    "civil_status": {
+     "expected": "Single",
+     "read": "Single."
+    },
+    "citizenship": {
+     "expected": "Filipino",
+     "read": "Filipino."
+    },
+    "icr_no": {
+     "expected": "",
+     "read": "None."
+    },
+    "height": {
+     "expected": "168",
+     "read": "168 centimeters."
+    },
+    "weight": {
+     "expected": "63",
+     "read": "63 kilos."
+    },
+    "occupation": {
+     "expected": "Welder",
+     "read": "Welder."
+    },
+    "gross_annual_income": {
+     "expected": "200000",
+     "read": "200,000 pesos."
+    }
+   }
+  }
+ ]
+}
