@@ -7,15 +7,19 @@ import os
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.concurrency import run_in_threadpool
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.config import settings
 from app.core.database import (
-    DATABASE_KIND, create_tables, missing_migration_message, missing_practice_log_message,
+    DATABASE_KIND, create_tables, missing_eval_message, missing_migration_message,
+    missing_practice_log_message,
 )
 from app.api.routes import auth, speech, extraction, qr, forms, citizen_auth, places
 from app.api.routes import settings as settings_routes
-from app.api.routes import sus, practice_log
+from app.api.routes import sus, practice_log, eval as eval_routes
 
 # ─── Logging Setup ─────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -52,7 +56,7 @@ async def lifespan(app: FastAPI):
 
     # Stop here if the database lacks a migration: otherwise every save at the
     # interview station would fail mid-interview (plan 001.4).
-    problem = missing_migration_message() or missing_practice_log_message()
+    problem = missing_migration_message() or missing_practice_log_message() or missing_eval_message()
     if problem:
         logger.error(problem)
         raise RuntimeError(problem)
@@ -149,6 +153,16 @@ def create_app() -> FastAPI:
         expose_headers=["X-Total-Count", "Content-Disposition", "X-Empty-Reason"],
     )
 
+    # Failed logins and 401/403 answers are counted (time, route, kind; plan 003). Never blocks the answer.
+    @app.exception_handler(StarletteHTTPException)
+    async def count_denied_requests(request, exc):
+        if exc.status_code in (401, 403):
+            path = request.url.path
+            kind = "login_failed" if "login" in path else ("unauthorized" if exc.status_code == 401 else "forbidden")
+            from app.services import eval_service
+            await run_in_threadpool(eval_service.record_security_event, path, kind)
+        return await http_exception_handler(request, exc)
+
     # ── Routers ───────────────────────────────────────────────────────────────
     app.include_router(auth.router,         prefix="/api/auth",       tags=["Staff Authentication"])
     app.include_router(speech.router,       prefix="/api/speech",     tags=["Speech Recognition"])
@@ -159,6 +173,7 @@ def create_app() -> FastAPI:
     app.include_router(settings_routes.router, prefix="/api/settings", tags=["Settings"])
     app.include_router(sus.router,          prefix="/api/sus",        tags=["SUS Survey"])
     app.include_router(practice_log.router, prefix="/api/practice-log", tags=["Practice Log (temporary)"])
+    app.include_router(eval_routes.router,  prefix="/api/eval",        tags=["Evaluation mode"])
     app.include_router(places.router,       prefix="/api/places",     tags=["Place lists (pickers)"])
 
     # Generated PDFs are NOT served as public static files: they contain

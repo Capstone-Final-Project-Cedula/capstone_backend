@@ -8,10 +8,11 @@ GET  /api/speech/script      — get verification script text without speaking
 """
 import os
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, File, Form, status
 from fastapi.responses import Response
 
 from app.core.security import get_current_user
+from app.services import eval_service
 from app.services.speech_service import SpeechService
 from app.services.tts_service import speak_verification, get_verification_script, synthesize_bytes
 from app.schemas.schemas import TranscriptionResponse
@@ -37,6 +38,14 @@ async def transcribe_audio(
                                description="PSGC code of the town answered before ('address_barangay' hint)"),
     province: Optional[str] = Form(None, pattern=r"^\d{0,10}$",
                                    description="PSGC code of the province of birth ('place_of_birth_town' hint)"),
+    # Evaluation mode (plan 003): which logged interview this try belongs to, what was asked, and the
+    # original compressed recording (saved after the response, never sent to Whisper).
+    eval_session_id: Optional[int] = Form(None),
+    eval_field: Optional[str] = Form(None, max_length=40),
+    eval_step: Optional[str] = Form(None, max_length=10),
+    eval_try: Optional[str] = Form(None, max_length=40, pattern=r"^[A-Za-z0-9_-]*$"),
+    eval_clip: Optional[UploadFile] = File(None),
+    background_tasks: BackgroundTasks = None,
     current_user=Depends(get_current_user),
 ):
     """
@@ -84,7 +93,12 @@ async def transcribe_audio(
         )
 
     dropped = result.pop("dropped", None)
+    passes = result.pop("passes", [])
+    eval_logs = _eval_rows(passes, field_key, result, eval_session_id, eval_field, eval_step, eval_try,
+                           current_user.id)
     if not result.get("transcript"):
+        for row in eval_logs:
+            eval_service.log_transcribe(**row)        # a silent try is a row too (no clip: nothing to hear)
         # Why it is empty, for the practice log (plan 002.2): the message stays the same for every reason.
         reason = {"echo": "dropped-echo", "repetition": "dropped-repetition"}.get(dropped, "whisper-empty")
         raise HTTPException(
@@ -94,7 +108,39 @@ async def transcribe_audio(
             headers={"X-Empty-Reason": reason},
         )
 
+    if eval_logs:
+        clip = await eval_clip.read() if eval_clip is not None else None
+        # No compressed recording sent: the WAV is saved instead (plan 003 A). One clip per try.
+        eval_logs[0]["clip"] = clip if clip else audio_bytes
+        eval_logs[0]["clip_type"] = (eval_clip.content_type if clip else audio_file.content_type) or "audio/wav"
+        for row in eval_logs:
+            background_tasks.add_task(eval_service.log_transcribe, **row)
+
     return TranscriptionResponse(**result)
+
+
+def _eval_rows(passes, field_key, result, session_id, field, step, try_id, user_id) -> list:
+    """
+    The evaluation log rows of one Whisper call: one per decoding pass that really ran (the review step is
+    two-pass), each with its own model, beam, transcript and seconds. The first keeps the try id.
+    """
+    if not (session_id and step and (field or field_key)):
+        return []
+    base = dict(session_id=session_id, user_id=user_id, field=field or field_key, step=step, engine="whisper")
+    if not passes:
+        model, beam = SpeechService.model_and_beam_for(field_key)
+        return [dict(base, try_id=try_id or None, model=model, beam=beam, transcript=result.get("transcript", ""),
+                     seconds=result.get("processing_time_seconds"))]
+    rows = []
+    for index, one in enumerate(passes):
+        last = index == len(passes) - 1
+        rows.append(dict(
+            base, try_id=(try_id if index == 0 else f"{try_id}-p{index + 1}") if try_id else None,
+            model=one["model"], beam=one["beam"],
+            seconds=result.get("processing_time_seconds") if len(passes) == 1 else one["seconds"],
+            transcript=result.get("transcript", "") if last else (one.get("text") or "").strip(),
+        ))
+    return rows
 
 
 @router.post("/verify")

@@ -2043,7 +2043,8 @@ class TestWhisperEngine:
                 patch.object(speech_service.settings, "WHISPER_FIELD_MODELS", False), \
                 patch.dict(SpeechService._models, clear=True):
             out = SpeechService.transcribe_file(np.zeros(16000, dtype=np.float32), "surname")
-        assert set(out) == {"transcript", "dropped", "language", "confidence", "segments", "processing_time_seconds"}
+        assert set(out) == {"transcript", "dropped", "language", "confidence", "segments", "processing_time_seconds",
+                            "passes"}
         assert out["transcript"] == "Dela Cruz po." and out["language"] == "en" and out["dropped"] is None
         assert out["segments"][0]["text"] == "Dela Cruz po." and 0 < out["confidence"] < 1
         (_, name, load_kwargs), (_, _, options) = calls

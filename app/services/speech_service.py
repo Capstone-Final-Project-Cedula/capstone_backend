@@ -388,17 +388,22 @@ class SpeechService:
         yes (or silence), the same audio is decoded again with Medium, whose text is used."""
         passes = [False]
         result: dict = {}
+        ran: list = []   # what each pass really used, for the evaluation log (plan 003); decoding is unchanged
         for second in passes:
             name, beam = cls.model_and_beam_for(field_key, second)
             model = cls.get_model(name)
             logger.info(f"Whisper model for {field_key or 'no field'}: {name}, beam {beam}"
                         f"{' (second pass)' if second else ''}")
+            pass_start = time.time()
             with _model_lock:
                 result = _run(_engine(), model, audio, prompt, beam=beam)
+            ran.append({"model": name, "beam": beam, "second_pass": second,
+                        "seconds": round(time.time() - pass_start, 3), "text": result.get("text", "")})
             if field_key == "review" and not second and settings.WHISPER_FIELD_MODELS:
                 heard = _clean_transcript(result.get("text", ""), result.get("segments", []))
                 if heard and not is_plain_yes(heard):
                     passes.append(True)
+        result["eval_passes"] = ran
         return result
 
     @classmethod
@@ -498,6 +503,7 @@ class SpeechService:
                 for s in segments
             ],
             "processing_time_seconds": round(processing_time, 3),
+            "passes": result.get("eval_passes", []),
         }
 
     @classmethod

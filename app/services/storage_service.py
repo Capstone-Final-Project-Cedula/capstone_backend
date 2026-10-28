@@ -86,6 +86,21 @@ def download_bytes(ref: str) -> Tuple[bytes, str]:
     return response.content, response.headers.get("content-type", "application/octet-stream")
 
 
+def delete_object_strict(ref: str) -> None:
+    """Delete an object and raise StorageError when the storage service did not confirm it (plan 003: the
+    admin's "Delete evaluation audio now" must not report a clip gone while it is still stored)."""
+    bucket, path = parse_ref(ref)
+    response = httpx.request(
+        "DELETE",
+        f"{settings.SUPABASE_URL}/storage/v1/object/{bucket}",
+        json={"prefixes": [path]},
+        headers=_headers(),
+        timeout=30,
+    )
+    if response.status_code >= 400:
+        raise StorageError(f"Could not delete {ref}: {response.status_code}")
+
+
 def delete_object(ref: str) -> None:
     """Best-effort delete; logs instead of raising so DB changes are never blocked."""
     try:

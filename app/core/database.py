@@ -101,12 +101,37 @@ def missing_practice_log_message(bind=None):
     return MISSING_PRACTICE_LOG_MIGRATION
 
 
+MISSING_EVAL_MIGRATION = (
+    "Database is missing migration 20261028090000_evaluation_mode.sql (plan 003: evaluation mode). "
+    "Apply it in the Supabase SQL editor and create the private 'eval-audio' storage bucket "
+    "(see capstone_docs/TESTING-LAPTOP.md)."
+)
+
+
+def missing_eval_message(bind=None):
+    """
+    The start-up message when an existing database lacks the evaluation-mode migration, else None.
+    Evaluation mode is ON by default, so the check always runs; an empty database (tests) has no
+    app_settings yet: fine. Must run BEFORE create_tables(): create_all() would make the eval tables
+    without row level security and never adds the new app_settings columns.
+    """
+    from app.models.eval import EVAL_TABLE_NAMES
+    inspector = inspect(bind if bind is not None else engine)
+    if not inspector.has_table("app_settings"):
+        return None
+    columns = {column["name"] for column in inspector.get_columns("app_settings")}
+    if "evaluation_mode" not in columns or not all(inspector.has_table(name) for name in EVAL_TABLE_NAMES):
+        return MISSING_EVAL_MIGRATION
+    return None
+
+
 def create_tables():
     """Create any missing tables defined in models. Called on startup."""
     from app.models import applicant, issuance, mobile_submission, staff_user  # noqa: F401
     from app.models import citizen_user, app_settings, sus_response, record_access_log  # noqa: F401
-    from app.models import practice_log  # noqa: F401
+    from app.models import practice_log, eval as eval_models  # noqa: F401
     # The temporary practice-log tables (plan 001.7) exist only through their migration:
     # create_all() would make them without row level security.
-    tables = [t for t in Base.metadata.sorted_tables if not t.info.get("practice_log")]
+    # Same for the evaluation-mode tables (plan 003).
+    tables = [t for t in Base.metadata.sorted_tables if not t.info.get("practice_log") and not t.info.get("eval")]
     Base.metadata.create_all(bind=engine, tables=tables)
