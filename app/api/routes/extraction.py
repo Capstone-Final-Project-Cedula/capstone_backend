@@ -8,10 +8,11 @@ POST /api/extraction/tax      — compute community tax from income
 """
 from typing import Dict, List, Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.core.security import get_current_user
+from app.services import eval_service
 from app.services.answer_service import understand_answer, understand_answers
 from app.services.extraction_service import extract_fields
 from app.services.tax_service import compute_tax
@@ -37,6 +38,10 @@ class AnswerRequest(BaseModel):
     spoken: bool = False   # True: Whisper's transcript in the voice interview (names may be respelled)
     town: Optional[str] = Field(None, pattern=r"^\d{0,10}$")   # PSGC code of the town, for "address_barangay"
     province: Optional[str] = Field(None, pattern=r"^\d{0,10}$")   # PSGC code of the province, "place_of_birth_town"
+    # Evaluation mode (plan 003): the logged interview, the step this try was, and the try id sent with the Whisper call.
+    eval_session_id: Optional[int] = None
+    eval_step: Optional[str] = Field(None, max_length=10)
+    eval_try: Optional[str] = Field(None, max_length=40, pattern=r"^[A-Za-z0-9_-]*$")
 
 
 class AnswerResponse(BaseModel):
@@ -65,7 +70,8 @@ class AnswersResponse(BaseModel):
 
 
 @router.post("/answer", response_model=AnswerResponse)
-def understand_interview_answer(payload: AnswerRequest, current_user=Depends(get_current_user)):
+def understand_interview_answer(payload: AnswerRequest, background_tasks: BackgroundTasks,
+                                current_user=Depends(get_current_user)):
     """
     Understand ONE answer of the live interview (DistilBERT NER for names and
     places, regex for dates, numbers, units and choices). Returns the
@@ -74,6 +80,11 @@ def understand_interview_answer(payload: AnswerRequest, current_user=Depends(get
     """
     result = understand_answer(payload.field_key, payload.transcript, spoken=payload.spoken, town=payload.town or None,
                                province=payload.province or None)
+    if payload.eval_session_id and payload.eval_step:
+        background_tasks.add_task(
+            eval_service.log_extraction, payload.eval_session_id, current_user.id, field=payload.field_key,
+            step=payload.eval_step, try_id=payload.eval_try or None, spoken=payload.spoken,
+            value=result.value, ok=result.ok, transcript=payload.transcript)
     return AnswerResponse(**result.as_dict())
 
 
