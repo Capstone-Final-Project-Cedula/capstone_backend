@@ -119,11 +119,6 @@ class TestEvalAdminOnly:
         assert started.json() == {"session_id": None}                      # off: nothing is logged
         _eval_put(client, admin_token, evaluation_mode=True)
 
-    def test_practice_log_on_keeps_evaluation_logging_off(self, client, staff_token):
-        from app.services import eval_service
-        with patch.object(eval_service.env_settings, "PRACTICE_LOG_ENABLED", True):
-            assert client.get("/api/eval/consent", headers=_auth(staff_token)).json() == {"recording": False}
-
 
 class TestEvalRoundsAndCards:
     def test_participant_codes_count_per_round_and_cards_wrap(self, client, staff_token, admin_token):

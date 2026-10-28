@@ -69,14 +69,11 @@ def get_eval_settings(db: Session) -> dict:
         "round_condition": "quiet" if row is None else row.eval_round_condition,
         "card_set": None if row is None else row.eval_round_card_set,
         "round_no": 1 if row is None else row.eval_round_no,
-        "practice_log_conflict": bool(env_settings.PRACTICE_LOG_ENABLED),
     }
 
 
 def recording_on(db: Session) -> bool:
-    """Evaluation mode on, and the temporary practice log off (the two logs never run together)."""
-    if env_settings.PRACTICE_LOG_ENABLED:
-        return False
+    """Evaluation mode on (no settings row yet = on)."""
     row = _row(db)
     return True if row is None else bool(row.evaluation_mode)
 
@@ -683,9 +680,52 @@ def delete_batch(db: Session, size: int = 100) -> dict:
 
 # ─── Called by /forms/issue ──────────────────────────────────────────────────
 
+# Interview question key (what the web calls it) -> the ApplicantRecord column saved at issue.
+FIELD_TO_RECORD = {
+    "surname": "surname",
+    "given_name": "given_name",
+    "middle_name": "middle_name",
+    "address": "address",
+    "date": "date_of_birth",
+    "sex": "sex",
+    "civil_status": "civil_status",
+    "citizenship": "citizenship",
+    "icr_no": "icr_number",
+    "place_of_birth": "place_of_birth",
+    "height": "height_cm",
+    "weight": "weight_kg",
+    "occupation": "occupation",
+    "gross_annual_income": "gross_annual_income",
+}
+
+
+def _canon(field: str, value) -> str:
+    """One text form for a value, so a voice value and the saved value can be compared."""
+    value = getattr(value, "value", value)         # enums (sex, civil status)
+    if value is None:
+        return ""
+    if isinstance(value, bool):
+        return str(value)
+    if isinstance(value, (int, float)):
+        number = float(value)
+        text = str(int(number)) if number.is_integer() else repr(number)   # 158.0 and 158 are the same value
+    else:
+        text = str(value).strip()
+    # A blank height / weight is saved as nothing, though the form sends 0.
+    if field in ("height", "weight") and text == "0":
+        return ""
+    return text
+
+
+def _final_value(field: str, applicant) -> str:
+    attr = FIELD_TO_RECORD[field]
+    value = getattr(applicant, attr, None)
+    if attr == "date_of_birth" and value is not None:
+        value = value.isoformat()
+    return _canon(field, value)
+
 def record_values_for(db: Session, session: EvalSession) -> Dict[str, str]:
-    """The saved CTC value of each of the 14 fields (same forms the practice log compares)."""
-    from app.api.routes.practice_log import FIELD_TO_RECORD, _final_value
+    """The saved CTC value of each of the 14 fields."""
     from app.models.issuance import CTCIssuance
     issuance = db.get(CTCIssuance, session.issuance_id) if session.issuance_id else None
     applicant = issuance.applicant if issuance else None
