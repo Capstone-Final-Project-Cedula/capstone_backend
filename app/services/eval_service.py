@@ -385,6 +385,8 @@ def score_unit(session: EvalSession, field: str, rows: List[EvalAnswer], note: O
     accepted = next((r for r in reversed(counted) if r.extract_ok), None)
     if note.get("accepted_engine") == "skipped":
         accepted = None          # the read-back was refused and the question skipped: nothing was accepted
+    if note.get("accepted_engine") == "typed":
+        accepted = None          # finished by typing: an earlier voice answer that was refused earns nothing
     if final_value is None:
         final_value = accepted.extracted_value if accepted else ""
     final_norm = norm(field, final_value)
@@ -408,6 +410,8 @@ def score_unit(session: EvalSession, field: str, rows: List[EvalAnswer], note: O
     correct_finished = bool(answered and final_norm == target)
 
     def voice_hit(row: EvalAnswer) -> bool:
+        if target == "" and finished == "end_typed":
+            return False         # a none that had to be typed was not accepted by voice
         return bool(row.extract_ok and row.engine != "typed" and norm(field, row.extracted_value) == target)
 
     first_spoken = next((r for r in counted if r.step == "spoken" and r.engine != "typed"), None)
@@ -485,7 +489,10 @@ def score_session(db: Session, session: EvalSession, record_values: Dict[str, st
                 # Voice credit only if what was heard still is in the saved value: staff who retyped the whole
                 # address on the review page get no voice hit (Codex verify round 1).
                 saved = set(norm(field, record_values.get(field, "")).split())
-                kept = all(set(norm(field, u["final_value"]).split()) <= saved for _, u in part_units)
+                heard = [set(norm(field, u["final_value"]).split()) for _, u in part_units]
+                # Every heard part is still in the saved value, and the saved value holds nothing that was not heard
+                # (an accepted blank purok changed to "Purok 7" is a staff edit).
+                kept = all(words <= saved for words in heard) and saved <= set().union(*heard)
                 if not kept:
                     whole["correct_first"] = whole["correct_ladder"] = False
                     if whole["finished_in"] != "blank":

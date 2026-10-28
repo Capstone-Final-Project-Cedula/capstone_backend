@@ -16,6 +16,15 @@ from tests.test_backend import (  # noqa: F401
 from app.services.speech_service import SpeechService  # after test_backend: it sets the throwaway database first
 
 
+@pytest.fixture(scope="module", autouse=True)
+def release_connections(setup_test_db):
+    """Closes every pooled connection to the throwaway database before it is deleted (background tasks and the
+    name lexicon open their own sessions)."""
+    yield
+    from app.core.database import engine as app_engine
+    app_engine.dispose()
+
+
 def _eval_put(client, admin_token, **body):
     resp = client.put("/api/eval/settings", json=body, headers=_auth(admin_token))
     assert resp.status_code == 200, resp.text
@@ -704,3 +713,20 @@ class TestEvalCodexVerifyRound1:
         db.expire_all()
         row = db.query(EvalAnswer).filter(EvalAnswer.session_id == sid).one()
         assert (row.engine, row.transcript) == ("browser", "Abarquez")
+
+
+class TestEvalCodexVerifyRound2:
+    def test_recovering_a_rejected_none_by_typing_earns_no_voice_credit(self, db):
+        s = _eval_session(db, card_no=3)
+        _eval_try(db, s, "icr_no", "spoken", "none", "", ok=True)        # refused at the read-back
+        notes = [{"field": "icr_no", "accepted_engine": "typed", "accepted_value": None, "left_blank": True}]
+        row = _score(db, s, {**CARD1, "icr_no": ""}, notes)["icr_no"]
+        assert (row.finished_in, row.correct_first, row.correct_ladder, row.correct_finished) == (
+            "end_typed", False, False, True)
+
+    def test_an_accepted_blank_purok_changed_to_a_purok_by_staff_earns_no_voice_credit(self, db):
+        s = _eval_session(db, round_type="uat")
+        for key, value in (("address_town", "Baungon, Bukidnon"), ("address_barangay", "Imbatug"), ("address_purok", "")):
+            _eval_try(db, s, key, "spoken", value or "none", value)
+        row = _score(db, s, {**CARD1, "address": "Purok 7, Barangay Imbatug, Baungon, Bukidnon"})["address"]
+        assert (row.finished_in, row.correct_first, row.correct_ladder) == ("staff_typed", False, False)
