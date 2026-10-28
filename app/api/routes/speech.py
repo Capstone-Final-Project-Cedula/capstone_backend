@@ -94,17 +94,11 @@ async def transcribe_audio(
 
     dropped = result.pop("dropped", None)
     passes = result.pop("passes", [])
-    eval_log = None
-    if eval_session_id and eval_step and (eval_field or field_key):
-        name, beam = _model_used(passes, field_key)
-        eval_log = dict(
-            session_id=eval_session_id, user_id=current_user.id, field=eval_field or field_key, step=eval_step,
-            try_id=eval_try or None, engine="whisper", model=name, beam=beam,
-            transcript=result.get("transcript", ""), seconds=result.get("processing_time_seconds"),
-        )
+    eval_logs = _eval_rows(passes, field_key, result, eval_session_id, eval_field, eval_step, eval_try,
+                           current_user.id)
     if not result.get("transcript"):
-        if eval_log:
-            eval_service.log_transcribe(**eval_log)   # a silent try is a row too (no clip: nothing to hear)
+        for row in eval_logs:
+            eval_service.log_transcribe(**row)        # a silent try is a row too (no clip: nothing to hear)
         # Why it is empty, for the practice log (plan 002.2): the message stays the same for every reason.
         reason = {"echo": "dropped-echo", "repetition": "dropped-repetition"}.get(dropped, "whisper-empty")
         raise HTTPException(
@@ -114,22 +108,39 @@ async def transcribe_audio(
             headers={"X-Empty-Reason": reason},
         )
 
-    if eval_log:
+    if eval_logs:
         clip = await eval_clip.read() if eval_clip is not None else None
-        # No compressed recording sent: the WAV is saved instead (plan 003 A).
-        eval_log["clip"] = clip if clip else audio_bytes
-        eval_log["clip_type"] = (eval_clip.content_type if clip else audio_file.content_type) or "audio/wav"
-        background_tasks.add_task(eval_service.log_transcribe, **eval_log)
+        # No compressed recording sent: the WAV is saved instead (plan 003 A). One clip per try.
+        eval_logs[0]["clip"] = clip if clip else audio_bytes
+        eval_logs[0]["clip_type"] = (eval_clip.content_type if clip else audio_file.content_type) or "audio/wav"
+        for row in eval_logs:
+            background_tasks.add_task(eval_service.log_transcribe, **row)
 
     return TranscriptionResponse(**result)
 
 
-def _model_used(passes: list, field_key: Optional[str]):
-    """The model and beam that really decoded the answer; a two-pass review is "tiny>medium"."""
+def _eval_rows(passes, field_key, result, session_id, field, step, try_id, user_id) -> list:
+    """
+    The evaluation log rows of one Whisper call: one per decoding pass that really ran (the review step is
+    two-pass), each with its own model, beam, transcript and seconds. The first keeps the try id.
+    """
+    if not (session_id and step and (field or field_key)):
+        return []
+    base = dict(session_id=session_id, user_id=user_id, field=field or field_key, step=step, engine="whisper")
     if not passes:
-        return SpeechService.model_and_beam_for(field_key)
-    names = ">".join(p["model"] for p in passes)
-    return names, passes[-1]["beam"]
+        model, beam = SpeechService.model_and_beam_for(field_key)
+        return [dict(base, try_id=try_id or None, model=model, beam=beam, transcript=result.get("transcript", ""),
+                     seconds=result.get("processing_time_seconds"))]
+    rows = []
+    for index, one in enumerate(passes):
+        last = index == len(passes) - 1
+        rows.append(dict(
+            base, try_id=(try_id if index == 0 else f"{try_id}-p{index + 1}") if try_id else None,
+            model=one["model"], beam=one["beam"],
+            seconds=result.get("processing_time_seconds") if len(passes) == 1 else one["seconds"],
+            transcript=result.get("transcript", "") if last else (one.get("text") or "").strip(),
+        ))
+    return rows
 
 
 @router.post("/verify")

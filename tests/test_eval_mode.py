@@ -371,7 +371,11 @@ class TestEvalEndToEnd:
         db.expire_all()
         rows = {r.try_id: r for r in db.query(EvalAnswer).filter(EvalAnswer.session_id == sid)}
         assert rows["silent1"].transcript == "" and rows["silent1"].audio_ref is None
-        assert rows["rev1"].model == "tiny>medium" and rows["rev1"].yes_no == "no"
+        assert (rows["rev1"].model, rows["rev1"].beam, rows["rev1"].transcript, rows["rev1"].whisper_seconds) == (
+            "tiny", 5, "no", 0.3)                                  # the first pass is kept as it was heard
+        assert (rows["rev1-p2"].model, rows["rev1-p2"].transcript, rows["rev1-p2"].whisper_seconds) == (
+            "medium", "no it is cruz", 1.7)
+        assert rows["rev1"].yes_no == "no"
 
     def test_failed_logins_and_denied_calls_are_counted(self, client, staff_token, admin_token):
         before = client.get("/api/eval/stats", headers=_auth(admin_token)).json()["security"]
@@ -546,7 +550,7 @@ class TestEvalDeleteNow:
         assert client.post("/api/eval/delete-audio", json={"size": 100}, headers=_auth(admin_token)).status_code == 400
         assert eval_service.pending_delete_count(db) == before              # no click, nothing removed
         deleted = []
-        with patch.object(storage_service, "delete_object", side_effect=deleted.append):
+        with patch.object(storage_service, "delete_object_strict", side_effect=deleted.append):
             first = client.post("/api/eval/delete-audio", json={"confirm": True, "size": 4},
                                 headers=_auth(admin_token)).json()
             assert first["rows"] == 4 and first["remaining"] == before - 4   # a batch, not everything
@@ -559,6 +563,23 @@ class TestEvalDeleteNow:
         assert all(r.audio_ref is None and r.transcript is None and r.final_value is None for r in rows)
         final = next(r for r in rows if r.field == "surname" and r.step == "final")
         assert final.correct_first is True and final.wer_words is not None   # the numbers stay
+
+
+    def test_a_clip_storage_did_not_delete_is_kept_and_reported(self, client, admin_token, db):
+        from app.models.eval import EvalAnswer, EvalSession
+        from app.services import storage_service
+        db.query(EvalAnswer).delete()
+        db.query(EvalSession).delete()
+        db.commit()
+        s = _eval_session(db, round_no=11)
+        row = _eval_try(db, s, "surname", "spoken", "heard", "Abarquez")
+        row.audio_ref = "eval-audio/s1/stuck.webm"
+        db.commit()
+        with patch.object(storage_service, "delete_object_strict", side_effect=storage_service.StorageError("503")):
+            result = client.post("/api/eval/delete-audio", json={"confirm": True}, headers=_auth(admin_token)).json()
+        assert result["failed"] == 1 and result["remaining"] == 1
+        db.expire_all()
+        assert db.get(EvalAnswer, row.id).audio_ref == "eval-audio/s1/stuck.webm"     # the next click retries it
 
 
 class TestEvalStartupAndReview:
@@ -596,3 +617,90 @@ class TestEvalStartupAndReview:
         with patch.object(speech_service.settings, "WHISPER_FIELD_MODELS", False):
             off = run(["no, it is cruz"])
         assert [p["model"] for p in off["eval_passes"]] == [speech_service.settings.WHISPER_MODEL]
+
+
+class TestEvalCodexVerifyRound1:
+    """Regressions for the Codex verify findings (plan 003, round 1)."""
+
+    def test_card_part_values_match_what_the_real_extraction_returns(self):
+        from app.services import eval_service
+        from app.core.database import engine as app_engine
+        from app.services.answer_service import understand_answer
+        self._check_cards(eval_service, understand_answer)
+        app_engine.dispose()          # the name lexicon read the throwaway database on its own session
+
+    @staticmethod
+    def _check_cards(eval_service, understand_answer):
+        for card in eval_service.load_cards()["cards"]:
+            for parent in ("address", "place_of_birth"):
+                for key, part in card["answers"][parent]["parts"].items():
+                    heard = part["expected"].split(",")[0]       # what the volunteer says: the place itself
+                    result = understand_answer(key, heard, spoken=True)
+                    assert result.ok, (card["no"], key, heard)
+                    assert eval_service.norm(key, result.value) == eval_service.norm(key, part["expected"]), (
+                        card["no"], key, result.value, part["expected"])
+
+    def test_a_staff_retyped_address_gets_no_voice_credit(self, db):
+        s = _eval_session(db, round_type="uat")
+        for key, value in (("address_town", "Baungon, Bukidnon"), ("address_barangay", "Imbatug"),
+                           ("address_purok", "Purok 2")):
+            _eval_try(db, s, key, "spoken", value, value)
+        row = _score(db, s, {**CARD1, "address": "Purok 9, Barangay Lingating, Baungon, Bukidnon"})["address"]
+        assert (row.finished_in, row.correct_first, row.correct_ladder, row.correct_finished) == (
+            "staff_typed", False, False, True)
+        s2 = _eval_session(db, round_type="uat")
+        for key, value in (("address_town", "Baungon, Bukidnon"), ("address_barangay", "Imbatug"),
+                           ("address_purok", "Purok 2")):
+            _eval_try(db, s2, key, "spoken", value, value)
+        kept = _score(db, s2, {**CARD1, "address": "Purok 2, Barangay Imbatug, Baungon, Bukidnon"})["address"]
+        assert (kept.finished_in, kept.correct_first, kept.correct_ladder) == ("spoken_1", True, True)
+
+    def test_a_city_only_birthplace_needs_no_town_step_in_a_uat_round(self, db):
+        s = _eval_session(db, round_type="uat")
+        _eval_try(db, s, "place_of_birth_province", "spoken", "Cagayan de Oro City", "Cagayan de Oro City")
+        row = _score(db, s, {**CARD1, "place_of_birth": "Cagayan de Oro City"})["place_of_birth"]
+        assert (row.finished_in, row.correct_first, row.correct_finished) == ("spoken_1", True, True)
+
+    def test_browser_recognised_answers_count_as_voice_tries(self, db):
+        s = _eval_session(db, card_no=1)
+        _eval_try(db, s, "surname", "spoken", "Abarquez", "Abarquez", engine="browser", model=None)
+        row = _score(db, s, CARD1)["surname"]
+        assert (row.finished_in, row.correct_first, row.correct_ladder, row.correct_finished) == ("spoken_1", True, True, True)
+        assert row.wer_words is None                  # WER is Whisper's: a browser transcript is not scored
+
+    def test_a_rejected_none_followed_by_a_skip_is_unanswered(self, db):
+        s = _eval_session(db, card_no=3)
+        _eval_try(db, s, "icr_no", "spoken", "none", "", ok=True)
+        notes = [{"field": "icr_no", "accepted_engine": "skipped", "skipped": True}]
+        row = _score(db, s, {**CARD1, "icr_no": ""}, notes)["icr_no"]
+        assert (row.finished_in, row.correct_first, row.correct_ladder, row.correct_finished) == ("blank", False, False, False)
+
+    def test_an_unanswered_income_is_a_miss(self, db):
+        s = _eval_session(db, card_no=4)               # card 4 has no income: expected 0
+        row = _score(db, s, {**CARD1, "gross_annual_income": "0"})["gross_annual_income"]
+        assert (row.finished_in, row.correct_finished) == ("blank", False)
+
+    def test_a_reply_at_the_read_back_that_was_a_new_answer_is_scored_as_that_try(self, db):
+        from app.models.eval import EvalAnswer
+        from app.services import eval_service
+        s = _eval_session(db, card_no=1)
+        confirm = EvalAnswer(session_id=s.id, field="surname", step="confirm", attempt_no=0, try_id="c9", engine="whisper",
+                             model="tiny", beam=5, transcript="no it is Abarquez", yes_no="no")
+        db.add(confirm)
+        db.commit()
+        eval_service.log_extraction(s.id, s.staff_user_id, field="surname", step="spoken", try_id="c9", spoken=True,
+                                    value="Abarquez", ok=True)
+        db.expire_all()
+        row = db.get(EvalAnswer, confirm.id)
+        assert (row.step, row.yes_no, row.extracted_value) == ("spoken", None, "Abarquez")
+        assert _score(db, s, CARD1)["surname"].correct_ladder is True
+
+    def test_a_browser_try_keeps_what_the_browser_heard(self, client, staff_token, admin_token, db):
+        from app.models.eval import EvalAnswer
+        _eval_put(client, admin_token, evaluation_mode=True, round_type="practice")
+        sid = client.post("/api/eval/sessions", json={"input_method": "voice"}, headers=_auth(staff_token)).json()["session_id"]
+        client.post("/api/extraction/answer", headers=_auth(staff_token), json={
+            "field_key": "surname", "transcript": "Abarquez", "spoken": True, "eval_session_id": sid, "eval_step": "spoken"})
+        db.expire_all()
+        row = db.query(EvalAnswer).filter(EvalAnswer.session_id == sid).one()
+        assert (row.engine, row.transcript) == ("browser", "Abarquez")

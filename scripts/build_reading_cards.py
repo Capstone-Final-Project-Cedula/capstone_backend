@@ -85,7 +85,7 @@ def build_card(p1, p2):
         "read": generic(style, f"{full_addr}.", f"My address is {full_addr} po.", f"Sa {full_addr}.",
                         f"Ang tirahan ko ay {full_addr}."),
         "parts": {
-            "address_town": {"expected": town, "read": generic(
+            "address_town": {"expected": f"{town}, Bukidnon", "read": generic(
                 style, f"{town}.", f"I live in {town} po.", f"Nagpuyo ko sa {town}.", f"Nakatira ako sa {town}.")},
             "address_barangay": {"expected": brgy, "read": generic(
                 style, f"{brgy}.", f"My barangay is {brgy} po.", f"Sa barangay {brgy}.",
@@ -99,7 +99,8 @@ def build_card(p1, p2):
         style, f"{bprov}.", f"I was born in {bprov} po.", f"Natawo ko sa {bprov}.",
         f"Ipinanganak ako sa {bprov}.")}}
     if btown:
-        parts["place_of_birth_town"] = {"expected": btown, "read": generic(
+        # The extractor returns a town with its province ("Malaybalay City, Bukidnon"); the card says the same.
+        parts["place_of_birth_town"] = {"expected": f"{btown}, {bprov}", "read": generic(
             style, f"{btown}.", f"I was born in {btown} po.", f"Natawo ko sa {btown}.",
             f"Ipinanganak ako sa {btown}.")}
     a["place_of_birth"] = {

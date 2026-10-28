@@ -47,7 +47,7 @@
      "read": "Purok 2, Barangay Imbatug, Baungon, Bukidnon.",
      "parts": {
       "address_town": {
-       "expected": "Baungon",
+       "expected": "Baungon, Bukidnon",
        "read": "Baungon."
       },
       "address_barangay": {
@@ -69,7 +69,7 @@
        "read": "Bukidnon."
       },
       "place_of_birth_town": {
-       "expected": "Malaybalay City",
+       "expected": "Malaybalay City, Bukidnon",
        "read": "Malaybalay City."
       }
      }
@@ -133,7 +133,7 @@
      "read": "My address is Purok 5, Barangay Lingating, Baungon, Bukidnon po.",
      "parts": {
       "address_town": {
-       "expected": "Baungon",
+       "expected": "Baungon, Bukidnon",
        "read": "I live in Baungon po."
       },
       "address_barangay": {
@@ -215,7 +215,7 @@
      "read": "Sa Sitio Kibalabag, Barangay Pualas, Baungon, Bukidnon.",
      "parts": {
       "address_town": {
-       "expected": "Baungon",
+       "expected": "Baungon, Bukidnon",
        "read": "Nagpuyo ko sa Baungon."
       },
       "address_barangay": {
@@ -237,7 +237,7 @@
        "read": "Natawo ko sa Bukidnon."
       },
       "place_of_birth_town": {
-       "expected": "Valencia City",
+       "expected": "Valencia City, Bukidnon",
        "read": "Natawo ko sa Valencia City."
       }
      }
@@ -301,7 +301,7 @@
      "read": "Ang tirahan ko ay Purok 1, Barangay Liboran, Baungon, Bukidnon.",
      "parts": {
       "address_town": {
-       "expected": "Baungon",
+       "expected": "Baungon, Bukidnon",
        "read": "Nakatira ako sa Baungon."
       },
       "address_barangay": {
@@ -383,7 +383,7 @@
      "read": "Purok 4, Barangay Salimbalan, Baungon, Bukidnon.",
      "parts": {
       "address_town": {
-       "expected": "Baungon",
+       "expected": "Baungon, Bukidnon",
        "read": "Baungon."
       },
       "address_barangay": {
@@ -405,7 +405,7 @@
        "read": "Bukidnon."
       },
       "place_of_birth_town": {
-       "expected": "Talakag",
+       "expected": "Talakag, Bukidnon",
        "read": "Talakag."
       }
      }
@@ -469,7 +469,7 @@
      "read": "My address is Purok 7, Barangay San Vicente, Baungon, Bukidnon po.",
      "parts": {
       "address_town": {
-       "expected": "Baungon",
+       "expected": "Baungon, Bukidnon",
        "read": "I live in Baungon po."
       },
       "address_barangay": {
@@ -491,7 +491,7 @@
        "read": "I was born in Bukidnon po."
       },
       "place_of_birth_town": {
-       "expected": "Manolo Fortich",
+       "expected": "Manolo Fortich, Bukidnon",
        "read": "I was born in Manolo Fortich po."
       }
      }
@@ -555,7 +555,7 @@
      "read": "Sa Purok 3, Barangay Danatag, Baungon, Bukidnon.",
      "parts": {
       "address_town": {
-       "expected": "Baungon",
+       "expected": "Baungon, Bukidnon",
        "read": "Nagpuyo ko sa Baungon."
       },
       "address_barangay": {
@@ -577,7 +577,7 @@
        "read": "Natawo ko sa Bukidnon."
       },
       "place_of_birth_town": {
-       "expected": "Baungon",
+       "expected": "Baungon, Bukidnon",
        "read": "Natawo ko sa Baungon."
       }
      }
@@ -641,7 +641,7 @@
      "read": "Purok 6, Barangay Nicdao, Baungon, Bukidnon.",
      "parts": {
       "address_town": {
-       "expected": "Baungon",
+       "expected": "Baungon, Bukidnon",
        "read": "Baungon."
       },
       "address_barangay": {

@@ -84,7 +84,7 @@ def understand_interview_answer(payload: AnswerRequest, background_tasks: Backgr
         background_tasks.add_task(
             eval_service.log_extraction, payload.eval_session_id, current_user.id, field=payload.field_key,
             step=payload.eval_step, try_id=payload.eval_try or None, spoken=payload.spoken,
-            value=result.value, ok=result.ok)
+            value=result.value, ok=result.ok, transcript=payload.transcript)
     return AnswerResponse(**result.as_dict())
 
 

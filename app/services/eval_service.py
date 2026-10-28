@@ -315,7 +315,7 @@ def _save_clip(db: Session, session_id: int, try_id: Optional[str], field: str, 
 
 
 def log_extraction(session_id: int, user_id: int, *, field: str, step: str, try_id: Optional[str], spoken: bool,
-                   value: Optional[str], ok: bool) -> None:
+                   value: Optional[str], ok: bool, transcript: Optional[str] = None) -> None:
     """Background task after /extraction/answer: what the system made of the try. Never raises."""
     db = SessionLocal()
     try:
@@ -330,6 +330,10 @@ def log_extraction(session_id: int, user_id: int, *, field: str, step: str, try_
             if not existed:      # no Whisper call before it: heard by the browser, or typed
                 row.field, row.step = field, step
                 row.engine = "browser" if spoken else "typed"
+                if spoken:
+                    row.transcript = (transcript or "")[:500]
+            elif row.step in ("confirm", "review"):
+                row.step, row.yes_no = step, None     # a reply at "is that correct?" that was really a new answer
             row.extracted_value, row.extract_ok = value, bool(ok)
 
         _save_row(db, write)
@@ -371,7 +375,7 @@ def score_unit(session: EvalSession, field: str, rows: List[EvalAnswer], note: O
     """
     note = note or {}
     voice_rows = [r for r in rows if r.step in VOICE_STEPS]
-    counted = [r for r in voice_rows if r.engine == "typed" or not is_filler(r.transcript)]
+    counted = [r for r in voice_rows if r.engine in ("typed", "browser") or not is_filler(r.transcript)]
     numbers: Dict[int, int] = {}
     seen: Dict[str, int] = {}
     for r in counted:
@@ -379,6 +383,8 @@ def score_unit(session: EvalSession, field: str, rows: List[EvalAnswer], note: O
         numbers[r.id] = seen[r.step]
         r.attempt_no = numbers[r.id]
     accepted = next((r for r in reversed(counted) if r.extract_ok), None)
+    if note.get("accepted_engine") == "skipped":
+        accepted = None          # the read-back was refused and the question skipped: nothing was accepted
     if final_value is None:
         final_value = accepted.extracted_value if accepted else ""
     final_norm = norm(field, final_value)
@@ -392,10 +398,8 @@ def score_unit(session: EvalSession, field: str, rows: List[EvalAnswer], note: O
         finished = "end_typed"                     # typed at the end step (or a picker tap)
     elif note_engine == "typed" and final_norm == "" and note.get("left_blank"):
         finished = "end_typed"                     # "leave it blank" at the end step: an answer of none
-    elif final_norm == "" and not (final_value or "").strip() and field != "gross_annual_income":
-        finished = "blank"
-    elif final_norm == "" and field == "gross_annual_income":
-        finished = "staff_typed" if not accepted else "blank"
+    elif final_norm == "" or (field == "gross_annual_income" and final_norm == "0"):
+        finished = "blank"                         # nothing was said or typed: unanswered, a miss
     else:
         finished = "staff_typed"                   # the saved value is not what was heard: typed on review
 
@@ -409,6 +413,8 @@ def score_unit(session: EvalSession, field: str, rows: List[EvalAnswer], note: O
     first_spoken = next((r for r in counted if r.step == "spoken" and r.engine != "typed"), None)
     correct_first = bool(first_spoken and voice_hit(first_spoken))
     correct_ladder = any(voice_hit(r) for r in counted if r.step in ("spoken", "spelled"))
+    if not answered:
+        correct_first = correct_ladder = False         # left unanswered (even after a rejected "none"): a miss
     # A wrong or blank final cannot be a voice success in the non-scripted rounds, where the target is the final.
     if not expected and not correct_finished:
         correct_first = correct_ladder = False
@@ -455,6 +461,8 @@ def score_session(db: Session, session: EvalSession, record_values: Dict[str, st
                 part_expected = _expected_for(session, key)
                 if session.round_type == "scripted" and part_expected is None:
                     continue                     # the card has no such step (a city has no town step)
+                if session.round_type != "scripted" and not by_field.get(key):
+                    continue                     # a step that was never asked (a city needs no town step)
                 unit = score_unit(session, key, by_field.get(key, []), notes.get(key), None, part_expected)
                 part_units.append((key, unit))
                 db.add(_final_row(session, key, unit))
@@ -473,6 +481,15 @@ def score_session(db: Session, session: EvalSession, record_values: Dict[str, st
                 whole["wer_errors"] = sum(u["wer_errors"] for u in wer) if wer else None
                 whole["wer_words"] = sum(u["wer_words"] for u in wer) if wer else None
                 whole["model"] = part_units[0][1]["model"]
+            if part_units and not expected:
+                # Voice credit only if what was heard still is in the saved value: staff who retyped the whole
+                # address on the review page get no voice hit (Codex verify round 1).
+                saved = set(norm(field, record_values.get(field, "")).split())
+                kept = all(set(norm(field, u["final_value"]).split()) <= saved for _, u in part_units)
+                if not kept:
+                    whole["correct_first"] = whole["correct_ladder"] = False
+                    if whole["finished_in"] != "blank":
+                        whole["finished_in"] = "staff_typed"
             unit = whole
             if not expected:        # not a scripted round: nothing more to say about the joined text
                 unit["expected_value"] = None
@@ -641,14 +658,20 @@ def delete_batch(db: Session, size: int = 100) -> dict:
                     (EvalAnswer.extracted_value.isnot(None)) | (EvalAnswer.final_value.isnot(None)) |
                     (EvalAnswer.expected_value.isnot(None)))
             .order_by(EvalAnswer.id).limit(size).all())
-    clips = 0
+    clips = failed = 0
     for row in rows:
         if row.audio_ref:
-            storage_service.delete_object(row.audio_ref)
-            clips += 1
+            try:
+                storage_service.delete_object_strict(row.audio_ref)
+                clips += 1
+            except Exception as exc:  # noqa: BLE001
+                # Storage did not confirm: keep the reference (and the row's text) so the next click retries it.
+                failed += 1
+                logger.warning("Evaluation clip not deleted: %s", exc)
+                continue
         row.audio_ref = row.transcript = row.extracted_value = row.final_value = row.expected_value = None
     db.commit()
-    return {"rows": len(rows), "clips": clips, "remaining": pending_delete_count(db)}
+    return {"rows": len(rows) - failed, "clips": clips, "failed": failed, "remaining": pending_delete_count(db)}
 
 
 # ─── Called by /forms/issue ──────────────────────────────────────────────────
