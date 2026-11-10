@@ -30,3 +30,6 @@ Thumbs.db
 
 graphify-out/
 .graphifyignore
+
+# Local run logs
+*.log

@@ -1,0 +1,16 @@
+# Not uploaded by `railway up` (on top of .gitignore)
+.env
+.env.*
+venv/
+venv313-old/
+.claude/
+.pytest_cache/
+.ruff_cache/
+graphify-out/
+uploads/
+pdfs/
+tests/
+scripts/
+google_apps_script/
+*.db
+*.log
