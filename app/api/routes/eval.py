@@ -315,7 +315,8 @@ def save_hand_score(answer_id: int, body: HandScoreBody, db: Session = Depends(g
     row = eval_service.hand_score(db, answer_id, body.reference, body.hypothesis, admin.id)
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail="Only one question's (or one address / birthplace step's) result takes a hand score.")
+                            detail="Only one question's (or one address / birthplace step's) result with a WER count "
+                                   "(a card and a first spoken Whisper try) takes a hand score.")
     return _answer_dict(row)
 
 

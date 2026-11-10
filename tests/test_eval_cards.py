@@ -435,3 +435,50 @@ class TestStartup:
             conn.execute(text("create table eval_answers (id integer primary key)"))
             conn.execute(text("create table security_events (id integer primary key)"))
         assert missing_eval_message(old) == MISSING_EVAL_CARDS_MIGRATION
+
+
+class TestCodexVerifyRound1:
+    """Regressions for the Codex verify findings (plan 009, round 1)."""
+
+    def test_a_recovered_birthplace_skip_noted_on_the_joined_field_stays_a_miss(self, client, admin_token, db):
+        from app.services import eval_service
+        _wipe(db)
+        s = _card_session(db)
+        card = eval_service.load_cards()["cards"][0]["answers"]["place_of_birth"]["parts"]
+        for key in eval_service.PARTS["place_of_birth"]:
+            _eval_try(db, s, key, "spoken", card[key]["read"], card[key]["expected"])
+        # The browser notes the place of birth's skip on the field itself, then it is typed at the end step.
+        notes = [{"field": "place_of_birth", "accepted_engine": "typed", "accepted_value": "Malaybalay City, Bukidnon",
+                  "skipped": True, "seconds": 100.0},
+                 {"field": "surname", "seconds": 4.0}]
+        _eval_try(db, s, "surname", "spoken", "Abarquez", "Abarquez")
+        row = _score(db, s, CARD1, notes)["place_of_birth"]
+        assert (row.correct_first, row.correct_ladder, row.skipped) == (False, False, True)
+        timing = client.get("/api/eval/stats", headers=_auth(admin_token)).json()["timing"]
+        assert timing["avg_seconds_per_question"] == 4.0 and timing["skipped_questions"] == 1
+
+    def test_a_birthday_with_a_spoken_day_and_year_is_not_an_error(self):
+        from app.services.eval_service import wer_counts, wer_words
+        assert wer_words("March fourteen, nineteen ninety") == ["march", "14", "1990"]
+        assert wer_words("march fourteen nineteen ninety") == ["march", "14", "1990"]
+        assert wer_counts("March 14, 1990.", "March fourteen, nineteen ninety") == (0, 3)
+        assert wer_counts("May 2, 1985.", "may two nineteen eighty five") == (0, 3)
+        assert wer_counts("My birthday is May 2, 1985 po.", "my birthday is may two, nineteen eighty-five po") == (0, 7)
+
+    def test_only_a_question_with_a_wer_count_takes_a_hand_score(self, client, admin_token, db):
+        from app.models.eval import EvalAnswer
+        _wipe(db)
+        typed = _card_session(db)
+        _eval_try(db, typed, "surname", "spoken", "", "Abarquez", engine="typed", model=None)
+        _score(db, typed, CARD1)
+        no_card = _card_session(db, with_card=False)
+        _eval_try(db, no_card, "surname", "spoken", "Abarquez", "Abarquez")
+        _score(db, no_card, CARD1)
+        for s in (typed, no_card):
+            row = db.query(EvalAnswer).filter(EvalAnswer.session_id == s.id, EvalAnswer.step == "final",
+                                              EvalAnswer.field == "surname").one()
+            resp = client.put(f"/api/eval/answers/{row.id}/hand-score", headers=_auth(admin_token),
+                              json={"reference": "abarquez", "hypothesis": "abarkes"})
+            assert resp.status_code == 404
+        wer = client.get("/api/eval/stats?view=all", headers=_auth(admin_token)).json()["wer"]
+        assert (wer["hand_words"], wer["hand_scored"], wer["participants"]) == (0, 0, 0)

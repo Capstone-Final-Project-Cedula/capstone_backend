@@ -295,8 +295,9 @@ def _number_groups(run: List[Tuple[str, int]]) -> List[str]:
             current += value
         last = kind
     groups.append(total + current)
-    if len(groups) == 2 and all(10 <= g <= 99 for g in groups):
-        return [f"{groups[0]}{groups[1]:02d}"]          # a year said in two halves
+    if len(groups) >= 2 and all(10 <= g <= 99 for g in groups[-2:]) and (len(groups) == 2 or groups[0] <= 31):
+        # A year said in two halves, after a day too ("fourteen nineteen ninety" -> 14 1990).
+        return [str(g) for g in groups[:-2]] + [f"{groups[-2]}{groups[-1]:02d}"]
     if len(groups) > 1 and all(g < 10 for g in groups):
         return ["".join(str(g) for g in groups)]          # digit by digit: "one five eight" -> 158
     return [str(g) for g in groups]
@@ -312,7 +313,7 @@ def wer_words(text: Optional[str]) -> List[str]:
     text = (text or "").lower()
     text = re.sub(r"(?<=\d),(?=\d{3}\b)", "", text)          # 180,000 -> 180000
     text = re.sub(r"\b(\d+)(?:st|nd|rd|th)\b", r"\1", text)  # 14th -> 14
-    words = re.sub(r"[^\w\s]", " ", text).split()
+    words = re.sub(r"[^\w\s,]", " ", text.replace(",", " , ")).split()    # a comma still ends a number
     out: List[str] = []
     run: List[Tuple[str, int]] = []
 
@@ -322,6 +323,9 @@ def wer_words(text: Optional[str]) -> List[str]:
             run.clear()
 
     for i, word in enumerate(words):
+        if word == ",":
+            flush()                                         # "march fourteen, nineteen ninety"
+            continue
         nxt = words[i + 1] if i + 1 < len(words) else ""
         kind = _kind(word, ordinal_ok=bool(run) or (out[-1] in _MONTH_WORDS if out else False))
         if kind is None and word.isdigit() and (nxt == "hundred" or nxt in _SCALES):
@@ -676,7 +680,11 @@ def score_session(db: Session, session: EvalSession, record_values: Dict[str, st
                 whole["finished_in"] = max((u["finished_in"] for _, u in part_units), key=order.index)
                 whole["spoken_tries"] = sum(u["spoken_tries"] for _, u in part_units)
                 whole["spelled_tries"] = sum(u["spelled_tries"] for _, u in part_units)
-                whole["skipped"] = any(u["skipped"] for _, u in part_units)
+                # The browser may note a skip on the joined field itself (the place of birth): keep it, and a skip
+                # anywhere is a miss (Codex verify round 1).
+                whole["skipped"] = whole["skipped"] or any(u["skipped"] for _, u in part_units)
+                if whole["skipped"]:
+                    whole["correct_first"] = whole["correct_ladder"] = False
                 wer = [u for _, u in part_units if u["wer_words"] is not None]
                 whole["wer_errors"] = sum(u["wer_errors"] for u in wer) if wer else None
                 whole["wer_words"] = sum(u["wer_words"] for u in wer) if wer else None
@@ -754,8 +762,8 @@ def hand_score(db: Session, answer_id: int, reference: Optional[str], hypothesis
     """
     The admin listened to the clip: what the participant really said (reference) and what Whisper heard
     (hypothesis) are counted with the same text rule as the card. Both None clears the hand score.
-    Only the result row of one question or one part takes a hand score; the joined address and place of
-    birth add up their parts. Returns the row, or None when it cannot take one.
+    Only the result row of one question or one part that has a WER count takes a hand score; the joined
+    address and place of birth add up their parts. Returns the row, or None when it cannot take one.
     """
     row = db.get(EvalAnswer, answer_id)
     if row is None or row.step != "final":
@@ -767,6 +775,10 @@ def hand_score(db: Session, answer_id: int, reference: Optional[str], hypothesis
     if reference is None and hypothesis is None:
         for column in HAND_COLUMNS:
             setattr(row, column, None)
+    elif row.wer_words is None:
+        # Only a question that has a WER count (a card, and a first spoken try heard by Whisper) can be
+        # re-scored: a typed answer or a "no card" session adds nothing to WER (Codex verify round 1).
+        return None
     else:
         subs, dels, ins, words = wer_split(reference or "", hypothesis or "")
         row.hand_reference, row.hand_hypothesis = (reference or "")[:500], (hypothesis or "")[:500]
@@ -893,7 +905,7 @@ def stats(db: Session, filters: dict) -> dict:
         return func.sum(case((column.is_(True), 1), else_=0))
 
     final = EvalAnswer
-    hand_on = final.hand_words.isnot(None)
+    hand_on = and_(final.hand_words.isnot(None), final.wer_words.isnot(None))   # only where WER is counted
     not_skipped = final.skipped.isnot(True)
     field_rows = (db.query(
         final.field, func.count(final.id), b(final.correct_first), b(final.correct_ladder),
