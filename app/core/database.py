@@ -86,6 +86,10 @@ MISSING_EVAL_MIGRATION = (
     "Apply it in the Supabase SQL editor and create the private 'eval-audio' storage bucket "
     "(see capstone_docs/TESTING-LAPTOP.md)."
 )
+MISSING_EVAL_CARDS_MIGRATION = (
+    "Database is missing migration 20261110090000_eval_cards.sql (plan 009: evaluation cards and pooled WER). "
+    "Apply it in the Supabase SQL editor (see capstone_docs/TESTING-LAPTOP.md)."
+)
 
 
 def missing_eval_message(bind=None):
@@ -95,13 +99,18 @@ def missing_eval_message(bind=None):
     app_settings yet: fine. Must run BEFORE create_tables(): create_all() would make the eval tables
     without row level security and never adds the new app_settings columns.
     """
-    from app.models.eval import EVAL_TABLE_NAMES
     inspector = inspect(bind if bind is not None else engine)
     if not inspector.has_table("app_settings"):
         return None
     columns = {column["name"] for column in inspector.get_columns("app_settings")}
-    if "evaluation_mode" not in columns or not all(inspector.has_table(name) for name in EVAL_TABLE_NAMES):
+    if "evaluation_mode" not in columns or not all(
+            inspector.has_table(name) for name in ("eval_sessions", "eval_answers", "security_events")):
         return MISSING_EVAL_MIGRATION
+    session_columns = {column["name"] for column in inspector.get_columns("eval_sessions")}
+    answer_columns = {column["name"] for column in inspector.get_columns("eval_answers")}
+    if ("eval_counts" not in columns or not inspector.has_table("eval_cards") or "card_id" not in session_columns
+            or "hand_words" not in answer_columns):
+        return MISSING_EVAL_CARDS_MIGRATION
     return None
 
 

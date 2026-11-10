@@ -22,5 +22,6 @@ class AppSettings(Base):
     eval_round_condition = Column(String(10), nullable=False, default="quiet")
     eval_round_card_set  = Column(String(40), nullable=True)
     eval_round_no        = Column(Integer, nullable=False, default=1)
+    eval_counts          = Column(Boolean, nullable=False, default=True)   # plan 009: the next run counts
     updated_at        = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     updated_by        = Column(Integer, ForeignKey("staff_users.id", ondelete="SET NULL"), nullable=True)

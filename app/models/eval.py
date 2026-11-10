@@ -30,7 +30,26 @@ FINISHED_IN = (
     "spoken_1", "spoken_2", "spoken_3", "spelled_1", "spelled_2",
     "end_said", "end_typed", "staff_typed", "blank",
 )
-EVAL_TABLE_NAMES = ("eval_sessions", "eval_answers", "security_events")
+EVAL_TABLE_NAMES = ("eval_sessions", "eval_answers", "security_events", "eval_cards")
+
+
+class EvalCard(Base):
+    """
+    Plan 009: one generated made-up identity card (never a real resident). `card` is JSON shaped like a
+    reading card: {"style": ..., "answers": {field: {expected, read, parts?}}}. The next session claims
+    the oldest unclaimed card (supabase/migrations/20261110090000_eval_cards.sql).
+    """
+    __tablename__ = "eval_cards"
+    __table_args__ = {"info": {"eval": True}}
+
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    created_by = Column(Integer, ForeignKey("staff_users.id", ondelete="SET NULL"), nullable=True)
+    round_no = Column(Integer, nullable=True)
+    style = Column(String(2), nullable=False)
+    card = Column(Text, nullable=False)
+    claimed_by_session_id = Column(Integer, nullable=True, unique=True)   # the FK lives in the migration
+    claimed_at = Column(DateTime(timezone=True), nullable=True)
 
 
 class EvalSession(Base):
@@ -60,6 +79,8 @@ class EvalSession(Base):
     app_seconds = Column(Float, nullable=True)                    # consent -> CTC issued
     qr_seconds = Column(Float, nullable=True)                     # QR scan -> CTC issued (QR sessions)
     scored = Column(Boolean, nullable=False, default=False)
+    card_id = Column(Integer, ForeignKey("eval_cards.id", ondelete="SET NULL"), nullable=True)   # plan 009
+    counts = Column(Boolean, nullable=False, default=True)        # plan 009: "counts toward evaluation"
 
 
 class EvalAnswer(Base):
@@ -99,6 +120,18 @@ class EvalAnswer(Base):
     wer_errors = Column(Integer, nullable=True)
     wer_words = Column(Integer, nullable=True)
     seconds = Column(Float, nullable=True)                        # question asked -> answer accepted
+    # ── plan 009: the WER split and an optional hand re-score from the saved audio ──
+    s_errors = Column(Integer, nullable=True)
+    d_errors = Column(Integer, nullable=True)
+    i_errors = Column(Integer, nullable=True)
+    hand_reference = Column(Text, nullable=True)                  # what the participant really said
+    hand_hypothesis = Column(Text, nullable=True)                 # what Whisper heard (as checked by hand)
+    hand_s = Column(Integer, nullable=True)
+    hand_d = Column(Integer, nullable=True)
+    hand_i = Column(Integer, nullable=True)
+    hand_words = Column(Integer, nullable=True)
+    hand_scored_at = Column(DateTime(timezone=True), nullable=True)
+    hand_scored_by = Column(Integer, ForeignKey("staff_users.id", ondelete="SET NULL"), nullable=True)
 
 
 class SecurityEvent(Base):

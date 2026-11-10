@@ -75,6 +75,9 @@ class TestEvalAdminOnly:
         ("get", "/api/eval/sessions"), ("get", "/api/eval/sessions/1"), ("get", "/api/eval/answers/1/audio"),
         ("get", "/api/eval/export/sessions.csv"), ("get", "/api/eval/export/answers.csv"),
         ("get", "/api/eval/export/summary.csv"), ("get", "/api/eval/delete-audio"), ("post", "/api/eval/delete-audio"),
+        ("get", "/api/eval/cards"), ("post", "/api/eval/cards"), ("get", "/api/eval/cards/1"),
+        ("get", "/api/eval/cards/1.pdf"), ("put", "/api/eval/answers/1/hand-score"),
+        ("delete", "/api/eval/answers/1/hand-score"),
     ]
 
     def _call(self, client, method, url, headers):
@@ -121,20 +124,18 @@ class TestEvalAdminOnly:
 
 
 class TestEvalRoundsAndCards:
-    def test_participant_codes_count_per_round_and_cards_wrap(self, client, staff_token, admin_token):
+    def test_participant_codes_count_per_round_and_no_fixed_card_is_handed_out(self, client, staff_token, admin_token):
+        """Plan 009: only generated cards are read now; the 8 fixed cards stay for the plan 003 rows."""
         from app.models.eval import EvalSession
-        from app.services import eval_service
-        with patch.dict(eval_service.load_cards()["sets"], {"pair": [1, 2]}):
-            _eval_put(client, admin_token, evaluation_mode=True, round_type="scripted", card_set="pair",
-                      new_round=True)
-            ids = [client.post("/api/eval/sessions", json={"input_method": "voice"},
-                               headers=_auth(staff_token)).json()["session_id"] for _ in range(3)]
-            check = TestingSessionLocal()
-            rows = [check.get(EvalSession, i) for i in ids]
-            assert [r.participant_code for r in rows] == ["P001", "P002", "P003"]
-            assert [r.card_no for r in rows] == [1, 2, 1]
-            assert all(r.round_type == "scripted" and r.card_set == "pair" for r in rows)
-            check.close()
+        _eval_put(client, admin_token, evaluation_mode=True, round_type="scripted", new_round=True)
+        ids = [client.post("/api/eval/sessions", json={"input_method": "voice"},
+                           headers=_auth(staff_token)).json()["session_id"] for _ in range(3)]
+        check = TestingSessionLocal()
+        rows = [check.get(EvalSession, i) for i in ids]
+        assert [r.participant_code for r in rows] == ["P001", "P002", "P003"]
+        assert [r.card_no for r in rows] == [None, None, None]
+        assert all(r.round_type == "scripted" for r in rows)
+        check.close()
         _eval_put(client, admin_token, round_type="practice", new_round=True)
 
     def test_a_round_change_starts_a_new_participant_count(self, client, staff_token, admin_token):
@@ -341,7 +342,7 @@ class TestEvalEndToEnd:
         final = db.query(EvalAnswer).filter(EvalAnswer.session_id == sid, EvalAnswer.step == "final",
                                             EvalAnswer.field == "surname").one()
         assert final.correct_first and final.finished_in == "spoken_1" and final.seconds == 3.0
-        stats = client.get("/api/eval/stats?round_type=scripted", headers=_auth(admin_token)).json()
+        stats = client.get("/api/eval/stats?view=all&round_type=scripted", headers=_auth(admin_token)).json()
         assert stats["sessions"]["issued"] >= 1 and stats["fields"]["surname"]["answers"] >= 1
         for kind in ("sessions", "answers", "summary"):
             csv_resp = client.get(f"/api/eval/export/{kind}.csv", headers=_auth(admin_token))
@@ -487,7 +488,8 @@ class TestEvalStatsAndExport:
 
             event.listen(app_engine, "before_cursor_execute", listener)
             try:
-                assert client.get("/api/eval/stats?round_type=scripted", headers=_auth(admin_token)).status_code == 200
+                assert client.get("/api/eval/stats?view=all&round_type=scripted",
+                                  headers=_auth(admin_token)).status_code == 200
             finally:
                 event.remove(app_engine, "before_cursor_execute", listener)
             return len(seen)
@@ -502,21 +504,28 @@ class TestEvalStatsAndExport:
         small = count_queries()
         add_sessions(8)
         assert count_queries() == small
-        data = client.get("/api/eval/stats?round_type=scripted", headers=_auth(admin_token)).json()
+        data = client.get("/api/eval/stats?view=all&round_type=scripted", headers=_auth(admin_token)).json()
         assert data["sessions"]["issued"] == 10 and data["overall"]["answers"] == 10 * 14
 
-    def test_headline_hard5_and_easy9(self, client, admin_token):
-        data = client.get("/api/eval/stats?round_type=scripted", headers=_auth(admin_token)).json()
-        assert data["hard5"]["answers"] == 10 * 5 and data["easy9"]["answers"] == 10 * 9
-        assert data["overall"]["answers"] == data["hard5"]["answers"] + data["easy9"]["answers"]
+    def test_no_hard5_or_easy9_split_anywhere(self, client, admin_token):
+        """Plan 009 (Ralph, 2026-11-10): one overall WER over all 14 questions; per-field rows stay."""
+        from app.services import eval_service
+        data = client.get("/api/eval/stats?view=all", headers=_auth(admin_token)).json()
+        assert "hard5" not in data and "easy9" not in data
+        assert not hasattr(eval_service, "HARD5") and not hasattr(eval_service, "EASY9")
+        summary = client.get("/api/eval/export/summary.csv?view=all", headers=_auth(admin_token)).text.lower()
+        assert "hard" not in summary and "easy" not in summary and "all 14 questions" in summary
+        assert "field_extraction_accuracy_pct" in summary.splitlines()[0]
 
-    def test_practice_and_live_are_left_out_by_default(self, client, admin_token, db):
+    def test_the_counted_view_is_the_default_and_all_shows_every_round(self, client, admin_token, db):
         s = _eval_session(db, round_type="live", outcome="issued", round_no=8)
         _eval_try(db, s, "surname", "spoken", "Reyes", "Reyes")
         _score(db, s, {**CARD1, "surname": "Reyes"})
         default = client.get("/api/eval/stats", headers=_auth(admin_token)).json()
-        live = client.get("/api/eval/stats?round_type=live", headers=_auth(admin_token)).json()
-        assert default["overall"]["answers"] == 10 * 14 and live["overall"]["answers"] == 14
+        everything = client.get("/api/eval/stats?view=all", headers=_auth(admin_token)).json()
+        live = client.get("/api/eval/stats?view=all&round_type=live", headers=_auth(admin_token)).json()
+        assert default["view"] == "counted" and default["overall"]["answers"] == 0     # no card: not counted
+        assert everything["overall"]["answers"] == 11 * 14 and live["overall"]["answers"] == 14
 
     def test_csv_is_streamed_in_pages(self, client, admin_token, db):
         import inspect
