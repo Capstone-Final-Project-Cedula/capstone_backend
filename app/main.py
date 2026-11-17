@@ -70,7 +70,7 @@ async def lifespan(app: FastAPI):
     os.makedirs("assets", exist_ok=True)
     logger.info("Required directories created.")
 
-    # Seed a default admin user if the database is empty
+    # A brand-new database gets its first admin only from ADMIN_INITIAL_PASSWORD (plan 010)
     _seed_default_admin()
 
     # Load Whisper and DistilBERT in the background so the first interview answer is not slow.
@@ -90,29 +90,44 @@ async def lifespan(app: FastAPI):
     logger.info("=== Cedula System Shutting Down ===")
 
 
+ADMIN_INITIAL_PASSWORD_MIN_LENGTH = 12
+
+
 def _seed_default_admin():
-    """Create a default admin account if no staff users exist."""
+    """Create the first admin account on a brand-new database (plan 010).
+
+    Only when the staff table is empty, and only from the ADMIN_INITIAL_PASSWORD setting: the code holds
+    no starter password, and the password is never written to the log. Without a valid setting no account
+    is created and the backend still starts.
+    """
     from app.core.database import SessionLocal
     from app.core.security import hash_password
-    from app.models.staff_user import StaffUser, RoleEnum
+    from app.models.staff_user import RoleEnum, StaffUser
 
     db = SessionLocal()
     try:
-        count = db.query(StaffUser).count()
-        if count == 0:
-            default_admin = StaffUser(
-                username="admin",
-                hashed_password=hash_password("admin1234"),
-                full_name="System Administrator",
-                position="IT Administrator",
-                role=RoleEnum.ADMIN,
-            )
-            db.add(default_admin)
-            db.commit()
+        if db.query(StaffUser).count() > 0:
+            return
+        password = settings.ADMIN_INITIAL_PASSWORD
+        if len(password.strip()) < ADMIN_INITIAL_PASSWORD_MIN_LENGTH:
             logger.warning(
-                "Default admin created: username='admin' password='admin1234' "
-                "— CHANGE THIS IMMEDIATELY IN PRODUCTION!"
+                "No staff accounts exist and no admin account was created. To create the first admin "
+                f"('admin'), set ADMIN_INITIAL_PASSWORD (at least {ADMIN_INITIAL_PASSWORD_MIN_LENGTH} "
+                "characters) and restart the backend."
             )
+            return
+        db.add(StaffUser(
+            username="admin",
+            hashed_password=hash_password(password),
+            full_name="System Administrator",
+            position="IT Administrator",
+            role=RoleEnum.ADMIN,
+        ))
+        db.commit()
+        logger.warning(
+            "First admin account 'admin' created from ADMIN_INITIAL_PASSWORD. "
+            "Change it after the first login and remove the variable."
+        )
     finally:
         db.close()
 

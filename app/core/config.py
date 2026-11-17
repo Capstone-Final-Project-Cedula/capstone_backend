@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
 
+    # First admin account (plan 010). A secret: never logged. Used only when the staff table is EMPTY
+    # (a brand-new database) to create the account "admin"; at least 12 characters, otherwise no admin is
+    # created. Remove it after the first login. No starter password exists anywhere in the code.
+    ADMIN_INITIAL_PASSWORD: str = ""
+
     # Whisper ASR — speech-to-text for the live interview.
     # Tuned for short one-answer clips on an ordinary CPU server: "base" with
     # greedy decoding (~0.75 s per answer measured on an i5-11400H), versus
