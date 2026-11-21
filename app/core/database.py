@@ -81,45 +81,8 @@ def missing_migration_message(bind=None):
     return None
 
 
-MISSING_EVAL_MIGRATION = (
-    "Database is missing migration 20261028090000_evaluation_mode.sql (plan 003: evaluation mode). "
-    "Apply it in the Supabase SQL editor and create the private 'eval-audio' storage bucket "
-    "(see capstone_docs/TESTING-LAPTOP.md)."
-)
-MISSING_EVAL_CARDS_MIGRATION = (
-    "Database is missing migration 20261110090000_eval_cards.sql (plan 009: evaluation cards and pooled WER). "
-    "Apply it in the Supabase SQL editor (see capstone_docs/TESTING-LAPTOP.md)."
-)
-
-
-def missing_eval_message(bind=None):
-    """
-    The start-up message when an existing database lacks the evaluation-mode migration, else None.
-    Evaluation mode is ON by default, so the check always runs; an empty database (tests) has no
-    app_settings yet: fine. Must run BEFORE create_tables(): create_all() would make the eval tables
-    without row level security and never adds the new app_settings columns.
-    """
-    inspector = inspect(bind if bind is not None else engine)
-    if not inspector.has_table("app_settings"):
-        return None
-    columns = {column["name"] for column in inspector.get_columns("app_settings")}
-    if "evaluation_mode" not in columns or not all(
-            inspector.has_table(name) for name in ("eval_sessions", "eval_answers", "security_events")):
-        return MISSING_EVAL_MIGRATION
-    session_columns = {column["name"] for column in inspector.get_columns("eval_sessions")}
-    answer_columns = {column["name"] for column in inspector.get_columns("eval_answers")}
-    if ("eval_counts" not in columns or not inspector.has_table("eval_cards") or "card_id" not in session_columns
-            or "hand_words" not in answer_columns):
-        return MISSING_EVAL_CARDS_MIGRATION
-    return None
-
-
 def create_tables():
     """Create any missing tables defined in models. Called on startup."""
     from app.models import applicant, issuance, mobile_submission, staff_user  # noqa: F401
-    from app.models import citizen_user, app_settings, sus_response, record_access_log  # noqa: F401
-    from app.models import eval as eval_models  # noqa: F401
-    # The evaluation-mode tables (plan 003) exist only through their migration:
-    # create_all() would make them without row level security.
-    tables = [t for t in Base.metadata.sorted_tables if not t.info.get("eval")]
-    Base.metadata.create_all(bind=engine, tables=tables)
+    from app.models import citizen_user, app_settings, record_access_log  # noqa: F401
+    Base.metadata.create_all(bind=engine)

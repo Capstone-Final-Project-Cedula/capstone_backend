@@ -25,7 +25,6 @@ class Settings(BaseSettings):
     SUPABASE_SECRET_KEY: str = ""                  # sb_secret_... (server-side only, never in clients)
     SUPABASE_PDF_BUCKET: str = "ctc-pdfs"
     SUPABASE_PROFILE_BUCKET: str = "profile-pictures"
-    SUPABASE_EVAL_BUCKET: str = "eval-audio"       # private; evaluation-mode clips (plan 003)
 
     # Web app origins allowed to call the API when DEBUG is off (comma-separated),
     # e.g. "http://localhost:3000,http://192.168.1.8:3000"
@@ -79,10 +78,6 @@ class Settings(BaseSettings):
     # Verification emails are only logged today (no email sending yet), so every backend
     # must set CITIZEN_EMAIL_VERIFICATION=False in .env / on the host, or new citizens can never log in.
     CITIZEN_EMAIL_VERIFICATION: bool = True
-
-    # Stamped on every evaluation session so results can be grouped by build; the Builder bumps it
-    # as the last build step of every later plan.
-    APP_BUILD: str = "version-2.3+007"
 
     # QR Code
     QR_EXPIRY_MINUTES: int = 60

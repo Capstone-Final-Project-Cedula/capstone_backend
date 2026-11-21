@@ -16,7 +16,7 @@ OpenAI Whisper (`base`; `tiny` for yes/no), DistilBERT NER, ReportLab (PDF), qrc
 
 ## Map
 - `app/main.py` app factory + routers · `app/core/` config, database, security
-- `app/api/routes/` auth, citizen_auth, speech, extraction, qr, forms, settings, sus
+- `app/api/routes/` auth, citizen_auth, speech, extraction, qr, forms, settings, places
 - `app/services/` — `answer_service.py` (live interview parsing, biggest file), `speech_service.py` (Whisper),
   gazetteers + `name_lexicon.py`, `tax_service.py`, `pdf_service.py`, `storage_service.py`, `qr_service.py`
 - `app/data/` gazetteer CSVs (see its README) · `supabase/migrations/` schema · `tests/test_backend.py`
