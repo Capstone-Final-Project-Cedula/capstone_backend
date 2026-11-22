@@ -149,7 +149,7 @@ def get_qr_history(
 def get_qr_status(qr_token: str, db: Session = Depends(get_db)):
     """
     Has this QR code been scanned by the barangay staff yet? The mobile QR
-    screen polls this to show "form received" and the usability survey.
+    screen polls this to show "form received".
     Public (guests have no login), and it reveals nothing but two flags; the
     token itself is the unguessable secret the citizen holds.
     """

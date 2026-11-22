@@ -207,9 +207,6 @@ class IssuanceCreate(BaseModel):
     applicant_data: Union[ApplicantCreate, dict]  # Accept both Pydantic model and dict
     input_method: str = "voice"
     raw_transcript: Optional[str] = None
-    # Plan 003: the evaluation session and the browser's one batch (typed vs staff, skips, seconds).
-    eval_session_id: Optional[int] = None
-    eval_batch: Optional[dict] = None
 
     @validator('input_method', pre=True)
     def validate_input_method(cls, v):

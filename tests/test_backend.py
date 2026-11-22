@@ -1426,87 +1426,6 @@ class TestPlaceOfBirth:
         assert r.status_code == 422
 
 
-# ─── SUS Survey ────────────────────────────────────────────────────────────────
-
-class TestSusSurvey:
-    ANSWERS = dict(zip([f"q{i}" for i in range(1, 11)], [4, 2, 5, 1, 4, 2, 5, 2, 4, 1]))
-
-    def survey(self, **overrides):
-        return {
-            "respondent_name": "  ", "role": "citizen_applicant", "computer_experience": "basic",
-            "features_used": ["voice_input", "qr_prefill", "voice_input"], **self.ANSWERS,
-            "comments": "Easy to follow", "consent_given": True, "platform": "web", **overrides,
-        }
-
-    def test_submit_without_login_and_score_hidden(self, client, staff_token):
-        resp = client.post("/api/sus/responses", json=self.survey())
-        assert resp.status_code == 201
-        assert "sus_score" not in resp.json()
-
-        rows = client.get("/api/sus/responses", headers={"Authorization": f"Bearer {staff_token}"}).json()
-        row = next(r for r in rows if r["id"] == resp.json()["id"])
-        assert row["sus_score"] == 85.0                      # the reference test case
-        assert row["respondent_name"] is None                # blank name stored as empty
-        assert row["features_used"] == ["voice_input", "qr_prefill"]
-        assert row["synced_to_sheets"] is False
-
-    def test_typed_name_is_saved_trimmed_and_long_names_work(self, client, staff_token):
-        """Plan 007 B: a typed name is kept (trimmed); the 120-character limit is refused above."""
-        headers = {"Authorization": f"Bearer {staff_token}"}
-        name = "Ma. Concepcion Dela Cruz-Villanueva"
-        resp = client.post("/api/sus/responses", json=self.survey(respondent_name=f"  {name} "))
-        assert resp.status_code == 201
-        rows = client.get("/api/sus/responses", headers=headers).json()
-        assert next(r for r in rows if r["id"] == resp.json()["id"])["respondent_name"] == name
-        assert client.post("/api/sus/responses", json=self.survey(respondent_name="x" * 120)).status_code == 201
-        too_long = client.post("/api/sus/responses", json=self.survey(respondent_name="x" * 121))
-        assert too_long.status_code == 422
-
-    def test_missing_name_is_stored_as_empty(self, client, staff_token):
-        resp = client.post("/api/sus/responses", json={k: v for k, v in self.survey().items() if k != "respondent_name"})
-        assert resp.status_code == 201
-        rows = client.get("/api/sus/responses", headers={"Authorization": f"Bearer {staff_token}"}).json()
-        assert next(r for r in rows if r["id"] == resp.json()["id"])["respondent_name"] is None
-
-    def test_sheet_sync_still_sends_the_name(self):
-        from pathlib import Path
-        sync = Path(__file__).resolve().parents[1] / "supabase" / "functions" / "sus-sheets-sync" / "index.ts"
-        assert "respondent_name" in sync.read_text(encoding="utf-8")
-
-    def test_rejects_invalid_answers(self, client):
-        for bad in ({"consent_given": False}, {"q3": 6}, {"q10": 0}, {"role": "mayor"},
-                    {"features_used": ["hacking"]}, {"platform": "desktop"}, {"transaction_id": 999999}):
-            assert client.post("/api/sus/responses", json=self.survey(**bad)).status_code == 422, bad
-        missing = self.survey()
-        del missing["q7"]
-        assert client.post("/api/sus/responses", json=missing).status_code == 422
-
-    def test_links_to_transaction(self, client, staff_token, db):
-        from app.models.issuance import CTCIssuance
-        issuance_id = db.query(CTCIssuance.id).first()[0]
-        resp = client.post("/api/sus/responses", json=self.survey(transaction_id=issuance_id, platform="mobile"))
-        assert resp.status_code == 201
-
-    def test_reading_needs_staff(self, client, db):
-        from app.models.staff_user import StaffUser, RoleEnum
-        assert client.get("/api/sus/responses").status_code == 401
-        db.add(StaffUser(username="sus_viewer", hashed_password=hash_password("testpass123"),
-                         full_name="Survey Viewer", role=RoleEnum.VIEWER))
-        db.commit()
-        viewer = {"Authorization": f"Bearer {create_access_token(data={'sub': 'sus_viewer', 'type': 'staff'})}"}
-        assert client.get("/api/sus/responses", headers=viewer).status_code == 403
-        citizen = {"Authorization": f"Bearer {create_access_token(data={'sub': 'admin_test', 'type': 'citizen'})}"}
-        assert client.get("/api/sus/responses", headers=citizen).status_code == 401
-
-    def test_summary_and_resync_permissions(self, client, staff_token, admin_token):
-        summary = client.get("/api/sus/summary", headers={"Authorization": f"Bearer {staff_token}"}).json()
-        assert summary["total"] >= 2 and summary["pending_sync"] == summary["total"]
-        assert summary["mean_sus_score"] == 85.0
-        assert client.post("/api/sus/resync", headers={"Authorization": f"Bearer {staff_token}"}).status_code == 403
-        # The test database is SQLite, which has no Edge Function to call.
-        assert client.post("/api/sus/resync", headers={"Authorization": f"Bearer {admin_token}"}).status_code == 503
-
-
 # ─── Citizen sign-up and email verification switch ────────────────────────────
 
 def _citizen_payload(username: str) -> dict:
@@ -1605,8 +1524,7 @@ class TestWhisperEngine:
                 patch.object(speech_service.settings, "WHISPER_FIELD_MODELS", False), \
                 patch.dict(SpeechService._models, clear=True):
             out = SpeechService.transcribe_file(np.zeros(16000, dtype=np.float32), "surname")
-        assert set(out) == {"transcript", "dropped", "language", "confidence", "segments", "processing_time_seconds",
-                            "passes"}
+        assert set(out) == {"transcript", "dropped", "language", "confidence", "segments", "processing_time_seconds"}
         assert out["transcript"] == "Dela Cruz po." and out["language"] == "en" and out["dropped"] is None
         assert out["segments"][0]["text"] == "Dela Cruz po." and 0 < out["confidence"] < 1
         (_, name, load_kwargs), (_, _, options) = calls
@@ -2151,3 +2069,87 @@ class TestPlan006Answers:
                            json={"field_key": "place_of_birth_province", "transcript": "San Jose", "spoken": True})
         assert resp.status_code == 200 and resp.json()["reason"] == "ambiguous_town"
         assert len(resp.json()["candidates"]) > 3
+
+
+# ─── Plan 012: the in-system SUS survey and Evaluation mode are gone ────────────
+
+class TestSusAndEvalRemoved:
+    FAKE_WHISPER = {"transcript": "Santos", "dropped": None, "language": "en", "confidence": 0.9, "segments": [],
+                    "processing_time_seconds": 0.1}
+
+    @pytest.mark.parametrize("method, path", [
+        ("get", "/api/eval/settings"), ("get", "/api/eval/stats"), ("post", "/api/eval/sessions"),
+        ("get", "/api/eval/consent"), ("get", "/api/sus/summary"), ("get", "/api/sus/responses"),
+        ("post", "/api/sus/responses"), ("post", "/api/sus/resync"),
+    ])
+    def test_old_routes_are_gone(self, client, admin_token, method, path):
+        assert getattr(client, method)(path, headers=_auth(admin_token)).status_code == 404
+
+    def test_transcribe_ignores_old_eval_fields_and_has_no_passes(self, client, staff_token):
+        from app.services.speech_service import SpeechService
+        with patch.object(SpeechService, "transcribe_bytes", return_value=dict(self.FAKE_WHISPER)):
+            r = client.post("/api/speech/transcribe", headers=_auth(staff_token),
+                            files={"audio_file": ("a.wav", b"RIFF0000", "audio/wav"),
+                                   "eval_clip": ("c.webm", b"old-clip", "audio/webm")},
+                            data={"field_key": "surname", "eval_session_id": "7", "eval_field": "surname",
+                                  "eval_step": "spoken", "eval_try": "t1"})
+        assert r.status_code == 200
+        assert set(r.json()) == {"transcript", "language", "confidence", "segments", "processing_time_seconds"}
+
+    def test_answer_ignores_old_eval_fields(self, client, staff_token):
+        plain = client.post("/api/extraction/answer", headers=_auth(staff_token),
+                            json={"field_key": "surname", "transcript": "Santos", "spoken": True})
+        old = client.post("/api/extraction/answer", headers=_auth(staff_token),
+                          json={"field_key": "surname", "transcript": "Santos", "spoken": True,
+                                "eval_session_id": 7, "eval_step": "spoken", "eval_try": "t1"})
+        assert plain.status_code == old.status_code == 200
+        assert plain.json() == old.json()
+
+    def test_issue_ignores_old_eval_fields(self, client, staff_token):
+        body = {"applicant_data": {**TestIssuance.SAMPLE_APPLICANT, "surname": "Oldtab"}, "input_method": "voice",
+                "eval_session_id": 7, "eval_batch": {"typed": 1}}
+        with patch("app.api.routes.forms.generate_cedula_pdf", return_value="pdfs/test.pdf"), \
+             patch("app.api.routes.forms.generate_receipt_pdf", return_value="pdfs/test_receipt.pdf"):
+            r = client.post("/api/forms/issue", json=body, headers=_auth(staff_token))
+        assert r.status_code == 201 and r.json()["ctc_number"].startswith("CTC-")
+
+    def test_denied_answers_unchanged(self, client, staff_token):
+        wrong = client.post("/api/auth/login", json={"username": "admin", "password": "not-the-password"})
+        assert (wrong.status_code, wrong.json()["detail"]) == (401, "Invalid username or password")
+        no_token = client.get("/api/forms/records")
+        assert (no_token.status_code, no_token.json()["detail"]) == (401, "Not authenticated")
+        staff_on_admin = client.get("/api/auth/staff", headers=_auth(staff_token))
+        assert (staff_on_admin.status_code, staff_on_admin.json()["detail"]) == (403, "Admin access required")
+
+    def test_backend_starts_on_a_database_that_still_has_the_old_tables(self, tmp_path):
+        """Option A (Ralph, 2026-11-21): the eval/SUS tables and the six app_settings columns stay in Supabase."""
+        import app.main as main_module
+        from sqlalchemy import text
+        from sqlalchemy.orm import sessionmaker
+        from app.core.database import Base, create_tables
+        from app.models.app_settings import AppSettings
+        old = create_engine(f"sqlite:///{tmp_path / 'old_schema.db'}")
+        with patch("app.core.database.engine", old):
+            create_tables()
+        with old.begin() as conn:
+            for column in ("evaluation_mode BOOLEAN NOT NULL DEFAULT 1",
+                           "eval_round_type VARCHAR(10) NOT NULL DEFAULT 'practice'",
+                           "eval_round_condition VARCHAR(10) NOT NULL DEFAULT 'quiet'",
+                           "eval_round_card_set VARCHAR(40)", "eval_round_no INTEGER NOT NULL DEFAULT 1",
+                           "eval_counts BOOLEAN NOT NULL DEFAULT 1"):
+                conn.execute(text(f"ALTER TABLE app_settings ADD COLUMN {column}"))
+            for table in ("eval_sessions", "eval_answers", "eval_cards", "security_events", "sus_responses"):
+                conn.execute(text(f"CREATE TABLE {table} (id INTEGER PRIMARY KEY)"))
+        assert "sus_responses" not in Base.metadata.tables and "eval_sessions" not in Base.metadata.tables
+        with patch("app.core.database.engine", old), patch.object(main_module, "_seed_default_admin"):
+            with TestClient(app) as started:
+                assert started.get("/api/health").status_code == 200
+        session = sessionmaker(bind=old)()
+        session.add(AppSettings(id=1, barangay_name="Barangay Test", municipality="Town", province="Province"))
+        session.commit()       # the old NOT NULL DEFAULT columns fill themselves
+        session.close()
+        with old.connect() as conn:
+            assert conn.execute(text("SELECT evaluation_mode, eval_round_no FROM app_settings")).one() == (1, 1)
+            for table in ("eval_sessions", "eval_answers", "eval_cards", "security_events", "sus_responses"):
+                assert conn.execute(text(f"SELECT COUNT(*) FROM {table}")).scalar() == 0
+        old.dispose()
